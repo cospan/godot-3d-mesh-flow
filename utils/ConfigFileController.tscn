@@ -1,0 +1,58 @@
+[gd_scene load_steps=2 format=3 uid="uid://cm5wkle1n50gl"]
+
+[sub_resource type="GDScript" id="GDScript_geowb"]
+script/source = "extends Node
+
+
+##############################################################################
+# Signals
+##############################################################################
+
+##############################################################################
+# Constants
+##############################################################################
+
+##############################################################################
+# Members
+##############################################################################
+var m_logger = LogStream.new(\"Config File Controller\", LogStream.LogLevel.DEBUG)
+m_config = ConfigFile.new()
+
+##############################################################################
+# Exports
+##############################################################################
+@export_dir var CONFIG_FILE_DIR:String = \"user://godot-3d-mesh-flow.cfg\"
+@export var CLEAR_CONFIG:bool = false
+
+##############################################################################
+# Public Functions
+##############################################################################
+func load_config():
+		var err = m_config.load(CONFIG_FILE_DIR)
+		if err == OK:
+				m_logger.debug(\"Config file loaded successfully!\")
+		else:
+				m_logger.error(\"Failed to load config file!\")
+		return err
+
+
+##############################################################################
+# Private Functions
+##############################################################################
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+    m_logger.debug(\"Ready Entered!\")
+		m_config = ConfigFile.new()
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta):
+    pass
+
+
+
+"
+
+[node name="ConfigFileController" type="Node"]
+script = SubResource("GDScript_geowb")

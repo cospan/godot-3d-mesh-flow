@@ -1,0 +1,162 @@
+[gd_scene load_steps=13 format=3 uid="uid://b3vdtcf3df7vq"]
+
+[ext_resource type="Script" path="res://main/Main.gd" id="1_yctuw"]
+[ext_resource type="Texture2D" uid="uid://crmy1j1ao80x8" path="res://assets/icons/home.png" id="2_1t4bi"]
+[ext_resource type="Texture2D" uid="uid://dy8g5bb3dvxqv" path="res://assets/icons/home_inv.png" id="3_dhceg"]
+[ext_resource type="Texture2D" uid="uid://bjrikisacg1hh" path="res://assets/icons/new_library.png" id="4_8wnbc"]
+[ext_resource type="Texture2D" uid="uid://bwml3bxuo3cek" path="res://assets/icons/new_library_inv.png" id="5_juvih"]
+[ext_resource type="Texture2D" uid="uid://bkrfubmmjybt4" path="res://assets/icons/new_map.png" id="6_7j6km"]
+[ext_resource type="Texture2D" uid="uid://bod5fths4rtbk" path="res://assets/icons/new_map_inv.png" id="7_w6omt"]
+[ext_resource type="Texture2D" uid="uid://bikn730hbsr1m" path="res://assets/icons/log.png" id="8_o2n7h"]
+[ext_resource type="Texture2D" uid="uid://v7y5tike2mgw" path="res://assets/icons/Landing Page Test.png" id="8_ysc63"]
+[ext_resource type="Texture2D" uid="uid://duujsu0r0ou74" path="res://assets/icons/log_inv.png" id="9_x71ra"]
+[ext_resource type="PackedScene" uid="uid://cadjompe5itss" path="res://utils/TELogger.tscn" id="11_nh4p0"]
+
+[sub_resource type="Theme" id="Theme_8kjic"]
+BoxContainer/constants/separation = 4
+
+[node name="Main" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = SubResource("Theme_8kjic")
+script = ExtResource("1_yctuw")
+
+[node name="VBoxMain" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainMenu" type="MenuBar" parent="VBoxMain"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxMain/MainMenu"]
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="File" type="MenuButton" parent="VBoxMain/MainMenu/HBoxContainer"]
+layout_mode = 2
+text = "File"
+item_count = 1
+popup/item_0/text = "Exit"
+popup/item_0/id = 0
+
+[node name="Help" type="MenuButton" parent="VBoxMain/MainMenu/HBoxContainer"]
+layout_mode = 2
+text = "Help"
+item_count = 2
+popup/item_0/text = "Debug"
+popup/item_0/checkable = 1
+popup/item_0/id = 1
+popup/item_1/text = "About"
+popup/item_1/id = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxMain"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 2
+
+[node name="TextureButtonHome" type="TextureButton" parent="VBoxMain/HBoxContainer"]
+layout_mode = 2
+tooltip_text = "Return to the Landing Page"
+texture_normal = ExtResource("2_1t4bi")
+texture_pressed = ExtResource("3_dhceg")
+
+[node name="TextureButtonNewLibrary" type="TextureButton" parent="VBoxMain/HBoxContainer"]
+layout_mode = 2
+tooltip_text = "New Library"
+texture_normal = ExtResource("4_8wnbc")
+texture_pressed = ExtResource("5_juvih")
+
+[node name="TextureButtonNewMap" type="TextureButton" parent="VBoxMain/HBoxContainer"]
+layout_mode = 2
+tooltip_text = "New Map"
+texture_normal = ExtResource("6_7j6km")
+texture_pressed = ExtResource("7_w6omt")
+
+[node name="TextureButtonLog" type="TextureButton" parent="VBoxMain/HBoxContainer"]
+layout_mode = 2
+texture_normal = ExtResource("8_o2n7h")
+texture_pressed = ExtResource("9_x71ra")
+
+[node name="TabContainer" type="TabContainer" parent="VBoxMain"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+drag_to_rearrange_enabled = true
+
+[node name="Landing Page" type="TabBar" parent="VBoxMain/TabContainer"]
+layout_mode = 2
+
+[node name="LPHbox" type="HBoxContainer" parent="VBoxMain/TabContainer/Landing Page"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 20.0
+
+[node name="VBoxProject" type="VBoxContainer" parent="VBoxMain/TabContainer/Landing Page/LPHbox"]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="HBoxAdd" type="HBoxContainer" parent="VBoxMain/TabContainer/Landing Page/LPHbox/VBoxProject"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxMain/TabContainer/Landing Page/LPHbox/VBoxProject"]
+layout_mode = 2
+text = "Projects"
+
+[node name="PrList" type="ItemList" parent="VBoxMain/TabContainer/Landing Page/LPHbox/VBoxProject"]
+layout_mode = 2
+size_flags_vertical = 3
+item_count = 1
+item_0/text = "Test Project Item"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxMain/TabContainer/Landing Page/LPHbox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Label" type="Label" parent="VBoxMain/TabContainer/Landing Page/LPHbox/VBoxContainer"]
+layout_mode = 2
+text = "Preview
+"
+
+[node name="TextureRect" type="TextureRect" parent="VBoxMain/TabContainer/Landing Page/LPHbox/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+texture = ExtResource("8_ysc63")
+
+[node name="TeLogger" parent="VBoxMain" instance=ExtResource("11_nh4p0")]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="FileDialogNewLibraryFolder" type="FileDialog" parent="."]
+mode = 2
+title = "Open a Directory"
+size = Vector2i(392, 300)
+min_size = Vector2i(200, 300)
+ok_button_text = "Select Current Folder"
+file_mode = 2
+access = 2
+
+[node name="FileDialogNewMapFolder" type="FileDialog" parent="."]
+title = "Open a File"
+size = Vector2i(312, 300)
+min_size = Vector2i(200, 300)
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("db")
