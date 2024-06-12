@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://d1xbj35rutf18"]
+
+[ext_resource type="Script" path="res://utils/ConfirmDialogAsync.gd" id="1_bmbcg"]
+
+[node name="ConfirmDialogAsync" type="ConfirmationDialog"]
+script = ExtResource("1_bmbcg")

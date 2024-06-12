@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://b3vdtcf3df7vq"]
+[gd_scene load_steps=14 format=3 uid="uid://b3vdtcf3df7vq"]
 
 [ext_resource type="Script" path="res://main/Main.gd" id="1_yctuw"]
 [ext_resource type="Texture2D" uid="uid://crmy1j1ao80x8" path="res://assets/icons/home.png" id="2_1t4bi"]
@@ -11,6 +11,7 @@
 [ext_resource type="Texture2D" uid="uid://v7y5tike2mgw" path="res://assets/icons/Landing Page Test.png" id="8_ysc63"]
 [ext_resource type="Texture2D" uid="uid://duujsu0r0ou74" path="res://assets/icons/log_inv.png" id="9_x71ra"]
 [ext_resource type="PackedScene" uid="uid://cadjompe5itss" path="res://utils/TELogger.tscn" id="11_nh4p0"]
+[ext_resource type="PackedScene" uid="uid://dp1pk8apbgxt2" path="res://mesh-library-creator/MeshLibraryUtils.tscn" id="13_7arj8"]
 
 [sub_resource type="Theme" id="Theme_8kjic"]
 BoxContainer/constants/separation = 4
@@ -93,47 +94,39 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 drag_to_rearrange_enabled = true
 
-[node name="Landing Page" type="TabBar" parent="VBoxMain/TabContainer"]
+[node name="HBoxLandingPage" type="HBoxContainer" parent="VBoxMain/TabContainer"]
 layout_mode = 2
-
-[node name="LPHbox" type="HBoxContainer" parent="VBoxMain/TabContainer/Landing Page"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 20.0
 
-[node name="VBoxProject" type="VBoxContainer" parent="VBoxMain/TabContainer/Landing Page/LPHbox"]
+[node name="VBoxProject" type="VBoxContainer" parent="VBoxMain/TabContainer/HBoxLandingPage"]
 custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="HBoxAdd" type="HBoxContainer" parent="VBoxMain/TabContainer/Landing Page/LPHbox/VBoxProject"]
+[node name="HBoxAdd" type="HBoxContainer" parent="VBoxMain/TabContainer/HBoxLandingPage/VBoxProject"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBoxMain/TabContainer/Landing Page/LPHbox/VBoxProject"]
+[node name="Label" type="Label" parent="VBoxMain/TabContainer/HBoxLandingPage/VBoxProject"]
 layout_mode = 2
 text = "Projects"
 
-[node name="PrList" type="ItemList" parent="VBoxMain/TabContainer/Landing Page/LPHbox/VBoxProject"]
+[node name="ProjectList" type="ItemList" parent="VBoxMain/TabContainer/HBoxLandingPage/VBoxProject"]
 layout_mode = 2
 size_flags_vertical = 3
 item_count = 1
 item_0/text = "Test Project Item"
 
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxMain/TabContainer/Landing Page/LPHbox"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxMain/TabContainer/HBoxLandingPage"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Label" type="Label" parent="VBoxMain/TabContainer/Landing Page/LPHbox/VBoxContainer"]
+[node name="Label" type="Label" parent="VBoxMain/TabContainer/HBoxLandingPage/VBoxContainer"]
 layout_mode = 2
 text = "Preview
 "
 
-[node name="TextureRect" type="TextureRect" parent="VBoxMain/TabContainer/Landing Page/LPHbox/VBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="VBoxMain/TabContainer/HBoxLandingPage/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 texture = ExtResource("8_ysc63")
@@ -143,20 +136,14 @@ visible = false
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="FileDialogNewLibraryFolder" type="FileDialog" parent="."]
-mode = 2
-title = "Open a Directory"
-size = Vector2i(392, 300)
-min_size = Vector2i(200, 300)
-ok_button_text = "Select Current Folder"
-file_mode = 2
-access = 2
-
 [node name="FileDialogNewMapFolder" type="FileDialog" parent="."]
 title = "Open a File"
+initial_position = 2
 size = Vector2i(312, 300)
 min_size = Vector2i(200, 300)
 ok_button_text = "Open"
 file_mode = 0
 access = 2
 filters = PackedStringArray("db")
+
+[node name="MeshLibraryUtils" parent="." instance=ExtResource("13_7arj8")]
