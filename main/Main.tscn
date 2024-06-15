@@ -1,4 +1,4 @@
-[gd_scene load_steps=14 format=3 uid="uid://b3vdtcf3df7vq"]
+[gd_scene load_steps=15 format=3 uid="uid://b3vdtcf3df7vq"]
 
 [ext_resource type="Script" path="res://main/Main.gd" id="1_yctuw"]
 [ext_resource type="Texture2D" uid="uid://crmy1j1ao80x8" path="res://assets/icons/home.png" id="2_1t4bi"]
@@ -11,6 +11,7 @@
 [ext_resource type="Texture2D" uid="uid://v7y5tike2mgw" path="res://assets/icons/Landing Page Test.png" id="8_ysc63"]
 [ext_resource type="Texture2D" uid="uid://duujsu0r0ou74" path="res://assets/icons/log_inv.png" id="9_x71ra"]
 [ext_resource type="PackedScene" uid="uid://cadjompe5itss" path="res://utils/TELogger.tscn" id="11_nh4p0"]
+[ext_resource type="PackedScene" uid="uid://bjxuemcjde7o" path="res://map-creator/MapUtils.tscn" id="13_1nier"]
 [ext_resource type="PackedScene" uid="uid://dp1pk8apbgxt2" path="res://mesh-library-creator/MeshLibraryUtils.tscn" id="13_7arj8"]
 
 [sub_resource type="Theme" id="Theme_8kjic"]
@@ -88,62 +89,64 @@ layout_mode = 2
 texture_normal = ExtResource("8_o2n7h")
 texture_pressed = ExtResource("9_x71ra")
 
-[node name="TabContainer" type="TabContainer" parent="VBoxMain"]
+[node name="TabControl" type="TabContainer" parent="VBoxMain"]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 drag_to_rearrange_enabled = true
 
-[node name="HBoxLandingPage" type="HBoxContainer" parent="VBoxMain/TabContainer"]
+[node name="HBoxLandingPage" type="HBoxContainer" parent="VBoxMain/TabControl"]
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 20.0
 
-[node name="VBoxProject" type="VBoxContainer" parent="VBoxMain/TabContainer/HBoxLandingPage"]
+[node name="VBoxProject" type="VBoxContainer" parent="VBoxMain/TabControl/HBoxLandingPage"]
 custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="HBoxAdd" type="HBoxContainer" parent="VBoxMain/TabContainer/HBoxLandingPage/VBoxProject"]
+[node name="HBoxAdd" type="HBoxContainer" parent="VBoxMain/TabControl/HBoxLandingPage/VBoxProject"]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBoxMain/TabContainer/HBoxLandingPage/VBoxProject"]
+[node name="Label" type="Label" parent="VBoxMain/TabControl/HBoxLandingPage/VBoxProject"]
 layout_mode = 2
 text = "Projects"
 
-[node name="ProjectList" type="ItemList" parent="VBoxMain/TabContainer/HBoxLandingPage/VBoxProject"]
+[node name="ProjectList" type="ItemList" parent="VBoxMain/TabControl/HBoxLandingPage/VBoxProject"]
 layout_mode = 2
 size_flags_vertical = 3
 item_count = 1
 item_0/text = "Test Project Item"
 
-[node name="VBoxContainer" type="VBoxContainer" parent="VBoxMain/TabContainer/HBoxLandingPage"]
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxMain/TabControl/HBoxLandingPage"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Label" type="Label" parent="VBoxMain/TabContainer/HBoxLandingPage/VBoxContainer"]
+[node name="Label" type="Label" parent="VBoxMain/TabControl/HBoxLandingPage/VBoxContainer"]
 layout_mode = 2
 text = "Preview
 "
 
-[node name="TextureRect" type="TextureRect" parent="VBoxMain/TabContainer/HBoxLandingPage/VBoxContainer"]
+[node name="TextureRect" type="TextureRect" parent="VBoxMain/TabControl/HBoxLandingPage/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
 texture = ExtResource("8_ysc63")
 
 [node name="TeLogger" parent="VBoxMain" instance=ExtResource("11_nh4p0")]
-visible = false
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="FileDialogNewMapFolder" type="FileDialog" parent="."]
-title = "Open a File"
-initial_position = 2
-size = Vector2i(312, 300)
-min_size = Vector2i(200, 300)
-ok_button_text = "Open"
-file_mode = 0
-access = 2
-filters = PackedStringArray("db")
-
 [node name="MeshLibraryUtils" parent="." instance=ExtResource("13_7arj8")]
+
+[node name="MapUtils" parent="." instance=ExtResource("13_1nier")]
+
+[node name="PopupMenuItemActivate" type="PopupMenu" parent="."]
+title = "Project Menu"
+initial_position = 2
+item_count = 3
+item_0/text = "Open"
+item_0/id = 0
+item_1/text = "Reset"
+item_1/id = 1
+item_2/text = "Delete"
+item_2/id = 2

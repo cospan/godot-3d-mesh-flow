@@ -27,7 +27,7 @@ window/size/viewport_height=1080
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot-sqlite/plugin.cfg", "res://addons/godot_vim/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/logger/plugin.cfg", "res://addons/panku_console/plugin.cfg")
+enabled=PackedStringArray("res://addons/godot-sqlite/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/logger/plugin.cfg", "res://addons/panku_console/plugin.cfg")
 
 [input]
 

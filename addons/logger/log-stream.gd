@@ -38,6 +38,9 @@ func _init(log_name:String, min_log_level:=LogLevel.DEFAULT, crash_behavior:Call
     current_log_level = min_log_level
     _crash_behavior = crash_behavior
 
+func set_name(_name:String):
+    _log_name = _name
+
 ##prints a message to the log at the debug level.
 func debug(message, values={}):
     call_thread_safe("_internal_log", message, values, LogLevel.DEBUG)

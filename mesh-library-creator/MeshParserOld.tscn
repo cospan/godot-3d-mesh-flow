@@ -1,0 +1,16 @@
+[gd_scene load_steps=5 format=3 uid="uid://u43uwwiiv44j"]
+
+[ext_resource type="Script" path="res://mesh_loader/mesh_parser.gd" id="1_eqgee"]
+[ext_resource type="PackedScene" uid="uid://b3yakeqxi6wv0" path="res://utils/preview_generator.tscn" id="2_kjfe2"]
+[ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/module_database_rw_adapter.tscn" id="2_w6d3b"]
+[ext_resource type="PackedScene" uid="uid://djf322m6rdqss" path="res://utils/module_database_ro_adapter.tscn" id="4_yvpb3"]
+
+[node name="mesh_parser" type="Node"]
+script = ExtResource("1_eqgee")
+
+[node name="ModuleDatabaseAdapter" parent="." instance=ExtResource("2_w6d3b")]
+
+[node name="PreviewGenerator" parent="." instance=ExtResource("2_kjfe2")]
+visible = false
+
+[node name="ModuleDatabaseParserAdapter" parent="." instance=ExtResource("4_yvpb3")]

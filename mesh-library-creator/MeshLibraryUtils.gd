@@ -19,6 +19,7 @@ var m_created_project_path = null
 
 
 var scene = preload("res://mesh-library-creator/MeshLibraryControl.tscn")
+var icon = preload("res://assets/icons/library.png")
 
 ##############################################################################
 # Exports
@@ -44,7 +45,7 @@ func open(_path:String):
       m_logger.error("Project directory does not exist: %s" % _path)
       return null
 
-    var mlc = scene.instance()
+    var mlc = scene.instantiate()
     mlc.init(_path)
     return mlc
 
@@ -60,6 +61,71 @@ func is_type(_path:String):
         return false
     return true
 
+func get_icon():
+    return icon.duplicate()
+
+func get_project_dict(_path:String):
+    var project_dict = {}
+    # Open up the config file within the .library folder and populate the project_dict
+    var config = ConfigFile.new()
+    var lib_folder = _path + "/.library"
+    var lib_info_file = lib_folder + "/library.cfg"
+    var err = config.load(lib_info_file)
+    if err != OK:
+        m_logger.error("Failed to load library config file: %s" % lib_info_file)
+        return project_dict
+
+    project_dict["name"] = config.get_value("config", "name")
+    project_dict["type"] = config.get_value("config", "type")
+    project_dict["version"] = config.get_value("config", "version")
+    project_dict["description"] = config.get_value("config", "description")
+    project_dict["author"] = config.get_value("config", "author")
+    project_dict["created"] = config.get_value("config", "created")
+    project_dict["modified"] = config.get_value("config", "modified")
+    project_dict["path"] = _path
+    return project_dict
+
+
+func delete(_path:String):
+    var d = DirAccess.open(_path)
+    if not d.dir_exists(_path):
+        m_logger.error("Project directory does not exist: %s" % _path)
+        return false
+    var lib_folder = _path + "/.library"
+    if not d.dir_exists(lib_folder):
+        m_logger.error("Library folder does not exist: %s" % lib_folder)
+        return false
+    var err = d.remove_dir(lib_folder)
+    if err != OK:
+        m_logger.error("Failed to remove library folder: %s" % lib_folder)
+        return false
+    return true
+
+func reset(_path:String):
+    m_logger.debug("Resetting library: %s" % _path)
+    delete(_path)
+    _create(_path)
+
+
+func get_preview(_path:String):
+    var d = DirAccess.open(_path)
+    if not d.dir_exists(_path):
+        m_logger.warn("Project directory does not exist: %s" % _path)
+        return null
+    var lib_folder = _path + "/.library"
+    if not d.dir_exists(lib_folder):
+        m_logger.warn("Library folder does not exist: %s" % lib_folder)
+        return null
+    var preview_file = lib_folder + "/preview.png"
+    if not d.file_exists(preview_file):
+        m_logger.warn("Preview file does not exist: %s" % preview_file)
+        return null
+    var image = Image.new()
+    var err = image.load(preview_file)
+    if err != OK:
+        m_logger.error("Failed to load preview image: %s" % preview_file)
+        return null
+    return image
 
 ##############################################################################
 # Private Functions
@@ -111,11 +177,24 @@ func _on_file_dialog_new_library_folder_confirm():
 
         # Create a configuration file for the library
 
+    _create(folder_path)
+
+
+func _create(_path):
+
     # Within this directory create a 'config' file that will contain the library information
-    var lib_info_file = lib_folder + "/library.cfg"
+    var lib_info_file = _path + "/library.cfg"
 
     # Get the name of the folder that was selected as the proposed name of the library
-    var lib_name = folder_path.get_file().get_basename()
+    var parts = _path.split("/") 
+    var lib_name = ""
+    # iterate through 'parts' from the end, find the first non-empty string
+    for i in range(parts.size() - 1, 0, -1):
+        if parts[i] != "":
+            lib_name = parts[i]
+            break
+
+    m_logger.debug("Library Name: %s" % lib_name)
     var datetime = Time.get_datetime_dict_from_system()
     var formatted_datetime = "%s-%s-%s %s:%s:%s" % [datetime["year"], datetime["month"], datetime["day"], datetime["hour"], datetime["minute"], datetime["second"]]
 
@@ -129,7 +208,7 @@ func _on_file_dialog_new_library_folder_confirm():
     config.set_value("config", "modified", formatted_datetime)
     config.save(lib_info_file)
 
-    m_created_project_path = folder_path
+    m_created_project_path = _path
     emit_signal("create_finished")
 
 func _on_file_dialog_new_library_folder_canceled():

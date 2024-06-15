@@ -79,6 +79,8 @@ func _read_data():
             continue
         var _start = nl_array[0]
 
+        new_line = remove_ansii_escape_sequences(new_line)
+
         if _start.contains("FATAL"):
             _on_new_log_data(LogStream.LogLevel.FATAL, new_line)
         elif _start.contains("ERROR"):
@@ -98,10 +100,18 @@ func _read_data():
                 _on_new_log_data(LogStream.LogLevel.INFO, new_line)
             #_on_new_log_data(LogStream.LogLevel.INFO, new_line)
 
+
+func remove_ansii_escape_sequences(text):
+    var regex = RegEx.new()
+    regex.compile("\\x1B\\[[0-9;]*m") # Regular expression pattern for ANSI escape codes
+    var cleaned_text = regex.sub(text, "", true) # Replace ANSI escape codes with nothing
+    return cleaned_text
+
+
 func _on_new_log_data(_level, _message):
     match (_level):
         LogStream.LogLevel.DEBUG:
-            m_console.push_bgcolor(Color(0, 1, 0, 1)) # Green
+            m_console.push_bgcolor(Color(0, 0.5, 0, 1)) # Green
             m_console.push_color(Color(0, 0, 0, 1))   # Black
         LogStream.LogLevel.ERROR:
             m_console.push_bgcolor(Color(1, 0, 0, 1)) # Red

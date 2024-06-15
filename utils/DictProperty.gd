@@ -19,7 +19,7 @@ func update_dict(property_dict = {}):
 
     for key in property_dict:
         var label = Label.new()
-        var prop
+        var prop = null
         label.text = property_dict[key]["name"]
         add_child(label)
         match property_dict[key]["type"]:
@@ -138,6 +138,8 @@ func update_dict(property_dict = {}):
             _:
                 print ("Unknown Property: %s" % key["type"])
 
+        if "tooltip" in property_dict[key] and prop != null:
+            prop.tooltip_text = property_dict[key]["tooltip"]
 
         if property_dict[key].has("visible"):
             label.visible = property_dict[key]["visible"]
@@ -373,6 +375,9 @@ func add_float_spinbox(key: String, property_dict: Dictionary, label:Label) -> S
         editable = !property_dict["readonly"]
 
     var prop = SpinBox.new()
+    if "tooltip" in property_dict:
+        prop.tooltip_text = property_dict["tooltip"]
+
     prop.value = val
     prop.min_value = min_value
     prop.max_value = max_value
@@ -384,6 +389,8 @@ func add_float_spinbox(key: String, property_dict: Dictionary, label:Label) -> S
 
 func add_vector2_spinbox(key: String, property_dict: Dictionary, label:Label) -> HBoxContainer:
     var hbox = HBoxContainer.new()
+    if "tooltip" in property_dict:
+        hbox.tooltip_text = property_dict["tooltip"]
     hbox.custom_minimum_size = Vector2(200, 0) # Set minimum size
 
     var val1 = property_dict["value"][0]
@@ -428,6 +435,8 @@ func add_vector2_spinbox(key: String, property_dict: Dictionary, label:Label) ->
 func add_vector3_spinbox(key: String, property_dict: Dictionary, label:Label) -> HBoxContainer:
     var hbox = HBoxContainer.new()
     hbox.custom_minimum_size = Vector2(200, 0) # Set minimum size
+    if "tooltip" in property_dict:
+        hbox.tooltip_text = property_dict["tooltip"]
 
     var val1 = property_dict["value"][0]
     var val2 = property_dict["value"][1]

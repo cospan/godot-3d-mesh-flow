@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=3 uid="uid://b3yakeqxi6wv0"]
+
+[ext_resource type="Script" path="res://utils/PreviewGenerator.gd" id="1_mleeo"]
+
+[node name="PreviewGenerator" type="Node3D"]
+script = ExtResource("1_mleeo")
+
+[node name="SubViewport" type="SubViewport" parent="."]
+own_world_3d = true
+render_target_update_mode = 4
+
+[node name="Camera3D" type="Camera3D" parent="SubViewport"]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="SubViewport"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 32.2777, -50.1087)
