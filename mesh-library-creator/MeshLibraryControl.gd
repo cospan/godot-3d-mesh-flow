@@ -152,7 +152,7 @@ func _property_changed(prop_name:String, prop_value):
           m_properties.set_prop_visible("load_library", not prop_value)
       "reset_library":
           m_logger.debug("Reset Library")
-          m_state = STATE_TYPE.STATE_LOADING
+          m_state = STATE_TYPE.STATE_RESET
           m_flag_reset_library = true
           m_flag_load_library = true
       _:

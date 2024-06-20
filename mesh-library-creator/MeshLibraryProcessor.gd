@@ -107,6 +107,7 @@ func get_default_size() -> Vector2:
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+    m_hash_ctx = HashingContext.new()
     m_logger.debug("Ready Entered!")
     m_db_adapter = $ModuleDatabaseAdapter
 
@@ -128,9 +129,10 @@ func _process(_delta):
                 m_logger.info("Finding Novel Modules")
                 var db_info_dict = m_db_adapter.get_file_info_dict()
                 var fs_info_dict = _get_mesh_file_info_from_dir(m_database_path)
+                m_mesh_dict = get_mesh_dict_from_dir(m_database_path)
                 var novel_modules = _find_novel_mesh_files(fs_info_dict, db_info_dict)
                 m_novel_modules = novel_modules.keys()
-                m_db_adapter.set_file_info_dict(m_novel_modules)
+                m_db_adapter.set_file_info_dict(novel_modules)
 
                 m_flag_async_finished = false
                 _find_novel_modules_bounds()
@@ -210,6 +212,7 @@ func emit_percent_update(_name:String, _percent:float):
     emit_signal("progress_percent_update", _name, _percent)
 
 
+
 ##############################################################################
 # Module 2D Face Library Loading
 #
@@ -221,6 +224,24 @@ func emit_percent_update(_name:String, _percent:float):
 #         - XXX: It might be better to use the maximum size of the modules
 #           instead of the most common start and end points
 ##############################################################################
+func get_mesh_dict_from_dir(_mesh_data_dir:String):
+    var mesh_dict = {}
+    var dir = DirAccess.open(_mesh_data_dir)
+    if dir:
+        dir.list_dir_begin()
+        var file_name = dir.get_next()
+        while file_name != "":
+            if file_name.ends_with(".obj"):
+                var mesh = load(_mesh_data_dir + file_name)
+                if mesh:
+                    var m3d = MeshInstance3D.new()
+                    m3d.set_mesh(mesh)
+                    mesh_dict[file_name.get_basename()] = m3d
+            file_name = dir.get_next()
+        dir.list_dir_end()
+    return mesh_dict
+
+
 func _get_mesh_file_info_from_dir(_mesh_data_dir:String):
     var mesh_info_dict = {}
     var dir = DirAccess.open(_mesh_data_dir)

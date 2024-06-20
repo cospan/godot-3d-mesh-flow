@@ -82,6 +82,8 @@ func get_project_dict(_path:String):
     project_dict["author"] = config.get_value("config", "author")
     project_dict["created"] = config.get_value("config", "created")
     project_dict["modified"] = config.get_value("config", "modified")
+    project_dict["auto_laod"] = config.get_value("config", "auto_load")
+    project_dict["reset_library"] = config.get_value("config", "reset_library")
     project_dict["path"] = _path
     return project_dict
 
@@ -126,6 +128,10 @@ func get_preview(_path:String):
         m_logger.error("Failed to load preview image: %s" % preview_file)
         return null
     return image
+
+func get_menu_items_dict():
+    var menu_item_dict = {"Clear Database":on_clear_database}
+    pass
 
 ##############################################################################
 # Private Functions
@@ -183,10 +189,11 @@ func _on_file_dialog_new_library_folder_confirm():
 func _create(_path):
 
     # Within this directory create a 'config' file that will contain the library information
-    var lib_info_file = _path + "/library.cfg"
+    var lib_info_file = _path + "/.library/library.cfg"
+
 
     # Get the name of the folder that was selected as the proposed name of the library
-    var parts = _path.split("/") 
+    var parts = _path.split("/")
     var lib_name = ""
     # iterate through 'parts' from the end, find the first non-empty string
     for i in range(parts.size() - 1, 0, -1):
@@ -206,6 +213,8 @@ func _create(_path):
     config.set_value("config", "author", "Author")
     config.set_value("config", "created", formatted_datetime)
     config.set_value("config", "modified", formatted_datetime)
+    config.set_value("config", "auto_load", true)
+    config.set_value("config", "reset_library", false)
     config.save(lib_info_file)
 
     m_created_project_path = _path
@@ -215,4 +224,7 @@ func _on_file_dialog_new_library_folder_canceled():
     m_logger.debug("New library folder selection canceled")
     m_created_project_path = null
     emit_signal("create_finished")
+
+func on_clear_database(_project_dict):
+    pass
 

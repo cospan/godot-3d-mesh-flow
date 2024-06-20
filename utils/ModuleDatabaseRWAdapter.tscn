@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://b876tdeecktcr"]
 
-[ext_resource type="Script" path="res://utils/module_database_rw_adapter.gd" id="1_35dem"]
+[ext_resource type="Script" path="res://utils/ModuleDatabaseRWAdapter.gd" id="1_5ugr5"]
 
 [node name="ModuleDatabaseAdapter" type="Node"]
-script = ExtResource("1_35dem")
+script = ExtResource("1_5ugr5")

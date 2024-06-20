@@ -152,7 +152,16 @@ func _insert_recent_project(project_path):
         _update_project_list()
 
 func _update_project_list():
+        var project_path_list = []
         var recent_projects = m_config.get_value("config", "project_path")
+        # Validate the recent projects do exist and they are not duplicates
+        for project_path in recent_projects:
+            if project_path not in project_path_list:
+                project_path_list.append(project_path)
+                continue
+
+        m_config.set_value("config", "project_path", project_path_list)
+        recent_projects = m_config.get_value("config", "project_path")
         var project_list = $VBoxMain/TabControl/HBoxLandingPage/VBoxProject/ProjectList
         project_list.clear()
         for project_path in recent_projects:
@@ -303,6 +312,23 @@ func _project_item_menu_pressed(_index):
             m_logger.debug("Reset project: %s" % project_dict["path"])
             #project.reset(project_dict["path"])
             _update_project_list()
+    #   _:
+    #       # Check for custom items
+    #       var menu_items_dict = project.get_menu_items_dict()
+    #       for mi in menu_items_dict:
+    #           if text != mi:
+    #               continue
+    #           m_logger.debug("Found: %s" % text)
+
+    #           var project_dict = project_list.get_item_metadata(_project_index)
+    #           var project_type = project_dict["type"]
+    #           var project = m_project_types[project_type]
+    #           #var preview = project.get_menu_items(project_dict["path"])
+    #           project.menu_items_dict[text](project_dict)
+    ## Remove custom Items
+    #var menu_items_dict = project.get_menu_items_dict()
+
+
 
 func _project_item_menu_selected(_index):
     #var project_item_menu = $PopupMenuItemActive
@@ -331,7 +357,9 @@ func _project_item_menu_clicked(_index, _pos, mouse_button_index):
         return
     elif mouse_button_index == 2:
         m_project_selected = _index
+        #var project_list = $VBoxMain/TabControl/HBoxLandingPage/VBoxProject/ProjectList
         var project_item_menu = $PopupMenuItemActivate
+        #var project_dict = project_list.get_item_metadata(_index)
         project_item_menu.show()
 
 func _tab_selected(_index):

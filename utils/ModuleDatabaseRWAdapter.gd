@@ -432,6 +432,7 @@ func get_hash_name_face_tuple_dict(base_agnostic:bool = false) -> Dictionary:
     var rows = m_database.select_rows(MODULE_TABLE, "", select_list)
     for row in rows:
         for face_name in face_names:
+            #XXX: Possible crash when database is in the middle of loading, need to validate before starting
             hash_face_dict[row[face_name]].append([row["name"], row[face_name]])
     return hash_face_dict
 
