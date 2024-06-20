@@ -2,3 +2,6 @@
 *.import
 *.tmp
 *.trunk
+
+library.cfg
+*.db
