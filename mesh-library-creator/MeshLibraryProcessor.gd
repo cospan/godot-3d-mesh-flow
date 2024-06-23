@@ -5,6 +5,7 @@ extends Node
 ##############################################################################
 signal progress_percent_update
 signal continue_step
+signal finished_loading
 
 
 ##############################################################################
@@ -100,6 +101,8 @@ func load_library(database_path:String, force_new_database:bool = false):
 func get_default_size() -> Vector2:
     return m_db_adapter.get_default_size_2d()
 
+func get_module_names():
+    return m_db_adapter.get_module_names()
 
 ##############################################################################
 # Private Functions
@@ -129,7 +132,7 @@ func _process(_delta):
                 m_logger.info("Finding Novel Modules")
                 var db_info_dict = m_db_adapter.get_file_info_dict()
                 var fs_info_dict = _get_mesh_file_info_from_dir(m_database_path)
-                m_mesh_dict = get_mesh_dict_from_dir(m_database_path)
+                m_mesh_dict = _get_mesh_dict_from_dir(m_database_path)
                 var novel_modules = _find_novel_mesh_files(fs_info_dict, db_info_dict)
                 m_novel_modules = novel_modules.keys()
                 m_db_adapter.set_file_info_dict(novel_modules)
@@ -199,6 +202,7 @@ func _process(_delta):
             else:
                 m_db_adapter.cleanup_database()
                 m_logger.info("_process: GENERATE_BASES_AGNOSTIC_HASHES -> IDLE")
+                emit_signal("finished_loading")
                 m_state = STATE_T.IDLE
         _:
             m_logger.error("Invalid State: {m_state}")
@@ -208,10 +212,8 @@ func _process(_delta):
 ##############################################################################
 # Emit Signal Functions
 ##############################################################################
-func emit_percent_update(_name:String, _percent:float):
+func _emit_percent_update(_name:String, _percent:float):
     emit_signal("progress_percent_update", _name, _percent)
-
-
 
 ##############################################################################
 # Module 2D Face Library Loading
@@ -224,7 +226,7 @@ func emit_percent_update(_name:String, _percent:float):
 #         - XXX: It might be better to use the maximum size of the modules
 #           instead of the most common start and end points
 ##############################################################################
-func get_mesh_dict_from_dir(_mesh_data_dir:String):
+func _get_mesh_dict_from_dir(_mesh_data_dir:String):
     var mesh_dict = {}
     var dir = DirAccess.open(_mesh_data_dir)
     if dir:
@@ -305,15 +307,15 @@ func _find_novel_modules_bounds():
     var percent = 0.0
     var total_size = len(m_novel_modules)
     var _pname  = PROGRESS_UPDATE_FIND_BOUNDS
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     for i in range(len(m_novel_modules)):
         var mesh_name = m_novel_modules[i]
         _find_module_bounds(mesh_name)
         percent = (float((i + 1)) / total_size) * 100.0
-        call_deferred("emit_percent_update", _pname, percent)
+        call_deferred("_emit_percent_update", _pname, percent)
         await continue_step
     percent = 100
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     m_flag_async_finished = true
 
 func _find_module_bounds(module_name:String):
@@ -340,7 +342,7 @@ func _find_default_size_of_modules():
     var total_size = len(m_mesh_dict.keys())
     var _pname = PROGRESS_UPDATE_FIND_LIBRARY_BOUNDS
     var bounds_dict = m_db_adapter.get_bounds_dict()
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     for i in range(len(bounds_dict.keys())):
         var mesh_name = bounds_dict.keys()[i]
         #var bounds = m_db_adapter.get_bounds(mesh_name)
@@ -381,7 +383,7 @@ func _find_default_size_of_modules():
             ep_z[module_ep.z] += 1
 
         percent = (float((i + 1)) / total_size) * 100.0
-        call_deferred("emit_percent_update", _pname, percent)
+        call_deferred("_emit_percent_update", _pname, percent)
         await continue_step
 
     m_logger.debug ("Total Start Points X: %d" % len(sp_x.keys()))
@@ -452,7 +454,7 @@ func _find_default_size_of_modules():
     m_logger.debug ("Default Size: %s" % str(get_default_size()))
 
     percent = 100
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     m_flag_async_finished = true
 
 ##############################################################################
@@ -463,7 +465,7 @@ func _create_2d_face_library():
     m_flag_async_finished = false
     var total_size = float(len(m_novel_modules))
     var _pname = PROGRESS_UPDATE_FACE_PARSER
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     for mesh_index in range(len(m_novel_modules)):
         var mesh_name = m_novel_modules[mesh_index]
         var curr_mesh = m_mesh_dict[mesh_name]
@@ -471,10 +473,10 @@ func _create_2d_face_library():
         var face_2d_r = _get_reflected_faces(face_2d)
         m_db_adapter.update_2d_faces(mesh_name, face_2d, face_2d_r)
         percent = (float((mesh_index + 1)) / total_size) * 100.0
-        call_deferred("emit_percent_update", _pname, percent)
+        call_deferred("_emit_percent_update", _pname, percent)
         await continue_step
     percent = 100
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     m_flag_async_finished = true
 
 func _get_faces_from_mesh(curr_m3d_name:String, curr_m3d) -> Dictionary:
@@ -648,17 +650,17 @@ func _start_base_offset_removal():
     m_flag_async_finished = false
     var total_size = len(m_novel_modules)
     var _pname = PROGRESS_UPDATE_BASE_REMOVAL
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     # Go through each of the faces in each of the modules and find the hashes that are equal
     # If the hashes are equal, then the faces are the same, put them in a dictionary of faces
     for module_index in range(len(m_novel_modules)):
         var module_name = m_novel_modules[module_index]
         _base_offset_removal_step(module_name)
         percent = (float((module_index + 1)) / total_size) * 100.0
-        call_deferred("emit_percent_update", _pname, percent)
+        call_deferred("_emit_percent_update", _pname, percent)
         await continue_step
     percent = 100
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     m_flag_async_finished = true
 
 func _base_offset_removal_step(_module_name:String):
@@ -753,17 +755,17 @@ func _start_library_hash():
     m_flag_async_finished = false
     var total_size = len(m_novel_modules)
     var _pname = PROGRESS_UPDATE_HASHING
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     for module_index in range(len(m_novel_modules)):
         var module_name = m_novel_modules[module_index]
         var face_hash   = _hash_step( _face_library[module_name])
         var face_hash_r = _hash_step(_face_r_library[module_name])
         m_db_adapter.update_mesh_hashes(module_name, face_hash, face_hash_r)
         percent = (float((module_index + 1)) / total_size) * 100.0
-        call_deferred("emit_percent_update", _pname, percent)
+        call_deferred("_emit_percent_update", _pname, percent)
         await continue_step
     percent = 100
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     m_flag_async_finished = true
 
 func _hash_step(_curr_module_entry) -> Dictionary:
@@ -859,7 +861,7 @@ func _start_base_agnostic_library_hash():
     var _face_r_library = m_db_adapter.get_module_2d_faces_dict(true)
     var total_size = len(m_novel_modules)
     var _pname = PROGRESS_UPDATE_BASE_AGNOSTIC_HASH
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     for module_index in range(len(m_novel_modules)):
         var module_name = m_novel_modules[module_index]
         var _faces = _face_library[module_name]
@@ -868,10 +870,10 @@ func _start_base_agnostic_library_hash():
         var _face_r_hashes = _hash_step(_faces_r)
         m_db_adapter.update_mesh_hashes(module_name, _face_hashes, _face_r_hashes, true)
         percent = (float((module_index + 1)) / total_size) * 100.0
-        call_deferred("emit_percent_update", _pname, percent)
+        call_deferred("_emit_percent_update", _pname, percent)
         await continue_step
     percent = 100
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     m_flag_async_finished = true
 
 ##############################################################################
@@ -922,7 +924,7 @@ func _start_generating_index_dict():
         next_sid += 1
         current_index += 1
         percent = (float((current_index)) / total_size) * 100.0
-        call_deferred("emit_percent_update", _pname, percent)
+        call_deferred("_emit_percent_update", _pname, percent)
         await continue_step
 
     sids = m_db_adapter.get_sids(true)
@@ -938,10 +940,10 @@ func _start_generating_index_dict():
         next_sid += 1
         current_index += 1
         percent = (float((current_index)) / total_size) * 100.0
-        call_deferred("emit_percent_update", _pname, percent)
+        call_deferred("_emit_percent_update", _pname, percent)
         await continue_step
 
     percent = 100
-    call_deferred("emit_percent_update", _pname, percent)
+    call_deferred("_emit_percent_update", _pname, percent)
     m_flag_async_finished = true
 
