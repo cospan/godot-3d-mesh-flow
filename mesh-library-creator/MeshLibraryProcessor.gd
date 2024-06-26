@@ -104,6 +104,9 @@ func get_default_size() -> Vector2:
 func get_module_names():
     return m_db_adapter.get_module_names()
 
+func get_module_dict():
+    return m_mesh_dict.duplicate()
+
 ##############################################################################
 # Private Functions
 ##############################################################################

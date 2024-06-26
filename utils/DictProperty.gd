@@ -5,6 +5,7 @@ class_name DebugDictProperty
 signal property_changed(property_name, property_value)
 
 var m_widget_dict = {}
+@export var LABEL_MIN_X_SIZE:int = 200
 
 func _init(property_dict = null):
     if property_dict != null:
@@ -22,6 +23,7 @@ func update_dict(property_dict = {}):
         var prop = null
         label.text = property_dict[key]["name"]
         add_child(label)
+        label.custom_minimum_size = Vector2i(LABEL_MIN_X_SIZE, 0)
         match property_dict[key]["type"]:
             "Button":
                 #print ("Button")

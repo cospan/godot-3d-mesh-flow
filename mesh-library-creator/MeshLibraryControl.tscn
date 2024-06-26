@@ -1,19 +1,27 @@
-[gd_scene load_steps=8 format=3 uid="uid://csmu5jjho2trs"]
+[gd_scene load_steps=9 format=3 uid="uid://csmu5jjho2trs"]
 
 [ext_resource type="Script" path="res://mesh-library-creator/MeshLibraryControl.gd" id="1_h4j2m"]
-[ext_resource type="PackedScene" path="res://utils/DictProperty.tscn" id="2_6vhsl"]
+[ext_resource type="PackedScene" uid="uid://bjn216f0xxwjc" path="res://utils/DictProperty.tscn" id="2_6vhsl"]
 [ext_resource type="PackedScene" uid="uid://b5vbd4ybw83co" path="res://mesh-library-creator/FaceView.tscn" id="3_qrhha"]
 [ext_resource type="PackedScene" uid="uid://b2gew1pj8m12h" path="res://mesh-library-creator/MeshViewer.tscn" id="4_dsc3r"]
 [ext_resource type="Script" path="res://mesh-library-creator/MeshLibraryProcessor.gd" id="5_pvckx"]
-[ext_resource type="PackedScene" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="6_72k6q"]
-[ext_resource type="Script" path="res://utils/ModuleDatabaseRWAdapter.gd" id="7_d7700"]
+[ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="6_72k6q"]
+[ext_resource type="Script" path="res://mesh-library-creator/TextureRectMeshView.gd" id="6_h3lsv"]
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_1gi3y"]
+viewport_path = NodePath("HBMain/VBFaceView/TextureRect/SubViewport")
 
 [node name="MeshLibraryControl" type="Control"]
 layout_mode = 3
-anchors_preset = 0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("1_h4j2m")
+metadata/_edit_use_anchors_ = true
 
 [node name="HBMain" type="HBoxContainer" parent="."]
 layout_mode = 1
@@ -24,20 +32,24 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+metadata/_edit_use_anchors_ = true
 
 [node name="DictProperty" parent="HBMain" instance=ExtResource("2_6vhsl")]
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_vertical = 1
 
 [node name="VBFaceView" type="VBoxContainer" parent="HBMain"]
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_stretch_ratio = 2.0
 
 [node name="FaceView" parent="HBMain/VBFaceView" instance=ExtResource("3_qrhha")]
+visible = false
 layout_mode = 2
 
 [node name="HBFaceIndexModifier" type="HBoxContainer" parent="HBMain/VBFaceView"]
+visible = false
 layout_mode = 2
 
 [node name="VSAllFaces" type="ScrollContainer" parent="HBMain/VBFaceView/HBFaceIndexModifier"]
@@ -58,14 +70,22 @@ layout_mode = 2
 [node name="GCASelectedFaces" type="GridContainer" parent="HBMain/VBFaceView/HBFaceIndexModifier/VSSelectedFaces"]
 layout_mode = 2
 
+[node name="TextureRect" type="TextureRect" parent="HBMain/VBFaceView"]
+layout_mode = 2
+size_flags_vertical = 3
+texture = SubResource("ViewportTexture_1gi3y")
+script = ExtResource("6_h3lsv")
+
+[node name="SubViewport" type="SubViewport" parent="HBMain/VBFaceView/TextureRect"]
+
+[node name="MeshViewer" parent="HBMain/VBFaceView/TextureRect/SubViewport" instance=ExtResource("4_dsc3r")]
+
 [node name="VBFaceVectorView" type="VBoxContainer" parent="HBMain"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
-
-[node name="MeshViewer" parent="." instance=ExtResource("4_dsc3r")]
 
 [node name="MeshLibraryProcessor" type="Node" parent="."]
 script = ExtResource("5_pvckx")
 
 [node name="ModuleDatabaseAdapter" parent="MeshLibraryProcessor" instance=ExtResource("6_72k6q")]
-script = ExtResource("7_d7700")

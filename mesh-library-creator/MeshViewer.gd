@@ -1,12 +1,14 @@
 extends Node3D
 
-## Export Variables
-@export_dir var m_module_mesh_dir = "res://assets/road_pack/"
+##############################################################################
+# Signals
+##############################################################################
 
-# 3D Visual Variables
+signal module_clicked
 
-
-## Constants
+##############################################################################
+# Constants
+##############################################################################
 const DEFAULT_ROTATION_STEP = 0.01
 const CAMERA_LERP_SPEED = 1.0
 const DEFAULT_CAMERA_HEIGHT = 10.0
@@ -14,7 +16,13 @@ const MODULE_SPACING = 2.0
 
 enum MODE_T {SINGLE_MODE, ALL_MODE, FACE_MODE}
 
+# 3D Visual Variables
+
 var MODE:MODE_T = MODE_T.SINGLE_MODE
+
+##############################################################################
+# Members
+##############################################################################
 
 var m_bounding_box = null
 var m_test_pos = Vector3(0, 1.5, -2)
@@ -42,41 +50,18 @@ var m_face_mesh_dict = {}
 var DEBUG = false
 var m_logger = LogStream.new("Mesh Viewer", LogStream.LogLevel.INFO)
 
-# Signals
-signal module_clicked
-
-# Called when the node enters the scene tree for the first time.
-func _ready():
-    if DEBUG:
-      m_logger.set_current_level = LogStream.LogLevel.DEBUG
-    m_camera = $Camera
-    m_camera_dest_pos = m_camera_top_pos
-    m_camera_dest_rot = m_camera_top_rotation
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta):
-    if m_selected_module == null:
-        return
-
-    if m_bb_rotation_step != 0.0:
-        m_bb_rotation += m_bb_rotation_step
-        m_selected_module.rotation = Vector3(0, m_bb_rotation, 0)
-        if m_bounding_box:
-            m_bounding_box.rotation = Vector3(0, m_bb_rotation, 0)
-    else:
-        m_selected_module.rotation_degrees = m_manual_rotation
-        if m_bounding_box:
-            m_bounding_box.rotation_degrees = m_manual_rotation
-
-func _physics_process(_delta):
-    if not m_camera:
-        return
-    m_camera.position = m_camera.position.lerp(m_camera_dest_pos, _delta * CAMERA_LERP_SPEED)
-    m_camera.rotation = m_camera.rotation.lerp(m_camera_dest_rot, _delta * CAMERA_LERP_SPEED)
+##############################################################################
+# Exports
+##############################################################################
 
 ##############################################################################
+# Public Functions
+##############################################################################
+
+
+##################
 # GUI Functions
-##############################################################################
+##################
 func create_bounding_box(mesh:Mesh, tran:Vector3 = Vector3(0, 0, 0)):
     var bb_visible = false
     if m_bounding_box:
@@ -141,6 +126,17 @@ func configure_all_modules():
     m_camera_top_pos = Vector3(square_size * MODULE_SPACING / 2.0, y_offset, square_size * MODULE_SPACING / 2.0)
     set_camera_top_view()
 
+func recalculate_camera_pos():
+    var square_size = ceili(sqrt(len(m_modules)))
+    var y_offset = DEFAULT_CAMERA_HEIGHT
+    var x_size = square_size * m_module_bounds.x * MODULE_SPACING * 0.5
+    var hyp_val = sqrt((x_size * x_size) + (x_size * x_size))
+    var theta = deg_to_rad(m_camera.fov * 0.5)
+    y_offset = hyp_val / tan(theta)
+
+    m_camera_top_pos = Vector3(square_size * MODULE_SPACING / 2.0, y_offset, square_size * MODULE_SPACING / 2.0)
+    set_camera_top_view()
+
 func _on_module_clicked(_module_name:String):
     #m_logger.debug ("Module Clicked: ", _module_name)
     emit_signal("module_clicked", _module_name)
@@ -187,3 +183,38 @@ func set_camera_top_view():
     #m_camera.rotation = m_camera_top_rotation
     m_camera_dest_pos = m_camera_top_pos
     m_camera_dest_rot = m_camera_top_rotation
+
+##############################################################################
+# Private Functions
+##############################################################################
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+    if DEBUG:
+      m_logger.set_current_level = LogStream.LogLevel.DEBUG
+    m_camera = $Camera
+    m_camera_dest_pos = m_camera_top_pos
+    m_camera_dest_rot = m_camera_top_rotation
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(_delta):
+    if m_selected_module == null:
+        return
+
+    if m_bb_rotation_step != 0.0:
+        m_bb_rotation += m_bb_rotation_step
+        m_selected_module.rotation = Vector3(0, m_bb_rotation, 0)
+        if m_bounding_box:
+            m_bounding_box.rotation = Vector3(0, m_bb_rotation, 0)
+    else:
+        m_selected_module.rotation_degrees = m_manual_rotation
+        if m_bounding_box:
+            m_bounding_box.rotation_degrees = m_manual_rotation
+
+func _physics_process(_delta):
+    if not m_camera:
+        return
+    m_camera.position = m_camera.position.lerp(m_camera_dest_pos, _delta * CAMERA_LERP_SPEED)
+    m_camera.rotation = m_camera.rotation.lerp(m_camera_dest_rot, _delta * CAMERA_LERP_SPEED)
+
+

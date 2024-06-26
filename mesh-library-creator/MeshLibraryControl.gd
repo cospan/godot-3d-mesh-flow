@@ -14,11 +14,22 @@ extends Control
 var m_logger = LogStream.new("MeshLibraryControl", LogStream.LogLevel.DEBUG)
 var m_project_directory:String = ""
 var m_config = null
+var m_props = {}
+var m_properties = null
+var m_mlp = null
+var m_mesh_viewer = null
+var m_user_selected_module = null
+var m_user_selected_face = null
+
+
 
 # Flags
 var m_flag_load_library = false
 var m_flag_reset_library = false
 var m_flag_finished_loading = false
+var m_flag_view_all_modules = false
+var m_flag_user_selected_module = false
+var m_flag_user_selected_face = false
 
 
 ##############################################################################
@@ -33,12 +44,8 @@ enum STATE_TYPE {
     STATE_FACE_SELECTED
 }
 var m_state = STATE_TYPE.STATE_RESET
+var m_next_state = STATE_TYPE.STATE_RESET
 var m_prev_state = STATE_TYPE.STATE_RESET
-
-var m_props = {}
-
-var m_properties = null
-var m_mlp = null
 
 
 ##############################################################################
@@ -83,6 +90,9 @@ func _ready():
     m_logger.set_name("MLC (%s)" % m_config.get_value("config", "name"))
     m_properties = $HBMain/DictProperty
     m_mlp = $MeshLibraryProcessor
+    #m_mesh_viewer = $HBMain/VBFaceView/SubViewportContainer/SubViewport/MeshViewer
+    #m_mesh_viewer = $SubViewport/MeshViewer
+    m_mesh_viewer = $HBMain/VBFaceView/TextureRect/SubViewport/MeshViewer
 
     m_props["progress"] = {"type": "ProgressBar", "name": "Progress", "value": 0, "min": 0, "max": 100, "tooltip": "Display Progress of Loading"}
     m_props["auto_load"] = {"type": "CheckBox", "name": "Auto Load", "value": m_config.get_value("config", "auto_load"), "tooltip": "Auto Load Library on Start"}
@@ -93,57 +103,101 @@ func _ready():
     m_props["module_xy_size"] = {"type": "SpinBox", "name": "Module XZ Size", "value": Vector2(0, 0), "tooltip": "Module XY Size is Calculated and Displayed Here"}
     m_properties.update_dict(m_props)
 
-
     # Connect Signals
     m_properties.property_changed.connect(_property_changed)
     m_mlp.progress_percent_update.connect(_mlp_progress_percent_updated)
     m_mlp.finished_loading.connect(_mlp_finished_loading)
+    #resized.connect(on_size_changed)
+    #item_rect_changed.connect(on_size_changed)
+    m_mesh_viewer.module_clicked.connect(_on_mesh_viewer_module_clicked)
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
+
+    if m_flag_load_library:
+        m_state = STATE_TYPE.STATE_RESET
+
     match (m_state):
         STATE_TYPE.STATE_RESET:
             m_logger.debug("State: Reset")
-            m_state = STATE_TYPE.STATE_READY
             m_flag_finished_loading = false
+            m_flag_view_all_modules = false
+            m_flag_user_selected_module = false
+            m_flag_user_selected_face = false
+            m_next_state = STATE_TYPE.STATE_READY
         STATE_TYPE.STATE_READY:
-            m_logger.debug("State: Ready")
+            if m_prev_state != STATE_TYPE.STATE_READY:
+                m_logger.debug("State: Ready")
 
             # The library is already loaded, just go to the view selection
             if m_flag_finished_loading:
-                m_state = STATE_TYPE.STATE_NOTHING_SELECTED
+                m_logger.debug("Library Already Loaded")
+                m_next_state = STATE_TYPE.STATE_NOTHING_SELECTED
 
             # Check if we should initiate a load?
             elif m_config.get_value("config", "auto_load") or m_flag_load_library:
                 m_flag_load_library = false
                 m_mlp.load_library(m_project_directory, m_flag_reset_library)
                 m_flag_reset_library = false
-                m_state = STATE_TYPE.STATE_LOADING
+                m_next_state = STATE_TYPE.STATE_LOADING
 
         STATE_TYPE.STATE_LOADING:
             if m_prev_state != STATE_TYPE.STATE_LOADING:
                 m_logger.debug("State: Loading")
-            #m_state = STATE_TYPE.STATE_NOTHING_SELECTED
             if m_flag_finished_loading:
                 _update_properties()
-                m_state = STATE_TYPE.STATE_NOTHING_SELECTED
+                m_mesh_viewer.set_modules_with_bounds(m_mlp.get_module_dict(),
+                                                      m_mlp.get_default_size())
+                m_properties.set_value("module_xy_size", m_mlp.get_default_size())
+                m_next_state = STATE_TYPE.STATE_NOTHING_SELECTED
+                m_flag_view_all_modules = true
+
         STATE_TYPE.STATE_NOTHING_SELECTED:
-            #m_logger.debug("State: Nothing Selected")
-            pass
+            if m_flag_view_all_modules:
+                m_flag_view_all_modules = false
+                m_user_selected_module = null
+                m_logger.debug("State: Nothing Selected")
+                _view_all_modules()
+
+            if m_flag_user_selected_module:
+                m_next_state = STATE_TYPE.STATE_MODULE_SELECTED
+
         STATE_TYPE.STATE_MODULE_SELECTED:
-            m_logger.debug("State: Module Selected")
+            if m_flag_user_selected_module:
+                m_flag_user_selected_module = false
+                m_logger.debug("State: Module Selected")
+                _view_module(m_user_selected_module)
+
+            if m_flag_view_all_modules:
+                m_next_state = STATE_TYPE.STATE_NOTHING_SELECTED
+
         STATE_TYPE.STATE_FACE_SELECTED:
-            m_logger.debug("State: Face Selected")
+            if m_flag_user_selected_face:
+                m_flag_user_selected_face = false
+                m_logger.debug("State: Face Selected")
+
+            if m_flag_view_all_modules:
+                m_next_state = STATE_TYPE.STATE_NOTHING_SELECTED
+
         _:
             m_logger.debug("State: Unknown")
-            m_state = STATE_TYPE.STATE_RESET
+            m_next_state = STATE_TYPE.STATE_RESET
+
 
     m_prev_state = m_state
+    m_state = m_next_state
+
 
 
 func _update_properties():
     m_properties.set_value("module_list", m_mlp.get_module_names())
+
+func _view_all_modules():
+    m_mesh_viewer.view_all_modules()
+
+func _view_module(_module_name):
+    m_mesh_viewer.select_module(_module_name)
 
 ##############################################################################
 # Signal Handlers
@@ -155,11 +209,13 @@ func _property_changed(prop_name:String, prop_value):
     match prop_name:
       "module_list":
           m_logger.debug("Module Selected: %s" % prop_value)
+          m_user_selected_module = prop_value
+          m_flag_user_selected_module = true
       "view_all_modules":
           m_logger.debug("View All Modules")
+          m_flag_view_all_modules = true
       "load_library":
           m_logger.debug("Load Library")
-          m_state = STATE_TYPE.STATE_RESET
           m_flag_load_library = true
       "auto_load":
           m_logger.debug("Auto Load: %s" % prop_value)
@@ -168,9 +224,10 @@ func _property_changed(prop_name:String, prop_value):
           m_properties.set_prop_visible("load_library", not prop_value)
       "reset_library":
           m_logger.debug("Reset Library")
-          m_state = STATE_TYPE.STATE_RESET
           m_flag_reset_library = true
           m_flag_load_library = true
+      "module_xy_size":
+          m_logger.debug("Module Size Changed: %s" % str(prop_value))
       _:
           m_logger.debug("Unknown Property: %s" % str(prop_name))
 
@@ -181,4 +238,13 @@ func _mlp_progress_percent_updated(_name:String, _percent:float):
     m_properties.set_value("progress", _percent)
 
 func _mlp_finished_loading():
+    m_logger.debug("Finished Loading")
     m_flag_finished_loading = true
+
+#func on_size_changed():
+#    m_logger.debug("Size Changed: %s" % str(size))
+
+func _on_mesh_viewer_module_clicked(_module_name):
+    m_logger.debug("Module Clicked: %s" % _module_name)
+    m_user_selected_module = _module_name
+    m_flag_user_selected_module = true

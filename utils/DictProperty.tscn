@@ -1,10 +1,14 @@
-[gd_scene load_steps=2 format=3 uid="uid://c8lvx7ngljfpt"]
+[gd_scene load_steps=2 format=3 uid="uid://bjn216f0xxwjc"]
 
 [ext_resource type="Script" path="res://utils/DictProperty.gd" id="1_vhbr2"]
 
 [node name="DictProperty" type="GridContainer"]
-offset_right = 40.0
-offset_bottom = 40.0
+custom_minimum_size = Vector2(400, 0)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 size_flags_vertical = 3
 columns = 2
 script = ExtResource("1_vhbr2")
