@@ -130,8 +130,8 @@ func get_preview(_path:String):
     return image
 
 func get_menu_items_dict():
-    var menu_item_dict = {"Clear Database":on_clear_database}
-    pass
+    #var menu_item_dict = {"Clear Database":on_clear_database}
+        pass
 
 ##############################################################################
 # Private Functions

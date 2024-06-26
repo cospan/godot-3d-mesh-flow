@@ -48,7 +48,8 @@ var m_camera_top_rotation = Vector3(-1.5708, 0, 0)
 var m_face_mesh_dict = {}
 
 var DEBUG = false
-var m_logger = LogStream.new("Mesh Viewer", LogStream.LogLevel.INFO)
+var m_logger = LogStream.new("Mesh Viewer", LogStream.LogLevel.DEBUG)
+#var m_logger = LogStream.new("Mesh Viewer", LogStream.LogLevel.INFO)
 
 ##############################################################################
 # Exports
@@ -138,7 +139,7 @@ func recalculate_camera_pos():
     set_camera_top_view()
 
 func _on_module_clicked(_module_name:String):
-    #m_logger.debug ("Module Clicked: ", _module_name)
+    m_logger.debug ("Module Clicked: ", _module_name)
     emit_signal("module_clicked", _module_name)
 
 func view_all_modules():
@@ -196,6 +197,7 @@ func _ready():
     m_camera_dest_pos = m_camera_top_pos
     m_camera_dest_rot = m_camera_top_rotation
 
+
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
     if m_selected_module == null:
@@ -218,3 +220,11 @@ func _physics_process(_delta):
     m_camera.rotation = m_camera.rotation.lerp(m_camera_dest_rot, _delta * CAMERA_LERP_SPEED)
 
 
+#func _input(_event):
+#    m_logger.debug ("Input Event: ", _event)
+
+
+
+func _on_static_body_3d_input_event(camera, event, position, normal, shape_idx):
+    m_logger.debug ("Static Body Input Event: ", event)
+    pass # Replace with function body.

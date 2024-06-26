@@ -1,15 +1,12 @@
-[gd_scene load_steps=9 format=3 uid="uid://csmu5jjho2trs"]
+[gd_scene load_steps=8 format=3 uid="uid://csmu5jjho2trs"]
 
 [ext_resource type="Script" path="res://mesh-library-creator/MeshLibraryControl.gd" id="1_h4j2m"]
 [ext_resource type="PackedScene" uid="uid://bjn216f0xxwjc" path="res://utils/DictProperty.tscn" id="2_6vhsl"]
 [ext_resource type="PackedScene" uid="uid://b5vbd4ybw83co" path="res://mesh-library-creator/FaceView.tscn" id="3_qrhha"]
 [ext_resource type="PackedScene" uid="uid://b2gew1pj8m12h" path="res://mesh-library-creator/MeshViewer.tscn" id="4_dsc3r"]
+[ext_resource type="Script" path="res://mesh-library-creator/SubViewportContainerMeshViewer.gd" id="4_tepjt"]
 [ext_resource type="Script" path="res://mesh-library-creator/MeshLibraryProcessor.gd" id="5_pvckx"]
 [ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="6_72k6q"]
-[ext_resource type="Script" path="res://mesh-library-creator/TextureRectMeshView.gd" id="6_h3lsv"]
-
-[sub_resource type="ViewportTexture" id="ViewportTexture_1gi3y"]
-viewport_path = NodePath("HBMain/VBFaceView/TextureRect/SubViewport")
 
 [node name="MeshLibraryControl" type="Control"]
 layout_mode = 3
@@ -70,15 +67,17 @@ layout_mode = 2
 [node name="GCASelectedFaces" type="GridContainer" parent="HBMain/VBFaceView/HBFaceIndexModifier/VSSelectedFaces"]
 layout_mode = 2
 
-[node name="TextureRect" type="TextureRect" parent="HBMain/VBFaceView"]
+[node name="SubViewportContainer" type="SubViewportContainer" parent="HBMain/VBFaceView"]
 layout_mode = 2
 size_flags_vertical = 3
-texture = SubResource("ViewportTexture_1gi3y")
-script = ExtResource("6_h3lsv")
+script = ExtResource("4_tepjt")
 
-[node name="SubViewport" type="SubViewport" parent="HBMain/VBFaceView/TextureRect"]
+[node name="SubViewport" type="SubViewport" parent="HBMain/VBFaceView/SubViewportContainer"]
+handle_input_locally = false
+physics_object_picking = true
+render_target_update_mode = 4
 
-[node name="MeshViewer" parent="HBMain/VBFaceView/TextureRect/SubViewport" instance=ExtResource("4_dsc3r")]
+[node name="MeshViewer" parent="HBMain/VBFaceView/SubViewportContainer/SubViewport" instance=ExtResource("4_dsc3r")]
 
 [node name="VBFaceVectorView" type="VBoxContainer" parent="HBMain"]
 visible = false

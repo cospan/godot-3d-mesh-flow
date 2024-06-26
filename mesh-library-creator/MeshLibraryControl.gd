@@ -90,9 +90,7 @@ func _ready():
     m_logger.set_name("MLC (%s)" % m_config.get_value("config", "name"))
     m_properties = $HBMain/DictProperty
     m_mlp = $MeshLibraryProcessor
-    #m_mesh_viewer = $HBMain/VBFaceView/SubViewportContainer/SubViewport/MeshViewer
-    #m_mesh_viewer = $SubViewport/MeshViewer
-    m_mesh_viewer = $HBMain/VBFaceView/TextureRect/SubViewport/MeshViewer
+    m_mesh_viewer = $HBMain/VBFaceView/SubViewportContainer/SubViewport/MeshViewer
 
     m_props["progress"] = {"type": "ProgressBar", "name": "Progress", "value": 0, "min": 0, "max": 100, "tooltip": "Display Progress of Loading"}
     m_props["auto_load"] = {"type": "CheckBox", "name": "Auto Load", "value": m_config.get_value("config", "auto_load"), "tooltip": "Auto Load Library on Start"}
@@ -241,10 +239,10 @@ func _mlp_finished_loading():
     m_logger.debug("Finished Loading")
     m_flag_finished_loading = true
 
-#func on_size_changed():
-#    m_logger.debug("Size Changed: %s" % str(size))
-
 func _on_mesh_viewer_module_clicked(_module_name):
     m_logger.debug("Module Clicked: %s" % _module_name)
     m_user_selected_module = _module_name
     m_flag_user_selected_module = true
+
+
+
