@@ -1,24 +1,19 @@
-[gd_scene load_steps=2 format=3 uid="uid://b5vbd4ybw83co"]
+[gd_scene load_steps=4 format=3 uid="uid://b5vbd4ybw83co"]
 
-[sub_resource type="GDScript" id="GDScript_mi3n8"]
-script/source = "extends Control
+[ext_resource type="FontFile" uid="uid://c4hpll8xd3s8r" path="res://assets/fonts/Roboto-Regular.ttf" id="1_cmped"]
+[ext_resource type="Script" path="res://mesh-library-creator/FaceView.gd" id="1_t1auo"]
 
-
-# Called when the node enters the scene tree for the first time.
-func _ready():
-    pass # Replace with function body.
-
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta):
-    pass
-"
+[sub_resource type="Theme" id="Theme_3745w"]
+default_font = ExtResource("1_cmped")
+default_font_size = 16
 
 [node name="FaceView" type="Control"]
+custom_minimum_size = Vector2(700, 100)
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-script = SubResource("GDScript_mi3n8")
+theme = SubResource("Theme_3745w")
+script = ExtResource("1_t1auo")

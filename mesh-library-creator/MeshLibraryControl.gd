@@ -18,10 +18,9 @@ var m_props = {}
 var m_properties = null
 var m_mlp = null
 var m_mesh_viewer = null
+var m_face_viewer = null
 var m_user_selected_module = null
 var m_user_selected_face = null
-
-
 
 # Flags
 var m_flag_load_library = false
@@ -91,6 +90,7 @@ func _ready():
     m_properties = $HBMain/DictProperty
     m_mlp = $MeshLibraryProcessor
     m_mesh_viewer = $HBMain/VBFaceView/SubViewportContainer/SubViewport/MeshViewer
+    m_face_viewer = $HBMain/VBFaceView/FaceView
 
     m_props["progress"] = {"type": "ProgressBar", "name": "Progress", "value": 0, "min": 0, "max": 100, "tooltip": "Display Progress of Loading"}
     m_props["auto_load"] = {"type": "CheckBox", "name": "Auto Load", "value": m_config.get_value("config", "auto_load"), "tooltip": "Auto Load Library on Start"}
@@ -108,13 +108,12 @@ func _ready():
     #resized.connect(on_size_changed)
     #item_rect_changed.connect(on_size_changed)
     m_mesh_viewer.module_clicked.connect(_on_mesh_viewer_module_clicked)
+    m_face_viewer.face_selected.connect(_on_face_selected)
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
 
-    if m_flag_load_library:
-        m_state = STATE_TYPE.STATE_RESET
 
     match (m_state):
         STATE_TYPE.STATE_RESET:
@@ -147,6 +146,7 @@ func _process(_delta):
                 _update_properties()
                 m_mesh_viewer.set_modules_with_bounds(m_mlp.get_module_dict(),
                                                       m_mlp.get_default_size())
+                m_face_viewer.set_module_processor(m_mlp)
                 m_properties.set_value("module_xy_size", m_mlp.get_default_size())
                 m_next_state = STATE_TYPE.STATE_NOTHING_SELECTED
                 m_flag_view_all_modules = true
@@ -154,6 +154,7 @@ func _process(_delta):
         STATE_TYPE.STATE_NOTHING_SELECTED:
             if m_flag_view_all_modules:
                 m_flag_view_all_modules = false
+                m_flag_user_selected_face = false
                 m_user_selected_module = null
                 m_logger.debug("State: Nothing Selected")
                 _view_all_modules()
@@ -164,15 +165,23 @@ func _process(_delta):
         STATE_TYPE.STATE_MODULE_SELECTED:
             if m_flag_user_selected_module:
                 m_flag_user_selected_module = false
+                m_flag_user_selected_face = false
                 m_logger.debug("State: Module Selected")
                 _view_module(m_user_selected_module)
+                # Show the face view
+                m_face_viewer.visible = true
 
             if m_flag_view_all_modules:
                 m_next_state = STATE_TYPE.STATE_NOTHING_SELECTED
 
+            if m_flag_user_selected_face:
+                m_next_state = STATE_TYPE.STATE_FACE_SELECTED
+
         STATE_TYPE.STATE_FACE_SELECTED:
             if m_flag_user_selected_face:
                 m_flag_user_selected_face = false
+                m_face_viewer.visible = true
+                m_face_viewer.set_current_module(m_user_selected_module)
                 m_logger.debug("State: Face Selected")
 
             if m_flag_view_all_modules:
@@ -183,8 +192,29 @@ func _process(_delta):
             m_next_state = STATE_TYPE.STATE_RESET
 
 
+    if m_flag_load_library:
+        m_next_state = STATE_TYPE.STATE_RESET
+
     m_prev_state = m_state
     m_state = m_next_state
+
+    if m_next_state != m_prev_state:
+        match (m_prev_state):
+            STATE_TYPE.STATE_RESET:
+                pass
+            STATE_TYPE.STATE_READY:
+                pass
+            STATE_TYPE.STATE_LOADING:
+                pass
+            STATE_TYPE.STATE_NOTHING_SELECTED:
+                pass
+            STATE_TYPE.STATE_MODULE_SELECTED:
+                m_face_viewer.visible = false
+                m_face_viewer.clear_selected_module()
+            STATE_TYPE.STATE_FACE_SELECTED:
+                pass
+            _:
+                pass
 
 
 
@@ -244,5 +274,8 @@ func _on_mesh_viewer_module_clicked(_module_name):
     m_user_selected_module = _module_name
     m_flag_user_selected_module = true
 
-
+func _on_face_selected(_face_name):
+    m_logger.debug("Face Selected: %s" % _face_name)
+    m_user_selected_face = _face_name
+    m_flag_user_selected_face = true
 
