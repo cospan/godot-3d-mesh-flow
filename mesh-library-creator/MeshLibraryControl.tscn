@@ -43,8 +43,9 @@ size_flags_stretch_ratio = 2.0
 
 [node name="FaceView" parent="HBMain/VBFaceView" instance=ExtResource("3_qrhha")]
 visible = false
+custom_minimum_size = Vector2(700, 225)
 layout_mode = 2
-size_flags_vertical = 2
+size_flags_vertical = 0
 
 [node name="HBFaceIndexModifier" type="HBoxContainer" parent="HBMain/VBFaceView"]
 visible = false

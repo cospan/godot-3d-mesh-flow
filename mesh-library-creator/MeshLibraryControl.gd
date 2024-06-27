@@ -114,7 +114,6 @@ func _ready():
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
 
-
     match (m_state):
         STATE_TYPE.STATE_RESET:
             m_logger.debug("State: Reset")
@@ -122,10 +121,12 @@ func _process(_delta):
             m_flag_view_all_modules = false
             m_flag_user_selected_module = false
             m_flag_user_selected_face = false
+            m_face_viewer.visible = false
             m_next_state = STATE_TYPE.STATE_READY
         STATE_TYPE.STATE_READY:
             if m_prev_state != STATE_TYPE.STATE_READY:
                 m_logger.debug("State: Ready")
+                m_face_viewer.visible = false
 
             # The library is already loaded, just go to the view selection
             if m_flag_finished_loading:
@@ -142,6 +143,8 @@ func _process(_delta):
         STATE_TYPE.STATE_LOADING:
             if m_prev_state != STATE_TYPE.STATE_LOADING:
                 m_logger.debug("State: Loading")
+                m_face_viewer.visible = false
+
             if m_flag_finished_loading:
                 _update_properties()
                 m_mesh_viewer.set_modules_with_bounds(m_mlp.get_module_dict(),
@@ -151,8 +154,10 @@ func _process(_delta):
                 m_next_state = STATE_TYPE.STATE_NOTHING_SELECTED
                 m_flag_view_all_modules = true
 
+
         STATE_TYPE.STATE_NOTHING_SELECTED:
             if m_flag_view_all_modules:
+                m_face_viewer.visible = false
                 m_flag_view_all_modules = false
                 m_flag_user_selected_face = false
                 m_user_selected_module = null
@@ -162,12 +167,16 @@ func _process(_delta):
             if m_flag_user_selected_module:
                 m_next_state = STATE_TYPE.STATE_MODULE_SELECTED
 
+            if m_flag_load_library:
+                m_next_state = STATE_TYPE.STATE_RESET
+
         STATE_TYPE.STATE_MODULE_SELECTED:
             if m_flag_user_selected_module:
                 m_flag_user_selected_module = false
                 m_flag_user_selected_face = false
                 m_logger.debug("State: Module Selected")
                 _view_module(m_user_selected_module)
+                m_face_viewer.set_current_module(m_user_selected_module)
                 # Show the face view
                 m_face_viewer.visible = true
 
@@ -177,44 +186,29 @@ func _process(_delta):
             if m_flag_user_selected_face:
                 m_next_state = STATE_TYPE.STATE_FACE_SELECTED
 
+            if m_flag_load_library:
+                m_next_state = STATE_TYPE.STATE_RESET
+
+
         STATE_TYPE.STATE_FACE_SELECTED:
             if m_flag_user_selected_face:
                 m_flag_user_selected_face = false
-                m_face_viewer.visible = true
-                m_face_viewer.set_current_module(m_user_selected_module)
                 m_logger.debug("State: Face Selected")
 
             if m_flag_view_all_modules:
                 m_next_state = STATE_TYPE.STATE_NOTHING_SELECTED
+
+            if m_flag_load_library:
+                m_next_state = STATE_TYPE.STATE_RESET
 
         _:
             m_logger.debug("State: Unknown")
             m_next_state = STATE_TYPE.STATE_RESET
 
 
-    if m_flag_load_library:
-        m_next_state = STATE_TYPE.STATE_RESET
 
     m_prev_state = m_state
     m_state = m_next_state
-
-    if m_next_state != m_prev_state:
-        match (m_prev_state):
-            STATE_TYPE.STATE_RESET:
-                pass
-            STATE_TYPE.STATE_READY:
-                pass
-            STATE_TYPE.STATE_LOADING:
-                pass
-            STATE_TYPE.STATE_NOTHING_SELECTED:
-                pass
-            STATE_TYPE.STATE_MODULE_SELECTED:
-                m_face_viewer.visible = false
-                m_face_viewer.clear_selected_module()
-            STATE_TYPE.STATE_FACE_SELECTED:
-                pass
-            _:
-                pass
 
 
 

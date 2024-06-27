@@ -107,6 +107,19 @@ func get_module_names():
 func get_module_dict():
     return m_mesh_dict.duplicate()
 
+func get_faces_from_name(module_name:String, base_agnostic:bool = false):
+    return m_db_adapter.get_module_2d_faces(module_name, base_agnostic)
+
+func is_module_face_symmetrical(module_name:String, face_index:int, base_agnostic:bool = false):
+    var hash_dict = m_db_adapter.get_hash_dict_from_module_name_and_face(module_name, face_index)
+    if hash_dict == null:
+        return false
+    # Return the flag
+    return hash_dict["symmetric"]
+
+func get_hash_from_module_name_and_face(module_name:String, face_index:int, base_agnostic:bool = false) -> String:
+    return m_db_adapter.get_hash_from_module_name_and_face(module_name, face_index, base_agnostic)
+
 ##############################################################################
 # Private Functions
 ##############################################################################

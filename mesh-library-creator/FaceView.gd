@@ -26,11 +26,12 @@ const SHOW_SINGLE_HEIGHT = 200
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("Face View", LogStream.LogLevel.INFO)
+var m_logger = LogStream.new("Face View", LogStream.LogLevel.DEBUG)
+#var m_logger = LogStream.new("Face View", LogStream.LogLevel.INFO)
 var m_font
 var m_font_size
 var m_db_adapter = null
-var m_current_module = null
+var m_module_name = null
 var m_base_agnostic_enable:bool = false
 var m_face_width = 10
 var m_selected_face = -1
@@ -51,12 +52,12 @@ func set_module_processor(module_processor):
     m_db_adapter = module_processor.m_db_adapter
 
 func set_current_module(module_name):
-    m_current_module = m_mlp.m_mesh_dict[module_name].duplicate()
+    m_module_name = module_name
     size.y = SHOW_SINGLE_HEIGHT
     queue_redraw()
 
 func clear_selected_module():
-    m_current_module = null
+    m_module_name = null
     size.y = SHOW_ALL_HEIGHT
     queue_redraw()
 
@@ -90,7 +91,7 @@ func _notification(what):
 
 func _draw():
 
-    if m_current_module == null or m_mlp == null:
+    if m_module_name == null or m_mlp == null:
         return
 
     var width = get_size().x
@@ -112,7 +113,7 @@ func _draw():
     draw_string(m_font, pos, "Left", HORIZONTAL_ALIGNMENT_CENTER, -1, m_font_size, Color(1, 1, 1, 1))
 
     var bb_module_faces = null
-    bb_module_faces = m_mlp.get_faces_from_name(m_current_module, m_base_agnostic_enable)
+    bb_module_faces = m_mlp.get_faces_from_name(m_module_name, m_base_agnostic_enable)
 
     if bb_module_faces.size() > 0:
         #Draw all the triangles in the front face
@@ -144,17 +145,17 @@ func _draw():
 
             # Symmetry
             var symmetric_string = "Asymmetric"
-            if (m_mlp.is_module_face_symmetrical(m_current_module, i)):
+            if (m_mlp.is_module_face_symmetrical(m_module_name, i)):
                 symmetric_string = "Symmetric"
             var symmetry_pos = Vector2(X_OFFSET + (part_width * i), Y_SYMMETRY_OFFSET)
             draw_string(m_font, symmetry_pos, symmetric_string, HORIZONTAL_ALIGNMENT_CENTER, -1, m_font_size, Color(1, 1, 1, 1))
             #symmetry_pos.x= part_width
 
     var base_offset_dict = m_db_adapter.get_bottom_offset_dict()
-    if m_current_module in base_offset_dict:
+    if m_module_name in base_offset_dict:
         pos = Vector2(X_OFFSET, Y_BASE_OFFSET)
         for i in range(6):
-            var base_offset = base_offset_dict[m_current_module][i]
+            var base_offset = base_offset_dict[m_module_name][i]
             var base_offset_string = "NAN"
             if base_offset != null:
                 base_offset_string = "B: %0.4f" % base_offset
@@ -163,7 +164,7 @@ func _draw():
 
 
     for i in range(6):
-        var _hash = m_mlp.get_hash_from_module_name_and_face(m_current_module, i, m_base_agnostic_enable)
+        var _hash = m_mlp.get_hash_from_module_name_and_face(m_module_name, i, m_base_agnostic_enable)
         var hash_string = "NAN"
         if _hash != null:
             hash_string = "H: %s" % _hash.left(5)
@@ -174,16 +175,26 @@ func _draw():
         draw_rect(Rect2(Vector2(m_selected_face * part_width, 0), Vector2(part_width, get_size().y)), Color(1, 1, 1, 0.2))
 
 
-
-func _on_gui_input(event:InputEvent):
+func _input(event):
     if event is InputEventMouseButton:
-        #m_logger.debug ("Mouse Event")
         if event.button_index == 1 && event.pressed == true:
             #m_logger.debug ("Global Position: %s" % str(event.global_position))
             #m_logger.debug ("Event Position: %s" % str(event.position))
-            m_selected_face = floori(event.position.x / m_face_width)
-            emit_signal("face_selected", m_selected_face)
+            #m_logger.debug ("Rect: %s" % str(get_global_rect()))
+            var pos_x = event.position.x - get_global_rect().position.x
+            m_selected_face = floori(pos_x / m_face_width)
 
-        #m_logger.debug ("Global Rects: %s" % str(get_global_rect()))
-        #m_logger.debug ("Full Screen Size: %s" % str(get_))
-        queue_redraw()
+            emit_signal("face_selected", m_selected_face)
+            queue_redraw()
+
+#func _on_gui_input(event:InputEvent):
+#    if event is InputEventMouseButton:
+#        #m_logger.debug ("Mouse Event")
+#        if event.button_index == 1 && event.pressed == true:
+#            #m_logger.debug ("Global Position: %s" % str(event.global_position))
+#            #m_logger.debug ("Event Position: %s" % str(event.position))
+#            m_selected_face = floori(event.position.x / m_face_width)
+#            emit_signal("face_selected", m_selected_face)
+#
+#        m_logger.debug ("Global Rects: %s" % str(get_global_rect()))
+#        queue_redraw()

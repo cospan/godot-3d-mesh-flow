@@ -50,7 +50,7 @@ func _ready():
     m_logger.debug("Siblings: %s" % str(m_siblings))
 
     m_root.resized.connect(on_root_resize)
-    #m_parent.resized.connect(on_parent_resize)
+    m_parent.resized.connect(on_parent_resize)
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -62,17 +62,31 @@ func on_resize():
     m_sub_viewport.size = size
     m_logger.debug("New Canvas Position: %s" % str(m_sub_viewport.canvas_transform.origin))
 
-#func on_parent_resize():
-#    m_logger.debug("On Parent ItemRect Changed: New Size: %s" % str(size))
-#    #m_sub_viewport.size = size
-#    # Check if parent position becomes negative
-#    if m_parent.position.x < 0:
-#        # Find the difference and resize the m_mesh_viewport so that the position is 0
-#        m_sub_viewport.size.x += m_parent.position.x
-#        m_parent.position.x = 0
-#    if m_parent.position.y < 0:
-#        m_sub_viewport.size.y += m_parent.position.y
-#        m_parent.position.y = 0
+func on_parent_resize():
+    m_logger.debug("On Parent ItemRect Changed: New Size: %s" % str(size))
+    m_logger.debug("Parent Position: %s" % str(m_parent.position))
+    if m_parent.position.x < 0:
+        # Find the difference and resize the m_mesh_viewport so that the position is 0
+        #m_sub_viewport.size.x += m_parent.position.x
+        var x_size = m_root.size.x
+        for s in m_siblings:
+            x_size -= s.size.x
+        m_sub_viewport.size.x = x_size
+        size.x = x_size
+
+        m_parent.position.x = 0
+        m_parent.size.x = m_root.size.x
+
+    if m_parent.position.y < 0:
+        var y_size = m_root.size.y
+        for s in m_siblings:
+            y_size -= s.size.y
+        m_sub_viewport.size.y = y_size
+        size.y = y_size
+
+        m_parent.position.y = 0
+        m_parent.size.y = m_root.size.y
+
 
 func on_root_resize():
     m_logger.debug("On Root Resized: New Size: %s" % str(m_root.size))
