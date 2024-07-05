@@ -190,7 +190,7 @@ func get_sid_from_hash(_hash:String, _base_agnostic:bool = false):
 func get_faces_from_name(_module_name:String, _base_agnostic:bool = false):
     return m_db_adapter.get_module_2d_faces(_module_name, _base_agnostic)
 
-func get_face_hash_sids(_base_agnostic):
+func get_sids(_base_agnostic):
     return m_db_adapter.get_sids(_base_agnostic)
 
 func get_face_bounds_rect(_module_name:String, _face:FACE_T, _base_agnostic:bool = false):

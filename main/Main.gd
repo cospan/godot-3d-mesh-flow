@@ -298,19 +298,19 @@ func _project_item_menu_pressed(_index):
     var project_list = $VBoxMain/TabControl/HBoxLandingPage/VBoxProject/ProjectList
     var project_dict = project_list.get_item_metadata(m_project_selected)
     #var project_type = project_dict["type"]
-    #var project = m_project_types[project_type]
+    var project = m_project_types[project_dict["type"]]
     var text = project_item_menu.get_item_text(_index)
     match text.to_lower():
         "open":
             m_logger.debug("Open project: %s" % project_dict["path"])
-            _open_project(project_dict)
+            _open_project(project_dict["path"])
         "delete":
             m_logger.debug("Delete project: %s" % project_dict["path"])
-            #project.delete(project_dict["path"])
+            project.delete(project_dict["path"])
             _update_project_list()
         "reset":
             m_logger.debug("Reset project: %s" % project_dict["path"])
-            #project.reset(project_dict["path"])
+            project.reset(project_dict["path"])
             _update_project_list()
     #   _:
     #       # Check for custom items

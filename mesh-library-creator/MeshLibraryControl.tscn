@@ -1,12 +1,16 @@
-[gd_scene load_steps=8 format=3 uid="uid://csmu5jjho2trs"]
+[gd_scene load_steps=12 format=3 uid="uid://csmu5jjho2trs"]
 
 [ext_resource type="Script" path="res://mesh-library-creator/MeshLibraryControl.gd" id="1_h4j2m"]
 [ext_resource type="PackedScene" uid="uid://bjn216f0xxwjc" path="res://utils/DictProperty.tscn" id="2_6vhsl"]
 [ext_resource type="PackedScene" uid="uid://b5vbd4ybw83co" path="res://mesh-library-creator/FaceView.tscn" id="3_qrhha"]
 [ext_resource type="PackedScene" uid="uid://b2gew1pj8m12h" path="res://mesh-library-creator/MeshViewer.tscn" id="4_dsc3r"]
 [ext_resource type="Script" path="res://mesh-library-creator/SubViewportContainerMeshViewer.gd" id="4_tepjt"]
+[ext_resource type="Script" path="res://mesh-library-creator/HBFaceIndexModifier.gd" id="4_ylls7"]
+[ext_resource type="Script" path="res://mesh-library-creator/ModuleFaceView.gd" id="5_ak7rr"]
 [ext_resource type="Script" path="res://mesh-library-creator/MeshLibraryProcessor.gd" id="5_pvckx"]
 [ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="6_72k6q"]
+[ext_resource type="Script" path="res://mesh-library-creator/sid-modifier/SIDModifier.gd" id="8_wlbek"]
+[ext_resource type="Script" path="res://utils/DictProperty.gd" id="9_vpxhp"]
 
 [node name="MeshLibraryControl" type="Control"]
 layout_mode = 3
@@ -50,21 +54,33 @@ size_flags_vertical = 0
 [node name="HBFaceIndexModifier" type="HBoxContainer" parent="HBMain/VBFaceView"]
 visible = false
 layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("4_ylls7")
 
 [node name="VSAllFaces" type="ScrollContainer" parent="HBMain/VBFaceView/HBFaceIndexModifier"]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="GCAllFaces" type="GridContainer" parent="HBMain/VBFaceView/HBFaceIndexModifier/VSAllFaces"]
 layout_mode = 2
 
 [node name="VB" type="VBoxContainer" parent="HBMain/VBFaceView/HBFaceIndexModifier"]
 layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="DPFaceDebug" parent="HBMain/VBFaceView/HBFaceIndexModifier/VB" instance=ExtResource("2_6vhsl")]
 layout_mode = 2
 
-[node name="VSSelectedFaces" type="ScrollContainer" parent="HBMain/VBFaceView/HBFaceIndexModifier"]
+[node name="ModuleFaceView" type="Control" parent="HBMain/VBFaceView/HBFaceIndexModifier/VB"]
 layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("5_ak7rr")
+
+[node name="VSSelectedFaces" type="ScrollContainer" parent="HBMain/VBFaceView/HBFaceIndexModifier"]
+custom_minimum_size = Vector2(100, 0)
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="GCASelectedFaces" type="GridContainer" parent="HBMain/VBFaceView/HBFaceIndexModifier/VSSelectedFaces"]
 layout_mode = 2
@@ -80,6 +96,27 @@ physics_object_picking = true
 render_target_update_mode = 4
 
 [node name="MeshViewer" parent="HBMain/VBFaceView/SubViewportContainer/SubViewport" instance=ExtResource("4_dsc3r")]
+
+[node name="SIDModifier" type="HBoxContainer" parent="HBMain/VBFaceView"]
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("8_wlbek")
+
+[node name="DebugDictProperty" type="GridContainer" parent="HBMain/VBFaceView/SIDModifier"]
+custom_minimum_size = Vector2(0, 300)
+layout_mode = 2
+script = ExtResource("9_vpxhp")
+
+[node name="SC" type="ScrollContainer" parent="HBMain/VBFaceView/SIDModifier"]
+layout_mode = 2
+size_flags_horizontal = 3
+follow_focus = true
+vertical_scroll_mode = 0
+
+[node name="HBSIDS" type="HBoxContainer" parent="HBMain/VBFaceView/SIDModifier/SC"]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="VBFaceVectorView" type="VBoxContainer" parent="HBMain"]
 visible = false

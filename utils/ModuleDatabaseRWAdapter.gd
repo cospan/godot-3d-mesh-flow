@@ -330,6 +330,15 @@ func get_sids_hash_dict(bash_agnostic:bool = false) -> Dictionary:
         sids_hash_dict[sid].append(row["hash"])
     return sids_hash_dict
 
+func get_sids_total_module_face_count(_sid:int, _base_agnostic:bool = false) -> int:
+    #XXX: is there a better way to do this using SQL?
+    m_logger.debug("Entered Get Sids Total Module Face Count")
+    var hash_dict = get_sids_hash_dict(_base_agnostic)
+    var count = 0
+    # Go through each of the hashes and find the total number of module faces that are associated with the hash
+    for h in hash_dict[_sid]:
+        count += len(get_name_face_tuple_from_hash(h, _base_agnostic))
+    return count
 
 func get_next_available_sid(base_agnostic:bool = false) -> int:
     var table_name = HASH_TABLE
@@ -401,10 +410,10 @@ func get_hash_from_module_name_and_face(module_name:String, face_index:int, base
 
 func get_name_face_tuple_from_hash(_hash: String, base_agnostic:bool = false):
     m_logger.debug("Entered Get name face tuple from hash: %s" % _hash)
-    var face_names = ["front_face_hash", "back_face_hash", "top_face_hash", "bottom_face_hash", "left_face_hash", "right_face_hash"]
+    var face_names = ["front_face_hash", "back_face_hash", "top_face_hash", "bottom_face_hash", "right_face_hash", "left_face_hash"]
     var mesh_table = MODULE_TABLE
     if base_agnostic:
-        face_names = ["ba_front_face_hash", "ba_back_face_hash", "ba_top_face_hash", "ba_bottom_face_hash", "ba_left_face_hash", "ba_right_face_hash"]
+        face_names = ["ba_front_face_hash", "ba_back_face_hash", "ba_top_face_hash", "ba_bottom_face_hash", "ba_right_face_hash", "ba_left_face_hash"]
     var select_cond = "{0} = {1}"
     var face_array = []
     for i in range(len(face_names)):
@@ -417,10 +426,10 @@ func get_name_face_tuple_from_hash(_hash: String, base_agnostic:bool = false):
 
 func get_hash_name_face_tuple_dict(base_agnostic:bool = false) -> Dictionary:
     m_logger.debug("Entered get_hash_name_face_tuple_dict")
-    var face_names = ["front_face_hash", "back_face_hash", "top_face_hash", "bottom_face_hash", "left_face_hash", "right_face_hash"]
+    var face_names = ["front_face_hash", "back_face_hash", "top_face_hash", "bottom_face_hash", "right_face_hash", "left_face_hash"]
     var htable = HASH_TABLE
     if base_agnostic:
-        face_names = ["ba_front_face_hash", "ba_back_face_hash", "ba_top_face_hash", "ba_bottom_face_hash", "ba_left_face_hash", "ba_right_face_hash"]
+        face_names = ["ba_front_face_hash", "ba_back_face_hash", "ba_top_face_hash", "ba_bottom_face_hash", "ba_right_face_hash", "ba_left_face_hash"]
         htable = BA_HASH_TABLE
     var hash_face_dict = {}
     var hrows = m_database.select_rows(htable, "", ["hash"])

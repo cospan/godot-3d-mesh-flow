@@ -81,6 +81,10 @@ func create_bounding_box(mesh:Mesh, tran:Vector3 = Vector3(0, 0, 0)):
 
 func set_modules_with_bounds(_modules:Dictionary, _bounds:Vector2):
     m_logger.debug ("Set module dict")
+    if len(m_modules) > 0:
+        for m in m_modules:
+            m_modules[m].queue_free()
+
     m_modules = {}
     m_module_bounds = _bounds
     for m in _modules:
@@ -225,6 +229,6 @@ func _physics_process(_delta):
 
 
 
-func _on_static_body_3d_input_event(camera, event, position, normal, shape_idx):
-    m_logger.debug ("Static Body Input Event: ", event)
-    pass # Replace with function body.
+#func _on_static_body_3d_input_event(camera, event, position, normal, shape_idx):
+#    m_logger.debug ("Static Body Input Event: ", event)
+#    pass # Replace with function body.

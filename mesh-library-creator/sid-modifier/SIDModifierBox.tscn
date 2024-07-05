@@ -1,0 +1,85 @@
+[gd_scene load_steps=6 format=3 uid="uid://dch2tcardvwd"]
+
+[ext_resource type="Theme" uid="uid://bdg3f7lsjs1ld" path="res://assets/Themes/MarginContainerTheme.tres" id="1_klvsj"]
+[ext_resource type="Script" path="res://mesh-library-creator/sid-modifier/SIDModifierBox.gd" id="2_vfeun"]
+[ext_resource type="Script" path="res://mesh-library-creator/sid-modifier/SIDFaceView.gd" id="3_300gy"]
+
+[sub_resource type="Theme" id="Theme_w8tpp"]
+
+[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_g1hu0"]
+size = Vector2(300, 300)
+
+[node name="SIDModifierBox" type="Control"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 3
+anchors_preset = 13
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -202.0
+offset_right = 202.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_vertical = 3
+theme = ExtResource("1_klvsj")
+script = ExtResource("2_vfeun")
+
+[node name="SIDTree" type="Tree" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+columns = 2
+
+[node name="ReferenceRect" type="ReferenceRect" parent="."]
+visible = false
+layout_mode = 2
+offset_left = 2.0
+offset_top = 2.0
+offset_right = 2.0
+offset_bottom = 2.0
+border_color = Color(0.116127, 0.116127, 0.116127, 1)
+border_width = 5.0
+editor_only = false
+
+[node name="VB" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_right = 200.0
+offset_bottom = 1076.0
+grow_horizontal = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="SidInfoTree" type="Tree" parent="VB"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme = SubResource("Theme_w8tpp")
+columns = 2
+select_mode = 1
+scroll_horizontal_enabled = false
+scroll_vertical_enabled = false
+
+[node name="SIDFaceView" type="Control" parent="VB"]
+custom_minimum_size = Vector2(300, 300)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+script = ExtResource("3_300gy")
+
+[node name="TextureRect" type="TextureRect" parent="VB"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 4
+texture = SubResource("PlaceholderTexture2D_g1hu0")
+
+[node name="NeighborSIDTree" type="Tree" parent="VB"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 5.0

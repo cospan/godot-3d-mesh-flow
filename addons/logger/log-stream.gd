@@ -57,7 +57,7 @@ func warn(message:String,values={}):
 func error(message:String,values={}):
     call_thread_safe("_internal_log", message, values, LogLevel.ERROR)
 
-##Prints a message to the log at the fatal level, exits the application 
+##Prints a message to the log at the fatal level, exits the application
 ##since there has been a fatal error.
 func fatal(message:String,values={}):
     call_thread_safe("_internal_log", message, values, LogLevel.FATAL)
@@ -95,14 +95,14 @@ func err_cond_not_equal(arg1, arg2, message:String, fatal:=true, other_values_to
 func _internal_log(message:String, values, log_level := LogLevel.INFO):
     if current_log_level > log_level :
         return
-    
+
     var now = Time.get_datetime_dict_from_system(ProjectSettings.get_setting(settings.USE_UTC_TIME_FORMAT_KEY, settings.USE_UTC_TIME_FORMAT_DEFAULT_VALUE))
     now["second"] = "%02d"%now["second"]
     now["minute"] = "%02d"%now["minute"]
     now["hour"] = "%02d"%now["hour"]
     now["day"] = "%02d"%now["day"]
     now["month"] = "%02d"%now["month"]
-    
+
     var format_data := {
             "log_name":_log_name,
             "message":message,
@@ -111,7 +111,7 @@ func _internal_log(message:String, values, log_level := LogLevel.INFO):
     format_data.merge(now)
     var msg:String = ProjectSettings.get_setting(settings.LOG_MESSAGE_FORMAT_KEY, settings.LOG_MESSAGE_FORMAT_DEFAULT_VALUE).format(format_data)
     var stack = get_stack()
-    
+
     match typeof(values):
         TYPE_ARRAY:
             if values.size() > 0:
@@ -142,7 +142,7 @@ func _internal_log(message:String, values, log_level := LogLevel.INFO):
             msg += JSON.stringify(null)
         _:
             msg += JSON.stringify(values)
-    
+
     emit_signal("log_message", log_level, msg)
     match log_level:
         LogLevel.DEBUG:
@@ -152,7 +152,7 @@ func _internal_log(message:String, values, log_level := LogLevel.INFO):
         LogLevel.WARN:
             if !stack.is_empty():#Aka is connected to debug server -> print to the editor console in addition to pushing the warning.
                 print_rich("[color=yellow]"+msg+"[/color]")
-            
+
             push_warning(msg)
             print(_get_reduced_stack(stack) + "\n")
         LogLevel.DEFAULT:
@@ -162,28 +162,28 @@ func _internal_log(message:String, values, log_level := LogLevel.INFO):
             push_error(msg)
             if !stack.is_empty():#Aka is connected to debug server -> print to the editor console in addition to pushing the warning.
                 printerr(msg)
-                #Mimic the native godot behavior of halting execution upon error. 
+                #Mimic the native godot behavior of halting execution upon error.
                 if ProjectSettings.get_setting(settings.BREAK_ON_ERROR_KEY, settings.BREAK_ON_ERROR_DEFAULT_VALUE):
                     ##Please go a few steps down the stack to find the errorous code, since you are currently inside the error handler.
                     breakpoint
             print(_get_reduced_stack(stack))
-            
+
             #We want to access the main scene tree since this may be a custom logger that isn't in the main tree.
             if Log.is_inside_tree():
                 print("Main tree: ")
                 Log.get_tree().root.print_tree_pretty()
             print("")#Print empty line to mark new message
-            
+
             if log_level == LogLevel.FATAL:
                 _crash_behavior.call()
 
 
 func _get_reduced_stack(stack:Array)->String:
     var stack_trace_message:=""
-    
+
     if !stack.is_empty():#aka has stack trace.
         stack_trace_message += "at:\n"
-        
+
         for i in range(stack.size()-2):
             var entry = stack[stack.size()-1-i]
             stack_trace_message += "\t" + entry["source"] + ":" + str(entry["line"]) + " in func " + entry["function"] + "\n"
@@ -215,16 +215,16 @@ static func _ensure_setting_exists(setting: String, default_value) -> void:
         if ProjectSettings.has_method("set_as_basic"): # 4.0 backward compatibility
             ProjectSettings.call("set_as_basic", setting, true)
 
-##Controls the behavior when a fatal error has been logged. 
+##Controls the behavior when a fatal error has been logged.
 ##Edit to customize the behavior.
 static func default_crash_behavior():
-    #Restart the process to the main scene. (Uncomment if wanted), 
-    #note that we don't want to restart if we crash on init, then we get stuck in an infinite crash-loop, which isn't fun for anyone. 
+    #Restart the process to the main scene. (Uncomment if wanted),
+    #note that we don't want to restart if we crash on init, then we get stuck in an infinite crash-loop, which isn't fun for anyone.
     #if get_tree().get_frame()>0:
     #	var _ret = OS.create_process(OS.get_executable_path(), OS.get_cmdline_args())
-    
-    #Choose crash mechanism. Difference is that get_tree().quit() quits at the end of the frame, 
-    #enabling multiple fatal errors to be cast, printing multiple stack traces etc. 
+
+    #Choose crash mechanism. Difference is that get_tree().quit() quits at the end of the frame,
+    #enabling multiple fatal errors to be cast, printing multiple stack traces etc.
     #Warning regarding the use of OS.crash() in the docs can safely be regarded in this case.
     OS.crash("Crash since falal error ocurred")
     #get_tree().quit(-1)

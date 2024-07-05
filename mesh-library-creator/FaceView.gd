@@ -83,6 +83,7 @@ func _ready():
 func _notification(what):
     if what == NOTIFICATION_RESIZED:
         m_face_width = get_size().x / 6
+        m_logger.debug ("Resized: %s" % str(get_size()))
         queue_redraw()
     if what == NOTIFICATION_VISIBILITY_CHANGED:
         m_logger.debug ("Visibility Changed")
@@ -174,15 +175,21 @@ func _draw():
     if m_selected_face >= 0 and m_selected_face < 6:
         draw_rect(Rect2(Vector2(m_selected_face * part_width, 0), Vector2(part_width, get_size().y)), Color(1, 1, 1, 0.2))
 
+func visibility_changed():
+    m_logger.debug("Visible: %s" % str(visible))
+    set_process_input(visible)
+    set_process_unhandled_input(visible)
 
-func _input(event):
+func _gui_input(event):
     if event is InputEventMouseButton:
         if event.button_index == 1 && event.pressed == true:
-            #m_logger.debug ("Global Position: %s" % str(event.global_position))
-            #m_logger.debug ("Event Position: %s" % str(event.position))
-            #m_logger.debug ("Rect: %s" % str(get_global_rect()))
-            var pos_x = event.position.x - get_global_rect().position.x
-            m_selected_face = floori(pos_x / m_face_width)
+            m_logger.debug("Mouse Button Event")
+            m_logger.debug ("Global Position: %s" % str(event.global_position))
+            m_logger.debug ("Event Position: %s" % str(event.position))
+            m_logger.debug ("Rect: %s" % str(get_global_rect()))
+            #var pos_x = event.position.x - get_global_rect().position.x
+            #m_selected_face = floori(pos_x / m_face_width)
+            m_selected_face = floori(event.position.x / m_face_width)
 
             emit_signal("face_selected", m_selected_face)
             queue_redraw()

@@ -48,12 +48,12 @@ enum FACE_T {
 }
 
 var C_BB_NORMALS = [
-    Vector3(0, 0, 1),  # + Z
-    Vector3(0, 0, -1), # - Z #XXX: Is this reversed?
-    Vector3(0, 1, 0),  # + Y
-    Vector3(0, -1, 0), # - Y
-    Vector3(1, 0, 0),  # + X
-    Vector3(-1, 0, 0)  # - X #XXX: Is this reversed?
+    Vector3( 0,  0,  1),  # + Z Front
+    Vector3( 0,  0, -1),  # - Z Back
+    Vector3( 0,  1,  0),  # + Y Top
+    Vector3( 0, -1,  0),  # - Y Bottom
+    Vector3( 1,  0,  0),  # + X Right
+    Vector3(-1,  0,  0)   # - X Left
 ]
 
 
@@ -107,11 +107,14 @@ func get_module_names():
 func get_module_dict():
     return m_mesh_dict.duplicate()
 
+
+# Face Functions
+
 func get_faces_from_name(module_name:String, base_agnostic:bool = false):
     return m_db_adapter.get_module_2d_faces(module_name, base_agnostic)
 
 func is_module_face_symmetrical(module_name:String, face_index:int, base_agnostic:bool = false):
-    var hash_dict = m_db_adapter.get_hash_dict_from_module_name_and_face(module_name, face_index)
+    var hash_dict = m_db_adapter.get_hash_dict_from_module_name_and_face(module_name, face_index, base_agnostic)
     if hash_dict == null:
         return false
     # Return the flag
@@ -119,6 +122,108 @@ func is_module_face_symmetrical(module_name:String, face_index:int, base_agnosti
 
 func get_hash_from_module_name_and_face(module_name:String, face_index:int, base_agnostic:bool = false) -> String:
     return m_db_adapter.get_hash_from_module_name_and_face(module_name, face_index, base_agnostic)
+
+func get_face_bounds_rect(_module_name:String, _face:FACE_T, _base_agnostic:bool = false):
+    var module_bound = m_db_adapter.get_bounds(_module_name)
+    if module_bound == null:
+        m_logger.warn("Did not find module bounds for %s" % _module_name)
+        return null
+
+    #var module_bounds = m_module_bounds[_module_name]
+    var module_bounds = m_db_adapter.get_bounds(_module_name)
+    var module_sp = module_bounds[0]
+    var module_ep = module_bounds[1]
+    if _base_agnostic:
+        var base_offset = m_db_adapter.get_bottom_offset(_module_name, _face)
+        module_sp.y -= base_offset
+        module_ep.y -= base_offset
+
+    match (_face):
+        FACE_T.FRONT:
+            return Rect2(Vector2(module_sp.x, -module_ep.y), Vector2(module_ep.x - module_sp.x, module_ep.y - module_sp.y))
+        FACE_T.BACK:
+            return Rect2(Vector2(module_sp.x, -module_ep.y), Vector2(module_ep.x - module_sp.x, module_ep.y - module_sp.y))
+        FACE_T.TOP:
+            return Rect2(Vector2(module_sp.x, module_sp.z), Vector2(module_ep.x - module_sp.x, module_ep.z - module_sp.z))
+        FACE_T.BOTTOM:
+            return Rect2(Vector2(module_sp.x, module_sp.z), Vector2(module_ep.x - module_sp.x, module_ep.z - module_sp.z))
+        FACE_T.RIGHT:
+            return Rect2(Vector2(module_sp.z, -module_ep.y), Vector2(module_ep.z - module_sp.z, module_ep.y - module_sp.y))
+        FACE_T.LEFT:
+            return Rect2(Vector2(module_sp.z, -module_ep.y), Vector2(module_ep.z - module_sp.z, module_ep.y - module_sp.y))
+
+    return null
+    #var _face_library = m_db_adapter.get_module_2d_faces_dict()
+    #var triangle_list = _face_library[_module_name][_face]
+    #var vl = []
+    #for i in range (len(triangle_list)):
+    #  for j in range(3):
+    #    vl.append(triangle_list[i][0][j])
+
+    #if len(vl) == 0:
+    #  return null
+
+    #var min_x = vl[0].x
+    #var max_x = vl[0].x
+    #var min_y = vl[0].y
+    #var max_y = vl[0].y
+    #for i in range(1, len(vl)):
+    #  if vl[i].x < min_x:
+    #    min_x = vl[i].x
+    #  if vl[i].x > max_x:
+    #    max_x = vl[i].x
+    #  if vl[i].y < min_y:
+    #    min_y = vl[i].y
+    #  if vl[i].y > max_y:
+    #    max_y = vl[i].y
+    #if _base_agnostic:
+    #  var base_offset = m_db_adapter.get_bottom_offset(_module_name, _face)
+    #  min_y -= base_offset
+    #  max_y -= base_offset
+    #return Rect2(Vector2(min_x, min_y), Vector2(max_x - min_x, max_y - min_y))
+
+func get_sid_from_hash(_hash:String, _base_agnostic:bool = false):
+    #return m_db_adapter.get_sid_from_hash(_hash, _base_agnostic)
+    var hash_dict = m_db_adapter.get_hash_dict(_base_agnostic)
+    return hash_dict[_hash]["sid"]
+
+func get_sids(_base_agnostic:bool = false) -> Array:
+    return m_db_adapter.get_sids(_base_agnostic)
+
+func get_hashes_from_sid(_index:int, _base_agnostic:bool = false) -> Array:
+    return m_db_adapter.get_hashes_from_sid(_index, _base_agnostic)
+
+func get_sids_total_module_face_count(_sid:int, _base_agnostic:bool = false) -> int:
+    return m_db_adapter.get_sids_total_module_face_count(_sid, _base_agnostic)
+
+func move_hash_to_sid(sid:int, _hash:String, _base_agnostic:bool = false):
+    m_db_adapter.update_hash_sid(_hash, sid, false, _base_agnostic)
+
+func remove_hash_from_sid(_hash:String, _base_agnostic:bool = false):
+    m_db_adapter.remove_hash_from_sid(_hash, _base_agnostic)
+
+func set_hash_reflected_for_sid(sid, _hash, reflected, base_agnostic:bool = false):
+    m_db_adapter.update_hash_sid(_hash, sid, reflected, base_agnostic)
+
+func get_name_face_tuple_from_hash(_hash:String, _base_agnostic:bool = false):
+    return m_db_adapter.get_name_face_tuple_from_hash(_hash, _base_agnostic)
+
+func get_face_name_from_face(_face:FACE_T) -> String:
+    match _face:
+        FACE_T.FRONT:
+            return "front"
+        FACE_T.BACK:
+            return "back"
+        FACE_T.TOP:
+            return "top"
+        FACE_T.BOTTOM:
+            return "bottom"
+        FACE_T.RIGHT:
+            return "right"
+        FACE_T.LEFT:
+            return "left"
+    return ""
+
 
 ##############################################################################
 # Private Functions
@@ -503,12 +608,12 @@ func _get_faces_from_mesh(curr_m3d_name:String, curr_m3d) -> Dictionary:
     # Create a list of normal vectors for the bounding box
     # Go through each surface of the mesh and find the normal vectors, add them to a dictionary
     var module_surface_normals = {}
-    module_surface_normals[0] = [] # + Z
-    module_surface_normals[1] = [] # - Z
-    module_surface_normals[2] = [] # + Y
-    module_surface_normals[3] = [] # - Y
-    module_surface_normals[4] = [] # + X
-    module_surface_normals[5] = [] # - X
+    module_surface_normals[0] = [] # + Z Front
+    module_surface_normals[1] = [] # - Z Back
+    module_surface_normals[2] = [] # + Y Top
+    module_surface_normals[3] = [] # - Y Bottom
+    module_surface_normals[4] = [] # + X Right
+    module_surface_normals[5] = [] # - X Left
 
     for i in range(curr_m3d.mesh.get_surface_count()):
         var mdt = MeshDataTool.new()
@@ -528,12 +633,12 @@ func _get_faces_from_mesh(curr_m3d_name:String, curr_m3d) -> Dictionary:
 
     # Create a list of verticies for the bounding box
     var module_bb_verticies = []
-    module_bb_verticies.push_back(snapped(Vector3(0, 0, module_ep.z), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # + Z
-    module_bb_verticies.push_back(snapped(Vector3(0, 0, module_sp.z), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # - Z
-    module_bb_verticies.push_back(snapped(Vector3(0, module_ep.y, 0), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # + Y
-    module_bb_verticies.push_back(snapped(Vector3(0, module_sp.y, 0), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # - Y
-    module_bb_verticies.push_back(snapped(Vector3(module_ep.x, 0, 0), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # + X
-    module_bb_verticies.push_back(snapped(Vector3(module_sp.x, 0, 0), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # - X
+    module_bb_verticies.push_back(snapped(Vector3(0, 0, module_ep.z), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # + Z Front
+    module_bb_verticies.push_back(snapped(Vector3(0, 0, module_sp.z), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # - Z Back
+    module_bb_verticies.push_back(snapped(Vector3(0, module_ep.y, 0), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # + Y Top
+    module_bb_verticies.push_back(snapped(Vector3(0, module_sp.y, 0), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # - Y Bottom
+    module_bb_verticies.push_back(snapped(Vector3(module_ep.x, 0, 0), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # + X Right
+    module_bb_verticies.push_back(snapped(Vector3(module_sp.x, 0, 0), Vector3(FACE_SNAP, FACE_SNAP, FACE_SNAP)))  # - X Left
 
     # Go through each face in the module_surface_normals and determine if the faces have a vertex that is on the outside of the mesh
     # If the face has a vertex that is on the outside of the mesh, then add the face to the list of faces for the bounding box

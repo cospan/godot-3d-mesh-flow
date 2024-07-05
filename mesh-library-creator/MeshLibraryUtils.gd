@@ -97,7 +97,7 @@ func delete(_path:String):
     if not d.dir_exists(lib_folder):
         m_logger.error("Library folder does not exist: %s" % lib_folder)
         return false
-    var err = d.remove_dir(lib_folder)
+    var err = d.remove(lib_folder)
     if err != OK:
         m_logger.error("Failed to remove library folder: %s" % lib_folder)
         return false
