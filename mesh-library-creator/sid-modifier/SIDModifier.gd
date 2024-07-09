@@ -8,6 +8,7 @@ signal progress_percent_update
 signal continue_step
 signal finished_loading
 signal back_button_pressed
+signal add_remove_faces
 
 ##############################################################################
 # Constants
@@ -149,6 +150,7 @@ func _update_sid_children():
         sid_box.set_module_processor(m_mlp)
         sid_box.set_sid(sid)
         m_hbsids.add_child(sid_box)
+        sid_box.add_remove_faces.connect(_on_add_remove_faces)
         percent = percent + 1.0
         call_deferred("emit_percent_update", _pname, percent / total_size * 100.0)
         #await continue_step
@@ -199,3 +201,6 @@ func _property_changed(prop_name:String, _prop_value):
         _:
             pass
 
+func _on_add_remove_faces(module_name, _face_index):
+    m_logger.debug("Add/Remove Faces: %s, %d" % [module_name, _face_index])
+    emit_signal("add_remove_faces", module_name, _face_index)

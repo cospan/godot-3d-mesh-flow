@@ -4,6 +4,7 @@ extends Control
 ##############################################################################
 # Signals
 ##############################################################################
+signal add_remove_faces
 
 ##############################################################################
 # Constants
@@ -18,12 +19,16 @@ var m_ba = false
 var m_sid = null
 var m_module_dict = null
 
+var m_module_name = null
+var m_face_index = null
+
 ##############################################################################
 # Scenes
 ##############################################################################
 var m_sid_info_tree = null
 var m_neighbor_sid_tree = null
 var m_sid_face_view = null
+var m_add_remove_faces_button = null
 
 
 ##############################################################################
@@ -66,6 +71,8 @@ func _ready():
 
     m_sid_face_view = $VB/SIDFaceView
 
+    m_add_remove_faces_button = $VB/AddRemoveFacesButton
+
     m_neighbor_sid_tree = $VB/NeighborSIDTree
     m_neighbor_sid_tree.columns = 2
     m_neighbor_sid_tree.hide_folding = true
@@ -77,9 +84,8 @@ func _ready():
     # Signals
     m_sid_info_tree.item_selected.connect(_on_info_tree_item_selected)
     m_neighbor_sid_tree.item_selected.connect(_on_neighbor_sid_tree_item_selected)
+    m_add_remove_faces_button.pressed.connect(_on_add_remove_faces_button_pressed)
     _update()
-
-
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
@@ -167,7 +173,9 @@ func _update_neighbor_tree() -> void:
         #m_logger.debug("Face Name Tuple: ", face_name_tuple)
         for fnt in face_name_tuples:
             var module_name = fnt[0]
+            m_module_name = module_name
             var face_index = fnt[1]
+            m_face_index = face_index
             var face_name = m_mlp.get_face_name_from_face(face_index)
             var name_child = m_neighbor_sid_tree.create_item(_root)
             var fn = module_name + ":" + face_name
@@ -184,17 +192,17 @@ func _update_neighbor_tree() -> void:
             ##tc.set_text(1, str(m_mlp.get_sids_total_module_face_count(ns, m_ba)))
 
 
-
-
-
-
-
 ##############################################################################
 # Signal Handlers
 ##############################################################################
 
 func _on_info_tree_item_selected():
-        m_logger.debug("Info Tree Item Selected!")
+    m_logger.debug("Info Tree Item Selected!")
 
 func _on_neighbor_sid_tree_item_selected():
-        m_logger.debug("Matching SID Tree Item Selected!")
+    m_logger.debug("Matching SID Tree Item Selected!")
+
+func _on_add_remove_faces_button_pressed():
+    m_logger.debug("Add/Remove Faces Button Pressed!")
+    emit_signal("add_remove_faces", m_module_name, m_face_index)
+

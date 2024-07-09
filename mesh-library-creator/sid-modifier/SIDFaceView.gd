@@ -11,7 +11,7 @@ extends Control
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("Template", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("SID Face View", LogStream.LogLevel.DEBUG)
 
 var m_face = null
 var m_bounds = null

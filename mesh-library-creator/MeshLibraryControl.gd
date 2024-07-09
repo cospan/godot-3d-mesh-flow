@@ -17,6 +17,7 @@ var m_config = null
 var m_props = {}
 var m_user_selected_module = null
 var m_user_selected_face = null
+var m_previous_state = null
 
 # Flags
 var m_flag_load_library = false
@@ -135,6 +136,7 @@ func _ready():
     m_face_viewer.face_selected.connect(_on_face_selected)
     m_face_index_modifier.back_button_pressed.connect(_on_face_index_modifier_back)
     m_sid_modifier.back_button_pressed.connect(_on_sid_modifier_back)
+    m_sid_modifier.add_remove_faces.connect(_on_sid_modifier_add_remove_faces)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
@@ -184,7 +186,8 @@ func _process(_delta):
 
 
         STATE_TYPE.STATE_NOTHING_SELECTED:
-            if m_flag_view_all_modules:
+            #if m_flag_view_all_modules:
+            if m_prev_state != STATE_TYPE.STATE_NOTHING_SELECTED:
                 m_next_view_state = VIEW_STATE_TYPE.VIEW_STATE_ALL_MODULES
                 m_flag_view_all_modules = false
                 m_flag_user_selected_face = false
@@ -202,10 +205,11 @@ func _process(_delta):
                 m_next_state = STATE_TYPE.STATE_SID_MODIFIER
 
         STATE_TYPE.STATE_MODULE_SELECTED:
-            if m_flag_user_selected_module:
-                m_next_view_state = VIEW_STATE_TYPE.VIEW_STATE_MODULE
+            #if m_flag_user_selected_module:
+            if m_prev_state != STATE_TYPE.STATE_MODULE_SELECTED:
                 m_flag_user_selected_module = false
                 m_flag_user_selected_face = false
+                m_next_view_state = VIEW_STATE_TYPE.VIEW_STATE_MODULE
                 m_logger.debug("State: Module Selected")
                 _view_module(m_user_selected_module)
                 m_face_viewer.set_current_module(m_user_selected_module)
@@ -224,16 +228,25 @@ func _process(_delta):
                 m_next_state = STATE_TYPE.STATE_SID_MODIFIER
 
         STATE_TYPE.STATE_SID_MODIFIER:
-            if m_flag_sid_modifier_enable:
+            #if m_flag_sid_modifier_enable:
+            if m_prev_state != STATE_TYPE.STATE_SID_MODIFIER:
+                m_sid_modifier.update()
                 m_next_view_state = VIEW_STATE_TYPE.VIEW_STATE_SID_MODIFIER
                 m_flag_sid_modifier_enable = false
                 m_logger.debug("State: SID Modifier")
 
             if m_flag_view_all_modules:
+                m_flag_user_selected_module = false
                 m_next_state = STATE_TYPE.STATE_NOTHING_SELECTED
+                m_user_selected_module = null
+                m_user_selected_face = null
+
+            if m_flag_user_selected_face:
+                m_next_state = STATE_TYPE.STATE_FACE_SELECTED
 
         STATE_TYPE.STATE_FACE_SELECTED:
-            if m_flag_user_selected_face:
+            #if m_flag_user_selected_face:
+            if m_prev_state != STATE_TYPE.STATE_FACE_SELECTED:
                 m_next_view_state = VIEW_STATE_TYPE.VIEW_STATE_FACE_SID
                 m_flag_user_selected_face = false
                 m_logger.debug("State: Face Selected")
@@ -246,7 +259,8 @@ func _process(_delta):
                 m_next_state = STATE_TYPE.STATE_RESET
 
             if m_flag_user_selected_module:
-                m_next_state = STATE_TYPE.STATE_MODULE_SELECTED
+                m_next_state = m_previous_state
+                #m_next_state = STATE_TYPE.STATE_MODULE_SELECTED
         _:
             m_logger.debug("State: Unknown")
             m_next_state = STATE_TYPE.STATE_RESET
@@ -365,6 +379,7 @@ func _on_face_selected(_face_name):
     m_logger.debug("Face Selected: %s" % _face_name)
     m_user_selected_face = _face_name
     m_flag_user_selected_face = true
+    m_previous_state = STATE_TYPE.STATE_MODULE_SELECTED
 
 func _on_face_index_modifier_back():
     m_logger.debug("Face Index Modifier Back")
@@ -373,3 +388,10 @@ func _on_face_index_modifier_back():
 func _on_sid_modifier_back():
     m_logger.debug("SID Modifier Back")
     m_flag_view_all_modules = true
+
+func _on_sid_modifier_add_remove_faces(_module_name, _face_name:int):
+    m_logger.debug("SID Modifier Add/Remove Faces")
+    m_user_selected_face = _face_name
+    m_user_selected_module = _module_name
+    m_flag_user_selected_face = true
+    m_previous_state = STATE_TYPE.STATE_SID_MODIFIER

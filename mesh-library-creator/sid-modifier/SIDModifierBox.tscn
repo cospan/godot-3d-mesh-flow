@@ -1,13 +1,10 @@
-[gd_scene load_steps=6 format=3 uid="uid://dch2tcardvwd"]
+[gd_scene load_steps=5 format=3 uid="uid://dch2tcardvwd"]
 
 [ext_resource type="Theme" uid="uid://bdg3f7lsjs1ld" path="res://assets/Themes/MarginContainerTheme.tres" id="1_klvsj"]
 [ext_resource type="Script" path="res://mesh-library-creator/sid-modifier/SIDModifierBox.gd" id="2_vfeun"]
 [ext_resource type="Script" path="res://mesh-library-creator/sid-modifier/SIDFaceView.gd" id="3_300gy"]
 
 [sub_resource type="Theme" id="Theme_w8tpp"]
-
-[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_g1hu0"]
-size = Vector2(300, 300)
 
 [node name="SIDModifierBox" type="Control"]
 custom_minimum_size = Vector2(400, 0)
@@ -73,11 +70,10 @@ size_flags_horizontal = 4
 size_flags_vertical = 4
 script = ExtResource("3_300gy")
 
-[node name="TextureRect" type="TextureRect" parent="VB"]
-visible = false
+[node name="AddRemoveFacesButton" type="Button" parent="VB"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_horizontal = 4
-texture = SubResource("PlaceholderTexture2D_g1hu0")
+text = "Add Remove Faces"
 
 [node name="NeighborSIDTree" type="Tree" parent="VB"]
 layout_mode = 2
