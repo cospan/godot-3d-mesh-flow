@@ -4,4 +4,9 @@
 *.trunk
 
 library.cfg
+map.cfg
+
+.library
+.map
+
 *.db

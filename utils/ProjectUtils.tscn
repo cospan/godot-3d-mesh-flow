@@ -1,0 +1,20 @@
+[gd_scene load_steps=3 format=3 uid="uid://bminc1j1pvk0x"]
+
+[ext_resource type="Script" path="res://utils/ProjectUtils.gd" id="1_a5n81"]
+[ext_resource type="PackedScene" uid="uid://d1xbj35rutf18" path="res://utils/ConfirmDialogAsync.tscn" id="2_qocfr"]
+
+[node name="ProjectUtils" type="Node"]
+script = ExtResource("1_a5n81")
+
+[node name="ConfirmDialogAsync" parent="." instance=ExtResource("2_qocfr")]
+initial_position = 2
+dialog_text = "Confirm Overwrite Existing Library?"
+
+[node name="FileDialogNewFolder" type="FileDialog" parent="."]
+title = "Open a Directory"
+initial_position = 2
+size = Vector2i(392, 300)
+min_size = Vector2i(200, 300)
+ok_button_text = "Select Current Folder"
+file_mode = 2
+access = 2

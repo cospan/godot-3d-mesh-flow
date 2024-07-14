@@ -131,8 +131,8 @@ func _update_info_tree() -> void:
     var module_name = face_name_tuple[0][0]
     var face_index = face_name_tuple[0][1]
     #m_logger.debug("Face Name Tuple: ", face_name_tuple)
-    var faces = m_mlp.get_faces_from_name(module_name)
-    var face = faces[face_index]
+    #var faces = m_mlp.get_faces_from_name(module_name)
+    #var face = faces[face_index]
     var symmetric = m_mlp.is_module_face_symmetrical(module_name, face_index, m_ba)
 
 

@@ -17,7 +17,9 @@ signal create_finished
 var m_logger = LogStream.new("MeshLibraryUtils", LogStream.LogLevel.DEBUG)
 var m_created_project_path = null
 
-
+#######################################
+# Scenes
+#######################################
 var scene = preload("res://mesh-library-creator/MeshLibraryControl.tscn")
 var icon = preload("res://assets/icons/library.png")
 
@@ -50,10 +52,11 @@ func open(_path:String):
     return mlc
 
 func is_type(_path:String):
-    var d = DirAccess.open(_path)
-    if not d.dir_exists(_path):
-        return false
-    var lib_folder = _path + "/.library"
+    #var d = DirAccess.open(_path)
+    #if not d.dir_exists(_path):
+    #    return false
+    #var lib_folder = _path + "/.library"
+        var lib_folder = _path
     if not d.dir_exists(lib_folder):
         return false
     var lib_info_file = lib_folder + "/library.cfg"
@@ -68,7 +71,10 @@ func get_project_dict(_path:String):
     var project_dict = {}
     # Open up the config file within the .library folder and populate the project_dict
     var config = ConfigFile.new()
-    var lib_folder = _path + "/.library"
+		var base_path = _get_base_path(_path)
+
+    #var lib_folder = _path + "/.library"
+        var lib_folder = _path
     var lib_info_file = lib_folder + "/library.cfg"
     var err = config.load(lib_info_file)
     if err != OK:
@@ -84,20 +90,22 @@ func get_project_dict(_path:String):
     project_dict["modified"] = config.get_value("config", "modified")
     project_dict["auto_laod"] = config.get_value("config", "auto_load")
     project_dict["reset_library"] = config.get_value("config", "reset_library")
-    project_dict["path"] = _path
+    project_dict["base_path"] = base_path
+    project_dict["path"] = lib_folder
     return project_dict
 
 
 func delete(_path:String):
-    var d = DirAccess.open(_path)
-    if not d.dir_exists(_path):
-        m_logger.error("Project directory does not exist: %s" % _path)
-        return false
-    var lib_folder = _path + "/.library"
+    #var d = DirAccess.open(_path)
+    #if not d.dir_exists(_path):
+    #    m_logger.error("Project directory does not exist: %s" % _path)
+    #    return false
+    #var lib_folder = _path + "/.library"
+        var lib_folder = _path
     if not d.dir_exists(lib_folder):
         m_logger.error("Library folder does not exist: %s" % lib_folder)
         return false
-    var err = d.remove(lib_folder)
+    var err = d.remove(_path)
     if err != OK:
         m_logger.error("Failed to remove library folder: %s" % lib_folder)
         return false
@@ -105,16 +113,18 @@ func delete(_path:String):
 
 func reset(_path:String):
     m_logger.debug("Resetting library: %s" % _path)
+		var base_path = _get_base_path(_path)
     delete(_path)
     _create(_path)
 
 
 func get_preview(_path:String):
-    var d = DirAccess.open(_path)
-    if not d.dir_exists(_path):
-        m_logger.warn("Project directory does not exist: %s" % _path)
-        return null
-    var lib_folder = _path + "/.library"
+    #var d = DirAccess.open(_path)
+    #if not d.dir_exists(_path):
+    #    m_logger.warn("Project directory does not exist: %s" % _path)
+    #    return null
+    #var lib_folder = _path + "/.library"
+        lib_folder = _path
     if not d.dir_exists(lib_folder):
         m_logger.warn("Library folder does not exist: %s" % lib_folder)
         return null
@@ -130,7 +140,7 @@ func get_preview(_path:String):
     return image
 
 func get_menu_items_dict():
-    #var menu_item_dict = {"Clear Database":on_clear_database}
+    #var menu_item_dict = {"Clear Database":_on_clear_database}
         pass
 
 ##############################################################################
@@ -144,10 +154,6 @@ func _ready():
     var new_lib_folder_dialog = $FileDialogNewLibraryFolder
     new_lib_folder_dialog.confirmed.connect(_on_file_dialog_new_library_folder_confirm)
     new_lib_folder_dialog.canceled.connect(_on_file_dialog_new_library_folder_canceled)
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta):
-    pass
 
 
 ##############################################################################
@@ -215,16 +221,25 @@ func _create(_path):
     config.set_value("config", "modified", formatted_datetime)
     config.set_value("config", "auto_load", true)
     config.set_value("config", "reset_library", false)
+        config.set_value("config", "base_path", _path)
     config.save(lib_info_file)
 
-    m_created_project_path = _path
+    m_created_project_path = _path + "/.library"
     emit_signal("create_finished")
+
+func _get_base_path(_path:String):
+		var parts = _path.split("/")
+		#parts.remove_at(parts.size() - 1)
+		parts.remove_at(- 1)
+		return "/".join(parts)
+
+##############################################################################
+# Signal Handlers
+##############################################################################
 
 func _on_file_dialog_new_library_folder_canceled():
     m_logger.debug("New library folder selection canceled")
     m_created_project_path = null
     emit_signal("create_finished")
 
-func on_clear_database(_project_dict):
-    pass
 

@@ -1,0 +1,52 @@
+[gd_scene load_steps=5 format=3 uid="uid://dc67rgul2jeyv"]
+
+[ext_resource type="Script" path="res://map-creator/MapCreatorControl.gd" id="1_yif36"]
+[ext_resource type="PackedScene" uid="uid://bjn216f0xxwjc" path="res://utils/DictProperty.tscn" id="2_chocf"]
+[ext_resource type="Script" path="res://map-creator/SVPContainerMapView.gd" id="3_ed66u"]
+[ext_resource type="Script" path="res://map-creator/MapView.gd" id="4_sb11a"]
+
+[node name="MapCreatorControl" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_yif36")
+
+[node name="HBMain" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+metadata/_edit_use_anchors_ = true
+
+[node name="DictProperty" parent="HBMain" instance=ExtResource("2_chocf")]
+layout_mode = 2
+size_flags_vertical = 1
+
+[node name="VBMain" type="VBoxContainer" parent="HBMain"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="SVPContainer" type="SubViewportContainer" parent="HBMain/VBMain"]
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_ed66u")
+
+[node name="SVP" type="SubViewport" parent="HBMain/VBMain/SVPContainer"]
+handle_input_locally = false
+physics_object_picking = true
+render_target_update_mode = 4
+
+[node name="MapView" type="Node3D" parent="HBMain/VBMain/SVPContainer/SVP"]
+script = ExtResource("4_sb11a")
+
+[node name="VBFaceVectorView" type="VBoxContainer" parent="HBMain"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3

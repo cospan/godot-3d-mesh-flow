@@ -11,8 +11,8 @@ extends Control
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("MeshLibraryControl", LogStream.LogLevel.DEBUG)
-var m_project_directory:String = ""
+var m_logger = LogStream.new("MLC", LogStream.LogLevel.DEBUG)
+var m_project_path:String = ""
 var m_config = null
 var m_props = {}
 var m_user_selected_module = null
@@ -78,17 +78,16 @@ var m_prev_view_state = null
 ##############################################################################
 # Public Functions
 ##############################################################################
-func init(dir:String):
+func init(_dir:String):
     m_logger.debug("Init Entered!")
     m_config = ConfigFile.new()
-    m_project_directory = dir
-    var lib_folder = "%s/%s" % [m_project_directory, ".library"]
-    var config_file = "%s/%s" % [lib_folder, "library.cfg"]
+    m_project_path = _dir
+    var config_file = "%s/%s" % [_dir, "library.cfg"]
     m_config.load(config_file)
     m_config.set_value("config", "auto_load", true)
 
 func get_project_path():
-    return m_project_directory
+    return m_project_path
 
 func enable_auto_load(enable:bool):
     m_config.set_value("config", "auto_load", enable)
@@ -163,7 +162,8 @@ func _process(_delta):
             # Check if we should initiate a load?
             elif m_config.get_value("config", "auto_load") or m_flag_load_library:
                 m_flag_load_library = false
-                m_mlp.load_library(m_project_directory, m_flag_reset_library)
+                var working_path = m_config.get_value("config", "base_path") + "/"
+                m_mlp.load_library(working_path, m_flag_reset_library)
                 m_flag_reset_library = false
                 m_next_state = STATE_TYPE.STATE_LOADING
 

@@ -1,16 +1,20 @@
-[gd_scene load_steps=2 format=3 uid="uid://bjxuemcjde7o"]
+[gd_scene load_steps=3 format=3 uid="uid://bjxuemcjde7o"]
 
 [ext_resource type="Script" path="res://map-creator/MapUtils.gd" id="1_pbjb2"]
+[ext_resource type="PackedScene" uid="uid://d1xbj35rutf18" path="res://utils/ConfirmDialogAsync.tscn" id="2_jsryb"]
 
 [node name="MapUtils" type="Node"]
 script = ExtResource("1_pbjb2")
 
-[node name="FileDialogNewMapFolder" type="FileDialog" parent="."]
-title = "Open a File"
+[node name="ConfirmDialogAsync" parent="." instance=ExtResource("2_jsryb")]
 initial_position = 2
-size = Vector2i(312, 300)
+dialog_text = "Confirm Overwrite Existing Map?"
+
+[node name="FileDialogNewMapFolder" type="FileDialog" parent="."]
+title = "Open a Directory"
+initial_position = 2
+size = Vector2i(392, 300)
 min_size = Vector2i(200, 300)
-ok_button_text = "Open"
-file_mode = 0
+ok_button_text = "Select Current Folder"
+file_mode = 2
 access = 2
-filters = PackedStringArray("db")

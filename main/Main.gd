@@ -29,8 +29,8 @@ var m_library_project_configs = []
 var m_project_selected:int = -1
 
 @onready var m_project_types = {
-        "mesh-library": $MeshLibraryUtils,
-        "map": $MapUtils
+        "library" : $LibraryProjectUtils,
+        "map"     : $MapProjectUtils
 }
 
 
@@ -140,52 +140,52 @@ func _initialize_config_file():
     m_config.save(CONFIG_FILE_DIR)
 
 func _insert_recent_project(project_path):
-        var recent_projects = m_config.get_value("config", "project_path")
-        m_logger.debug("Inserting project: %s" % project_path)
-        m_logger.debug("Recent projects (Before Insert): %s" % str(recent_projects))
-        if recent_projects.size() >= MAX_RECENT_PROJECTS:
-            recent_projects.pop_back()
-        recent_projects.insert(0, project_path)
-        m_logger.debug("Recent projects (After Insert): %s" % str(recent_projects))
-        m_config.set_value("config", "project_path", recent_projects)
-        m_config.save(CONFIG_FILE_DIR)
-        _update_project_list()
+    var recent_projects = m_config.get_value("config", "project_path")
+    m_logger.debug("Inserting project: %s" % project_path)
+    m_logger.debug("Recent projects (Before Insert): %s" % str(recent_projects))
+    if recent_projects.size() >= MAX_RECENT_PROJECTS:
+        recent_projects.pop_back()
+    recent_projects.insert(0, project_path)
+    m_logger.debug("Recent projects (After Insert): %s" % str(recent_projects))
+    m_config.set_value("config", "project_path", recent_projects)
+    m_config.save(CONFIG_FILE_DIR)
+    _update_project_list()
 
 func _update_project_list():
-        var project_path_list = []
-        var recent_projects = m_config.get_value("config", "project_path")
-        # Validate the recent projects do exist and they are not duplicates
-        for project_path in recent_projects:
-            if project_path not in project_path_list:
-                project_path_list.append(project_path)
-                continue
+    var project_path_list = []
+    var recent_projects = m_config.get_value("config", "project_path")
+    # Validate the recent projects do exist and they are not duplicates
+    for project_path in recent_projects:
+        if project_path not in project_path_list:
+            project_path_list.append(project_path)
+            continue
 
-        m_config.set_value("config", "project_path", project_path_list)
-        recent_projects = m_config.get_value("config", "project_path")
-        var project_list = $VBoxMain/TabControl/HBoxLandingPage/VBoxProject/ProjectList
-        project_list.clear()
-        for project_path in recent_projects:
-            m_logger.debug("Adding project: %s" % project_path)
-            # Go through the project types and see if we can find a match
-            var found = false
-            var project_dict = {}
-            var icon = null
-            for project_type in m_project_types.keys():
-                var project = m_project_types[project_type]
-                if project.is_type(project_path):
-                    icon = project.get_icon()
-                    project_dict = project.get_project_dict(project_path)
-                    found = true
-                    break
+    m_config.set_value("config", "project_path", project_path_list)
+    recent_projects = m_config.get_value("config", "project_path")
+    var project_list = $VBoxMain/TabControl/HBoxLandingPage/VBoxProject/ProjectList
+    project_list.clear()
+    for project_path in recent_projects:
+        m_logger.debug("Adding project: %s" % project_path)
+        # Go through the project types and see if we can find a match
+        var found = false
+        var project_dict = {}
+        var icon = null
+        for project_type in m_project_types.keys():
+            var project = m_project_types[project_type]
+            if project.is_type(project_path):
+                icon = project.get_icon()
+                project_dict = project.get_project_dict(project_path)
+                found = true
+                break
 
-            #project_list.add_item(project_path)
-            if not found:
-                m_logger.warn("Unknown project type: %s" % project_path)
-                continue
+        #project_list.add_item(project_path)
+        if not found:
+            m_logger.warn("Unknown project type: %s" % project_path)
+            continue
 
-            var index = project_list.add_item(project_dict["name"], icon, true)
-            project_list.set_item_metadata(index, project_dict)
-            project_list.set_item_tooltip(index, project_dict["description"])
+        var index = project_list.add_item(project_dict["name"], icon, true)
+        project_list.set_item_metadata(index, project_dict)
+        project_list.set_item_tooltip(index, project_dict["description"])
 
 
 func _open_project(project_dict):
@@ -226,6 +226,15 @@ func _update_project_preview(_project_index):
     var preview_container = $VBoxMain/TabControl/HBoxLandingPage/VBoxProject/Preview
     preview_container.add_child(preview)
 
+func _create_project(_project_type):
+    var project = m_project_types[_project_type]
+    var project_path = await project.create()
+    if project_path == null:
+        m_logger.info("ProjectUtils.create() failed")
+        return
+    m_logger.debug("ProjectUtils.create() success: %s" % project_path)
+    _insert_recent_project(project_path)
+
 ##############################################################################
 # Signal Handlers
 ##############################################################################
@@ -236,26 +245,11 @@ func _on_home_pressed():
 
 func _on_add_new_mesh_library_pressed():
     m_logger.debug("Add new mesh library")
-    var mlu = $MeshLibraryUtils
-    var project_path = await mlu.create()
-    if project_path == null:
-        m_logger.info("MeshLibraryUtils.create() failed")
-        return
-
-    m_logger.debug("MeshLibraryUtils.create() success: %s" % project_path)
-    # Insert the path to the recent project list
-    _insert_recent_project(project_path)
-
+    _create_project("library")
 
 func _on_new_map_pressed():
     m_logger.debug("New map")
-    # Create a new map
-    # Use a dialog to select a directory
-    var mu = $MapUtils
-    var project_path = await mu.create()
-    if project_path == null:
-        m_logger.info("MapUtils.create() failed")
-        return
+    _create_project("map")
 
 func _on_log_button_pressed():
     m_logger.debug("Status log button pressed")

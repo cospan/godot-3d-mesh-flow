@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=3 uid="uid://b3vdtcf3df7vq"]
+[gd_scene load_steps=18 format=3 uid="uid://b3vdtcf3df7vq"]
 
 [ext_resource type="Script" path="res://main/Main.gd" id="1_yctuw"]
 [ext_resource type="Texture2D" uid="uid://crmy1j1ao80x8" path="res://assets/icons/home.png" id="2_1t4bi"]
@@ -11,8 +11,11 @@
 [ext_resource type="Texture2D" uid="uid://v7y5tike2mgw" path="res://assets/icons/Landing Page Test.png" id="8_ysc63"]
 [ext_resource type="Texture2D" uid="uid://duujsu0r0ou74" path="res://assets/icons/log_inv.png" id="9_x71ra"]
 [ext_resource type="PackedScene" uid="uid://cadjompe5itss" path="res://utils/TELogger.tscn" id="11_nh4p0"]
-[ext_resource type="PackedScene" uid="uid://bjxuemcjde7o" path="res://map-creator/MapUtils.tscn" id="13_1nier"]
-[ext_resource type="PackedScene" uid="uid://dp1pk8apbgxt2" path="res://mesh-library-creator/MeshLibraryUtils.tscn" id="13_7arj8"]
+[ext_resource type="PackedScene" uid="uid://csmu5jjho2trs" path="res://mesh-library-creator/MeshLibraryControl.tscn" id="13_d0g2y"]
+[ext_resource type="Texture2D" uid="uid://ypath6f7alro" path="res://assets/icons/library.png" id="13_lkcha"]
+[ext_resource type="PackedScene" uid="uid://bminc1j1pvk0x" path="res://utils/ProjectUtils.tscn" id="14_i50od"]
+[ext_resource type="Texture2D" uid="uid://cv6m2x15uo50" path="res://assets/icons/map.png" id="14_wwsus"]
+[ext_resource type="PackedScene" uid="uid://dc67rgul2jeyv" path="res://map-creator/MapCreatorControl.tscn" id="15_um7ud"]
 
 [sub_resource type="Theme" id="Theme_8kjic"]
 BoxContainer/constants/separation = 4
@@ -136,10 +139,6 @@ texture = ExtResource("8_ysc63")
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MeshLibraryUtils" parent="." instance=ExtResource("13_7arj8")]
-
-[node name="MapUtils" parent="." instance=ExtResource("13_1nier")]
-
 [node name="PopupMenuItemActivate" type="PopupMenu" parent="."]
 title = "Project Menu"
 initial_position = 2
@@ -150,3 +149,16 @@ item_1/text = "Reset"
 item_1/id = 1
 item_2/text = "Delete"
 item_2/id = 2
+
+[node name="LibraryProjectUtils" parent="." instance=ExtResource("14_i50od")]
+PROJECT_SCENE = ExtResource("13_d0g2y")
+PROJECT_TYPE = "library"
+ICON = ExtResource("13_lkcha")
+CUSTOM_CONFIG_KEYS = {
+"autoload": true
+}
+
+[node name="MapProjectUtils" parent="." instance=ExtResource("14_i50od")]
+PROJECT_SCENE = ExtResource("15_um7ud")
+PROJECT_TYPE = "map"
+ICON = ExtResource("14_wwsus")
