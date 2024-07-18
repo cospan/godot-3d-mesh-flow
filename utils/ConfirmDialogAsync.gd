@@ -1,4 +1,4 @@
-extends ConfirmationDialog
+class_name ConfirmationDialogAsync extends ConfirmationDialog
 
 ##############################################################################
 # Signals

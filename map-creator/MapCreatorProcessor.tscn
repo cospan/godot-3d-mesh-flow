@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" path="res://map-creator/MapCreatorProcessor.gd" id="1_dk12l"]
 [ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="2_0tlg6"]
-[ext_resource type="PackedScene" path="res://map-creator/TileDatabaseAdapter.tscn" id="3_alaj1"]
+[ext_resource type="PackedScene" uid="uid://cv7wmeojxldk0" path="res://map-creator/TileDatabaseAdapter.tscn" id="3_alaj1"]
 [ext_resource type="Script" path="res://map-creator/TileDatabaseAdapter.gd" id="4_k7m38"]
-[ext_resource type="PackedScene" path="res://map-creator/Library2TileConverter.tscn" id="5_8k7fq"]
+[ext_resource type="PackedScene" uid="uid://xnw3dal6iqdn" path="res://map-creator/Library2TileConverter.tscn" id="5_8k7fq"]
 [ext_resource type="Script" path="res://map-creator/Library2TileConverter.gd" id="6_6usaq"]
 
 [node name="MapCreatorProcessor" type="Node"]

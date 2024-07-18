@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://dc67rgul2jeyv"]
+[gd_scene load_steps=7 format=3 uid="uid://dc67rgul2jeyv"]
 
 [ext_resource type="Script" path="res://map-creator/MapCreatorControl.gd" id="1_yif36"]
 [ext_resource type="PackedScene" uid="uid://bjn216f0xxwjc" path="res://utils/DictProperty.tscn" id="2_chocf"]
 [ext_resource type="Script" path="res://map-creator/SVPContainerMapView.gd" id="3_ed66u"]
 [ext_resource type="Script" path="res://map-creator/MapView.gd" id="4_sb11a"]
 [ext_resource type="PackedScene" uid="uid://cusy2ap8wcgj3" path="res://map-creator/MapCreatorProcessor.tscn" id="5_0gjwp"]
+[ext_resource type="PackedScene" uid="uid://d1xbj35rutf18" path="res://utils/ConfirmDialogAsync.tscn" id="6_m847h"]
 
 [node name="MapCreatorControl" type="Control"]
 layout_mode = 3
@@ -53,3 +54,5 @@ layout_mode = 2
 size_flags_horizontal = 3
 
 [node name="MapCreatorProcessor" parent="." instance=ExtResource("5_0gjwp")]
+
+[node name="ConfirmDialogAsync" parent="." instance=ExtResource("6_m847h")]

@@ -123,13 +123,11 @@ func _check_library_database_path():
     var parent_path = m_config.get_value("config", "base_path")
     var database_path = parent_path + "/database.db"
     # Check if the file exists
-    var auto_accept = false
-    var confirm = ConfirmationDialog.new()
-    confirm.popup_centered()
+    var confirm = $ConfirmDialogAsync
     confirm.set_text("Okay to set library database path to: \'%s\'?" % database_path)
     confirm.exclusive = true
-    confirm.get_ok_button().pressed.connect(func(): auto_accept = true)
-    await confirm.popup_exclusive_centered(self, Vector2(300, 100))
+    confirm.popup_exclusive_centered(self, Vector2(300, 100))
+    var auto_accept = await confirm.finished
     print ("Auto Accept: %s" % auto_accept)
 
 
