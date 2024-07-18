@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://xnw3dal6iqdn"]
+
+[ext_resource type="Script" path="res://utils/Library2TileConverter.gd" id="1_41dnb"]
+
+[node name="Library2TileConverter" type="Node"]
+script = ExtResource("1_41dnb")

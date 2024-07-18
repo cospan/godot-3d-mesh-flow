@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cv7wmeojxldk0"]
+
+[ext_resource type="Script" path="res://utils/TileDatabaseAdapter.gd" id="1_ys5t6"]
+
+[node name="TileDatabaseAdapter" type="Node"]
+script = ExtResource("1_ys5t6")

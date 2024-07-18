@@ -84,7 +84,6 @@ func init(_dir:String):
     m_project_path = _dir
     var config_file = "%s/%s" % [_dir, "library.cfg"]
     m_config.load(config_file)
-    m_config.set_value("config", "auto_load", true)
 
 func get_project_path():
     return m_project_path

@@ -2,6 +2,10 @@ extends Node
 
 class_name ModuleRWDatabaseAdapter
 
+##############################################################################
+# Signals
+##############################################################################
+
 @export var DATABASE_NAME:String = "database.db"
 @export var DEBUG:bool = false
 

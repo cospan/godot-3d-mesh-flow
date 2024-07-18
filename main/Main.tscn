@@ -162,3 +162,9 @@ CUSTOM_CONFIG_KEYS = {
 PROJECT_SCENE = ExtResource("15_um7ud")
 PROJECT_TYPE = "map"
 ICON = ExtResource("14_wwsus")
+CUSTOM_CONFIG_KEYS = {
+"auto_load": true,
+"clear_db": false,
+"library_database": "",
+"reset_db": false
+}
