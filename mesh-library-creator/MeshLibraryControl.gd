@@ -13,6 +13,7 @@ extends Control
 ##############################################################################
 var m_logger = LogStream.new("MLC", LogStream.LogLevel.DEBUG)
 var m_project_path:String = ""
+var m_config_file:String = ""
 var m_config = null
 var m_props = {}
 var m_user_selected_module = null
@@ -82,8 +83,8 @@ func init(_dir:String):
     m_logger.debug("Init Entered!")
     m_config = ConfigFile.new()
     m_project_path = _dir
-    var config_file = "%s/%s" % [_dir, "library.cfg"]
-    m_config.load(config_file)
+    m_config_file = "%s/%s" % [_dir, "library.cfg"]
+    m_config.load(m_config_file)
 
 func get_project_path():
     return m_project_path
@@ -94,6 +95,7 @@ func enable_auto_load(enable:bool):
         m_logger.debug("Enabling Auto Load")
     else:
         m_logger.debug("Disabling Auto Load")
+    m_config.save(m_config_file)
 
 
 
@@ -345,6 +347,7 @@ func _property_changed(prop_name:String, prop_value):
       "auto_load":
           m_logger.debug("Auto Load: %s" % prop_value)
           m_config.set_value("config", "auto_load", prop_value)
+          m_config.save(m_config_file)
           m_props["load_library"]["visible"] = not prop_value
           m_properties.set_prop_visible("load_library", not prop_value)
       "reset_library":
