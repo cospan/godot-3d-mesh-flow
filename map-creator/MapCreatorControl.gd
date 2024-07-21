@@ -25,6 +25,7 @@ var m_flag_load_library = false
 var m_flag_load_finished = false
 var m_flag_auto_load = false
 var m_flag_select_new_db = false
+var m_flag_reset_tile_db = false
 
 #######################################
 # State Machine
@@ -81,6 +82,7 @@ func _ready():
     m_props["reset_db"] = {"type": "CheckBox", "name": "Reset DB", "value": m_config.get_value("config", "reset_db"), "tooltip": "Reset DB and reload DB Tables on start"}
     m_props["clear_db"] = {"type": "CheckBox", "name": "Clear DB", "value": m_config.get_value("config", "clear_db"), "tooltip": "Clear all database rows on Start"}
     m_props["select_db"] = {"type": "Button", "name": "Select DB", "tooltip": "Select Library Database Path"}
+    m_props["reset_tile_db"] = {"type": "Button", "name": "Reset Tile DB", "tooltip": "Regenerate the Tile DB from the library DB"}
     m_properties.update_dict(m_props)
 
     # Connect Signals
@@ -105,7 +107,16 @@ func _process(_delta):
                 m_flag_load_library = false
                 m_flag_auto_load = false
                 #XXX: TODO
-                #m_processor.load_library()
+                var library_db_path = m_config.get_value("config", "library_database")
+                var tile_db_path = ""
+                if m_config.has_section_key("config", "tile_database"):
+                    tile_db_path = m_config.get_value("config", "tile_database")
+                else:
+                    var p = m_config.get_value("config", "path")
+                    tile_db_path = p + "/tile.db"
+
+                m_processor.convert_library_db_2_tile_db(library_db_path, tile_db_path, false, m_flag_reset_tile_db)
+                m_flag_reset_tile_db = false
                 m_state = STATE_TYPE.LOADING
             if m_flag_select_new_db:
                 m_logger.debug("Selecting New Library Database!")
@@ -188,6 +199,10 @@ func _property_changed(prop_name:String, value):
             m_processor.reload_library()
         "select_db":
             m_logger.debug("Select DB Button Pressed!")
+            m_flag_select_new_db = true
+            m_flag_ready = true
+        "reset_tile_db":
+            m_flag_reset_tile_db = true
             m_flag_select_new_db = true
             m_flag_ready = true
         _:

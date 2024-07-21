@@ -60,7 +60,7 @@ size_flags_horizontal = 3
 initial_position = 2
 
 [node name="DatabaseFileDialog" type="FileDialog" parent="."]
-title = "Open a Library Database"
+title = "Open a File"
 initial_position = 2
 ok_button_text = "Open"
 file_mode = 0

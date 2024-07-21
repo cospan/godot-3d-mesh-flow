@@ -141,7 +141,7 @@ func _start_generate_module_dict_from_database():
     var hash_face_dict = m_db_adapter.get_hash_name_face_tuple_dict()
     #var sids_list = sids_hash_dict.keys()
     #m_novel_module_face_sid_dict = m_db_adapter.get_module_hash_dict()
-    var module_face_sid_dict = m_db_adapter.get_module_hash_dict()
+    var module_face_sid_dict = m_db_adapter.get_sids_hash_dict()
     m_novel_module_hash_dict = module_face_sid_dict.duplicate()
 
     var total_size = len(m_novel_module_face_sid_dict.keys()) * 6
