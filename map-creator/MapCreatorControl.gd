@@ -135,7 +135,7 @@ func _check_library_database_path(clear_db = false) -> bool:
     var lib_db_path = ""
     if not clear_db:
         lib_db_path = m_config.get_value("config", "library_database")
-    if len(lib_db_path) != 0:
+    if len(lib_db_path) != 0 and FileAccess.file_exists(lib_db_path):
         m_logger.info("Library Database Path is set")
         return true
 

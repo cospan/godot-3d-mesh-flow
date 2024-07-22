@@ -63,9 +63,9 @@ func convert_library_db_2_tile_db(_library_db_path:String, _tile_db_path:String,
 # Called when the node enters the scene tree for the first time.
 func _ready():
     m_logger.debug("Ready Entered!")
-    m_library_db_adapter = $LibraryDBAdapter
+    m_library_db_adapter = $ModuleDatabaseAdapter
     m_library_2_tile_converter = $Library2TileConverter
-    m_tile_db_adapter = $TileDBAdapter
+    m_tile_db_adapter = $TileDatabaseAdapter
     m_flag_reset_finished = true
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
