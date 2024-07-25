@@ -161,8 +161,11 @@ func view_all_modules():
 func select_module(_mesh_name):
     if m_selected_module:
         m_selected_module.rotation = Vector3(0, 0, 0)
-    m_selected_module = m_modules[_mesh_name]
-    set_camera_single_view()
+    if _mesh_name == null:
+        view_all_modules()
+    else:
+        m_selected_module = m_modules[_mesh_name]
+        set_camera_single_view()
 
 func is_module_selected():
     return m_selected_module != null

@@ -52,6 +52,18 @@ var m_task_db_adapter = null
 # Table Definitions
 ########################################
 
+
+const CONFIG_TABLE = "config"
+const CONFIG_TABLE_SCHEME = {
+    "name"        : {"data_type":"text", "primary_key":true, "not_null":true, "auto_increment":false},
+    "data_group"  : {"data_type":"text",  "not_null":false},
+    "type"        : {"data_type":"text",  "not_null":true},
+    "int_value"   : {"data_type":"int",   "not_null":false},
+    "text_value"  : {"data_type":"text",  "not_null":false},
+    "float_value" : {"data_type":"real",  "not_null":false},
+    "blob_value"  : {"data_type":"blob",  "not_null":false}
+}
+
 const POS_TABLE = "pos"
 const POS_TABLE_SCHEME = {
     "id"        : {"data_type":"int",   "primary_key":true, "not_null":true, "auto_increment":false},
@@ -59,13 +71,15 @@ const POS_TABLE_SCHEME = {
     "x"         : {"data_type":"int",   "not_null":false},
     "y"         : {"data_type":"int",   "not_null":false},
     "z"         : {"data_type":"int",   "not_null":false},
-    "x_reflect" : {"data_type":"int",   "not_null":false},
-    "y_reflect" : {"data_type":"int",   "not_null":false},
-    "rot_90_cw" : {"data_type":"int",   "not_null":false},
+    "layer"     : {"data_type":"int",   "not_null":false},
+    "rot_90_cw" : {"data_type":"int",   "not_null":false}, # 0, 90, 180, 270
+    "transform" : {"data_type":"blob",  "not_null":false}, # Extra transform after rotation
+    "metadata"  : {"data_type":"blob",  "not_null":false}
 }
 
 var m_tables = {
-      POS_TABLE: POS_TABLE_SCHEME,
+    CONFIG_TABLE  : CONFIG_TABLE_SCHEME,
+    POS_TABLE     : POS_TABLE_SCHEME
     }
 
 

@@ -30,17 +30,16 @@ var m_database : SQLite
 ##############################################################################
 # Table Definitions
 ##############################################################################
-var m_tables = {}
 
 const CONFIG_TABLE = "config"
 const CONFIG_TABLE_SCHEME = {
-    "name": {"data_type":"text", "primary_key":true, "not_null":true, "auto_increment":false},
-    "data_group": {"data_type":"text", "not_null":false},
-    "type": {"data_type":"text", "not_null":true},
-    "int_value": {"data_type":"int", "not_null":false},
-    "text_value": {"data_type":"text", "not_null":false},
-    "float_value": {"data_type":"real", "not_null":false},
-    "blob_value": {"data_type":"blob", "not_null":false}
+    "name"        : {"data_type":"text",  "primary_key":true, "not_null":true, "auto_increment":false},
+    "data_group"  : {"data_type":"text",  "not_null":false},
+    "type"        : {"data_type":"text",  "not_null":true},
+    "int_value"   : {"data_type":"int",   "not_null":false},
+    "text_value"  : {"data_type":"text",  "not_null":false},
+    "float_value" : {"data_type":"real",  "not_null":false},
+    "blob_value"  : {"data_type":"blob",  "not_null":false}
 }
 
 const MODULE_TABLE = "modules"
@@ -48,43 +47,25 @@ const MODULE_TABLE_SCHEME = {
     "name": {"data_type":"text", "primary_key":true, "not_null":true, "auto_increment":false},
     "md5" :  {"data_type":"text", "not_null":false},
 
-    "front_face_index":  {"data_type":"int", "not_null":false},
-    "back_face_index":   {"data_type":"int", "not_null":false},
-    "top_face_index":    {"data_type":"int", "not_null":false},
-    "bottom_face_index": {"data_type":"int", "not_null":false},
-    "right_face_index":  {"data_type":"int", "not_null":false},
-    "left_face_index":   {"data_type":"int", "not_null":false},
-
-    "front_face_reflected": {"data_type":"int", "not_null":false},
-    "back_face_reflected": {"data_type":"int", "not_null":false},
-    "top_face_reflected": {"data_type":"int", "not_null":false},
-    "bottom_face_reflected": {"data_type":"int", "not_null":false},
-    "right_face_reflected": {"data_type":"int", "not_null":false},
-    "left_face_reflected": {"data_type":"int", "not_null":false},
+    "front_face_index"  : {"data_type":"int", "not_null":false},
+    "back_face_index"   : {"data_type":"int", "not_null":false},
+    "top_face_index"    : {"data_type":"int", "not_null":false},
+    "bottom_face_index" : {"data_type":"int", "not_null":false},
+    "right_face_index"  : {"data_type":"int", "not_null":false},
+    "left_face_index"   : {"data_type":"int", "not_null":false}
 }
 
-const MAP_TABLE = "map"
-const MAP_TABLE_SCHEME = {
-    "tile_id": {"data_type":"int", "primary_key":true, "not_null":true, "auto_increment":false},
-    "x_pos": {"data_type":"int", "not_null":false},
-    "y_pos": {"data_type":"int", "not_null":false},
-    "tile_type": {"data_type":"int", "not_null":false},
-    "layer": {"data_type":"int", "not_null":false},
-    "tile_set_id": {"data_type":"int", "not_null":false},
-    "custom_data": {"data_type":"blob", "not_null":false}
+const SID_TABLE = "sid"
+const SID_TABLE_SCHEME = {
+    "sid" : {"data_type":"int", "primary_key":true, "not_null":true, "auto_increment":false},
+
+    "asymmetric"  : {"data_type":"int",   "not_null":false},
+    "module_list" : {"data_type":"blob",  "not_null":false}
 }
 
-const HASH_TABLE = "hash"
-const HASH_TABLE_SCHEME = {
-    "name": {"data_type":"text", "primary_key":true, "not_null":true, "auto_increment":false},
-
-    "front_face_hash": {"data_type":"string", "not_null":false},
-    "back_face_hash": {"data_type":"string", "not_null":false},
-    "top_face_hash": {"data_type":"string", "not_null":false},
-    "bottom_face_hash": {"data_type":"string", "not_null":false},
-    "right_face_hash": {"data_type":"string", "not_null":false},
-    "left_face_hash": {"data_type":"string", "not_null":false},
-}
+var m_tables = {CONFIG_TABLE  : CONFIG_TABLE_SCHEME,
+                MODULE_TABLE  : MODULE_TABLE_SCHEME,
+                SID_TABLE     : SID_TABLE_SCHEME}
 
 ##############################################################################
 # Public Functions
@@ -92,7 +73,6 @@ const HASH_TABLE_SCHEME = {
 func open_database(database_path: String, clear_rows: bool = false, force_new_tables:bool = false):
     m_logger.debug("Entered Open Database")
     m_database = SQLite.new()
-    #m_database.path = folder_path + DATABASE_NAME
     m_database.path = database_path
     m_database.open_db()
 
@@ -128,12 +108,12 @@ func insert_modules(dict):
     for _name in dict.keys():
         #Change the face indexes to the text label
         var d = { "name": _name,
-                  "front_face_index":  dict[_name][FACE_T.FRONT]["sid"],
-                  "back_face_index":   dict[_name][FACE_T.BACK]["sid"],
-                  "top_face_index":    dict[_name][FACE_T.TOP]["sid"],
-                  "bottom_face_index": dict[_name][FACE_T.BOTTOM]["sid"],
-                  "right_face_index":  dict[_name][FACE_T.RIGHT]["sid"],
-                  "left_face_index":   dict[_name][FACE_T.LEFT]["sid"],
+                  "front_face_index":      dict[_name][FACE_T.FRONT]["sid"],
+                  "back_face_index":       dict[_name][FACE_T.BACK]["sid"],
+                  "top_face_index":        dict[_name][FACE_T.TOP]["sid"],
+                  "bottom_face_index":     dict[_name][FACE_T.BOTTOM]["sid"],
+                  "right_face_index":      dict[_name][FACE_T.RIGHT]["sid"],
+                  "left_face_index":       dict[_name][FACE_T.LEFT]["sid"],
 
                   "front_face_reflected":  dict[_name][FACE_T.FRONT]["reflected"],
                   "back_face_reflected":   dict[_name][FACE_T.BACK]["reflected"],
@@ -144,6 +124,19 @@ func insert_modules(dict):
         }
 
         m_database.insert_row(MODULE_TABLE, d)
+
+func insert_sid_socket_map(sid_dict:Dictionary):
+    m_logger.debug("Entered insert_sids")
+    #Each SID is dictionary with the following keys:
+    # "sid" : int
+    # "asymmetric" : int
+    # "module_list" : Array of Strings
+    m_database.delete_rows(SID_TABLE, "*")
+    for sid in sid_dict.keys():
+        var d = { "sid" : sid,
+                  "asymmetric" : sid_dict[sid]["asymmetric"],
+                  "module_list" : sid_dict[sid]["module_list"] }
+        m_database.insert_row(SID_TABLE, d)
 
 func get_module_dict() -> Dictionary:
     m_logger.debug("Get all modules dictionary")
@@ -176,36 +169,6 @@ func get_module_dict() -> Dictionary:
 
     return module_dict
 
-func insert_module_hashes(dict:Dictionary):
-    m_logger.debug("Entered update_module_hash")
-    m_database.delete_rows(HASH_TABLE, "*")
-    for _name in dict.keys():
-        #Change the face indexes to the text label
-        var d = { "name": _name,
-                  "front_face_hash":  dict[_name][FACE_T.FRONT],
-                  "back_face_hash":   dict[_name][FACE_T.BACK],
-                  "top_face_hash":    dict[_name][FACE_T.TOP],
-                  "bottom_face_hash": dict[_name][FACE_T.BOTTOM],
-                  "right_face_hash":  dict[_name][FACE_T.RIGHT],
-                  "left_face_hash":   dict[_name][FACE_T.LEFT] }
-        m_database.insert_row(HASH_TABLE, d)
-
-func get_module_hash_dict() -> Dictionary:
-    m_logger.debug("Entered get_module_hash_dict")
-    var module_hash_dict = {}
-    var rows = m_database.select_rows(HASH_TABLE, "", ["name", "front_face_hash", "back_face_hash", "top_face_hash", "bottom_face_hash", "right_face_hash", "left_face_hash"])
-
-    for row in rows:
-        var _name = row["name"]
-        module_hash_dict[_name] = {}
-        module_hash_dict[_name][FACE_T.FRONT ] = row["front_face_hash"]
-        module_hash_dict[_name][FACE_T.BACK  ] = row["back_face_hash"]
-        module_hash_dict[_name][FACE_T.TOP   ] = row["top_face_hash"]
-        module_hash_dict[_name][FACE_T.BOTTOM] = row["bottom_face_hash"]
-        module_hash_dict[_name][FACE_T.RIGHT ] = row["right_face_hash"]
-        module_hash_dict[_name][FACE_T.LEFT  ] = row["left_face_hash"]
-    return module_hash_dict
-
 
 ###############################################################################
 # Functions
@@ -213,10 +176,9 @@ func get_module_hash_dict() -> Dictionary:
 func _ready():
     #if DEBUG:
     #    m_logger.set_current_level = LogStream.LogLevel.DEBUG
-    m_tables[CONFIG_TABLE] = CONFIG_TABLE_SCHEME
-    m_tables[MODULE_TABLE] = MODULE_TABLE_SCHEME
-    m_tables[MAP_TABLE] = MAP_TABLE_SCHEME
-    m_tables[HASH_TABLE] = HASH_TABLE_SCHEME
+    m_tables[CONFIG_TABLE]  = CONFIG_TABLE_SCHEME
+    m_tables[MODULE_TABLE]  = MODULE_TABLE_SCHEME
+    m_tables[SID_TABLE]     = SID_TABLE_SCHEME
 
 func _face_name_from_index(face_index, base_agnostic = false) -> String:
     if (base_agnostic):

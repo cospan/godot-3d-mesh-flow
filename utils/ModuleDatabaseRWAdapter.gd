@@ -6,7 +6,6 @@ class_name ModuleRWDatabaseAdapter
 # Signals
 ##############################################################################
 
-@export var DATABASE_NAME:String = "database.db"
 @export var DEBUG:bool = false
 
 ##############################################################################
@@ -145,10 +144,10 @@ func _face_name_from_index(face_index, base_agnostic = false) -> String:
 ##############################################################################
 # Public Functions
 ##############################################################################
-func open_database(folder_path: String, force_new: bool = false):
+func open_database(database_path: String, force_new: bool = false):
     m_logger.debug("Entered Open Database")
     m_database = SQLite.new()
-    m_database.path = folder_path + DATABASE_NAME
+    m_database.path = database_path
     m_database.open_db()
 
     if force_new:

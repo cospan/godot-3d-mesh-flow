@@ -31,8 +31,8 @@ var m_flag_process_database:bool = false
 var m_novel_module_face_sid_dict = {}
 var m_novel_module_hash_dict = {}
 
-var m_existing_module_face_sid_dict = {}
-var m_existing_module_hash_dict = {}
+#var m_existing_module_face_sid_dict = {}
+#var m_existing_module_hash_dict = {}
 
 #######################################
 # State
@@ -65,8 +65,8 @@ func _process(_delta):
         STATE_T.IDLE:
             if m_flag_process_database:
                 m_flag_process_database = false
-                m_existing_module_face_sid_dict = m_db_wfc_adapter.get_module_dict()
-                m_existing_module_hash_dict = m_db_wfc_adapter.get_module_hash_dict()
+                #m_existing_module_face_sid_dict = m_db_wfc_adapter.get_module_dict()
+                #m_existing_module_hash_dict = m_db_wfc_adapter.get_module_hash_dict()
                 _start_generate_sid_dict_from_database()
                 m_state = STATE_T.GENERATE_FID_DICT
                 m_logger.debug("_process: IDLE -> GENERATE_FID_DICT")
@@ -140,9 +140,9 @@ func _start_generate_module_dict_from_database():
     var hash_dict = m_db_adapter.get_hash_dict()
     var hash_face_dict = m_db_adapter.get_hash_name_face_tuple_dict()
     #var sids_list = sids_hash_dict.keys()
-    #m_novel_module_face_sid_dict = m_db_adapter.get_module_hash_dict()
+    m_novel_module_face_sid_dict = m_db_adapter.get_module_hash_dict()
     var module_face_sid_dict = m_db_adapter.get_sids_hash_dict()
-    m_novel_module_hash_dict = module_face_sid_dict.duplicate()
+    #m_novel_module_hash_dict = module_face_sid_dict.duplicate()
 
     var total_size = len(m_novel_module_face_sid_dict.keys()) * 6
     call_deferred("emit_percent_update", _pname, percent)
@@ -164,7 +164,7 @@ func _start_generate_module_dict_from_database():
         await continue_step
 
     #Add the module to the tables
-    m_db_wfc_adapter.insert_module_hashes(m_novel_module_hash_dict)
+    #m_db_wfc_adapter.insert_module_hashes(m_novel_module_hash_dict)
     m_db_wfc_adapter.insert_modules(m_novel_module_face_sid_dict)
     percent = 100
     call_deferred("emit_percent_update", _pname, percent)

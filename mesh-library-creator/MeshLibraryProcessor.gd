@@ -64,6 +64,7 @@ var m_state = STATE_T.RESET
 var m_logger = LogStream.new("MLP", LogStream.LogLevel.DEBUG)
 var m_mesh_dict = {}
 var m_novel_modules = []
+var m_library_dir = null
 var m_database_path = null
 
 # Hash Context
@@ -92,10 +93,11 @@ var m_flag_async_finished = false
 ##############################################################################
 # Public Functions
 ##############################################################################
-func load_library(database_path:String, force_new_database:bool = false):
+func load_library(library_dir:String, database_path:String, force_new_database:bool = false):
     m_logger.debug("Loading Library")
-    m_flag_force_new_database = force_new_database
+    m_library_dir = library_dir + "/"
     m_database_path = database_path
+    m_flag_force_new_database = force_new_database
     m_flag_start_loading_library = true
 
 func get_default_size() -> Vector2:
@@ -252,8 +254,8 @@ func _process(_delta):
                 # Determine which modules are new
                 m_logger.info("Finding Novel Modules")
                 var db_info_dict = m_db_adapter.get_file_info_dict()
-                var fs_info_dict = _get_mesh_file_info_from_dir(m_database_path)
-                m_mesh_dict = _get_mesh_dict_from_dir(m_database_path)
+                var fs_info_dict = _get_mesh_file_info_from_dir(m_library_dir)
+                m_mesh_dict = _get_mesh_dict_from_dir(m_library_dir)
                 var novel_modules = _find_novel_mesh_files(fs_info_dict, db_info_dict)
                 m_novel_modules = novel_modules.keys()
                 m_db_adapter.set_file_info_dict(novel_modules)

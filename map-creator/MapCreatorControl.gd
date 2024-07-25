@@ -47,6 +47,7 @@ var m_processor = null
 ##############################################################################
 # Exports
 ##############################################################################
+var DATABASE_NAME = "tile_database.db"
 
 ##############################################################################
 # Public Functions
@@ -75,6 +76,12 @@ func _ready():
     m_logger.set_name("MC (%s)" % m_config.get_value("config", "name"))
     m_properties = $HBMain/DictProperty
     m_processor = $MapCreatorProcessor
+    if not m_config.has_section_key("config", "database_path"):
+        var _dir = m_config.get_value("config", "path")
+        m_config.set_value("config", "database_path", "%s/%s" % [_dir, DATABASE_NAME])
+        m_config.save(m_config_file)
+
+
 
     m_props["reload_lib_button"] = {"type": "Button", "name": "Reload Library", "tooltip": "Reload Library"}
     m_props["auto_load"] = {"type": "CheckBox", "name": "Auto Load", "value": m_config.get_value("config", "auto_load"), "tooltip": "Auto Load Library on Start"}
@@ -108,12 +115,7 @@ func _process(_delta):
                 m_flag_auto_load = false
                 #XXX: TODO
                 var library_db_path = m_config.get_value("config", "library_database")
-                var tile_db_path = ""
-                if m_config.has_section_key("config", "tile_database"):
-                    tile_db_path = m_config.get_value("config", "tile_database")
-                else:
-                    var p = m_config.get_value("config", "path")
-                    tile_db_path = p + "/tile.db"
+                var tile_db_path = m_config.get_value("config", "database_path")
 
                 m_processor.convert_library_db_2_tile_db(library_db_path, tile_db_path, false, m_flag_reset_tile_db)
                 m_flag_reset_tile_db = false

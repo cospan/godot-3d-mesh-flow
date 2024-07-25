@@ -74,6 +74,7 @@ var m_prev_view_state = null
 ##############################################################################
 @export var FORCE_NEW_DB:bool = false
 @export var DEBUG:bool = false
+@export var DATABASE_NAME:String = "database.db"
 
 
 ##############################################################################
@@ -85,6 +86,11 @@ func init(_dir:String):
     m_project_path = _dir
     m_config_file = "%s/%s" % [_dir, "library.cfg"]
     m_config.load(m_config_file)
+    if not m_config.has_section_key("config", "database_path") or FORCE_NEW_DB:
+        var base_dir = m_config.get_value("config", "base_path")
+        m_config.set_value("config", "database_path", "%s/%s" % [base_dir, DATABASE_NAME])
+        m_config.save(m_config_file)
+
 
 func get_project_path():
     return m_project_path
@@ -96,7 +102,6 @@ func enable_auto_load(enable:bool):
     else:
         m_logger.debug("Disabling Auto Load")
     m_config.save(m_config_file)
-
 
 
 ##############################################################################
@@ -163,8 +168,9 @@ func _process(_delta):
             # Check if we should initiate a load?
             elif m_config.get_value("config", "auto_load") or m_flag_load_library:
                 m_flag_load_library = false
-                var working_path = m_config.get_value("config", "base_path") + "/"
-                m_mlp.load_library(working_path, m_flag_reset_library)
+                var database_path = m_config.get_value("config", "database_path")
+                var library_dir = m_config.get_value("config", "base_path")
+                m_mlp.load_library(library_dir, database_path, m_flag_reset_library)
                 m_flag_reset_library = false
                 m_next_state = STATE_TYPE.STATE_LOADING
 
@@ -206,8 +212,8 @@ func _process(_delta):
                 m_next_state = STATE_TYPE.STATE_SID_MODIFIER
 
         STATE_TYPE.STATE_MODULE_SELECTED:
-            #if m_flag_user_selected_module:
-            if m_prev_state != STATE_TYPE.STATE_MODULE_SELECTED:
+            #if m_prev_state != STATE_TYPE.STATE_MODULE_SELECTED:
+            if m_flag_user_selected_module:
                 m_flag_user_selected_module = false
                 m_flag_user_selected_face = false
                 m_next_view_state = VIEW_STATE_TYPE.VIEW_STATE_MODULE
