@@ -47,12 +47,12 @@ const MODULE_TABLE_SCHEME = {
     "name": {"data_type":"text", "primary_key":true, "not_null":true, "auto_increment":false},
     "md5" :  {"data_type":"text", "not_null":false},
 
-    "front_face_index"  : {"data_type":"int", "not_null":false},
-    "back_face_index"   : {"data_type":"int", "not_null":false},
-    "top_face_index"    : {"data_type":"int", "not_null":false},
-    "bottom_face_index" : {"data_type":"int", "not_null":false},
-    "right_face_index"  : {"data_type":"int", "not_null":false},
-    "left_face_index"   : {"data_type":"int", "not_null":false}
+    "front_sid"  : {"data_type":"int", "not_null":false},
+    "back_sid"   : {"data_type":"int", "not_null":false},
+    "top_sid"    : {"data_type":"int", "not_null":false},
+    "bottom_sid" : {"data_type":"int", "not_null":false},
+    "right_sid"  : {"data_type":"int", "not_null":false},
+    "left_sid"   : {"data_type":"int", "not_null":false}
 }
 
 const SID_TABLE = "sid"
@@ -63,9 +63,16 @@ const SID_TABLE_SCHEME = {
     "module_list" : {"data_type":"blob",  "not_null":false}
 }
 
-var m_tables = {CONFIG_TABLE  : CONFIG_TABLE_SCHEME,
-                MODULE_TABLE  : MODULE_TABLE_SCHEME,
-                SID_TABLE     : SID_TABLE_SCHEME}
+const REFLECTED_SID_TABLE = "reflected_sids"
+const REFLECTED_SID_TABLE_SCHEME = {
+    "new_sid" : {"data_type":"int", "primary_key":true, "not_null":true, "auto_increment":false},
+    "reflected_sid" : {"data_type":"int", "not_null":true}
+}
+
+var m_tables = {CONFIG_TABLE        : CONFIG_TABLE_SCHEME,
+                MODULE_TABLE        : MODULE_TABLE_SCHEME,
+                SID_TABLE           : SID_TABLE_SCHEME,
+                REFLECTED_SID_TABLE : REFLECTED_SID_TABLE_SCHEME}
 
 ##############################################################################
 # Public Functions
@@ -102,25 +109,27 @@ func open_database(database_path: String, clear_rows: bool = false, force_new_ta
             m_database.create_table(table, m_tables[table])
 
 
+funct clear_module_table():
+    m_logger.debug("Entered clear_module_table")
+    m_database.delete_rows(MODULE_TABLE, "*")
+
+func insert_module(_name:String, _mesh_dict:Dictionary):
+    m_logger.debug("Entered insert_module")
+    pass
+
 func insert_modules(dict):
     m_logger.debug("Entered update_module")
     m_database.delete_rows(MODULE_TABLE, "*")
     for _name in dict.keys():
         #Change the face indexes to the text label
         var d = { "name": _name,
-                  "front_face_index":      dict[_name][FACE_T.FRONT]["sid"],
-                  "back_face_index":       dict[_name][FACE_T.BACK]["sid"],
-                  "top_face_index":        dict[_name][FACE_T.TOP]["sid"],
-                  "bottom_face_index":     dict[_name][FACE_T.BOTTOM]["sid"],
-                  "right_face_index":      dict[_name][FACE_T.RIGHT]["sid"],
-                  "left_face_index":       dict[_name][FACE_T.LEFT]["sid"],
+                  "front_sid":      dict[_name][FACE_T.FRONT]["sid"],
+                  "back_sid":       dict[_name][FACE_T.BACK]["sid"],
+                  "top_sid":        dict[_name][FACE_T.TOP]["sid"],
+                  "bottom_sid":     dict[_name][FACE_T.BOTTOM]["sid"],
+                  "right_sid":      dict[_name][FACE_T.RIGHT]["sid"],
+                  "left_sid":       dict[_name][FACE_T.LEFT]["sid"],
 
-                  "front_face_reflected":  dict[_name][FACE_T.FRONT]["reflected"],
-                  "back_face_reflected":   dict[_name][FACE_T.BACK]["reflected"],
-                  "top_face_reflected":    dict[_name][FACE_T.TOP]["reflected"],
-                  "bottom_face_reflected": dict[_name][FACE_T.BOTTOM]["reflected"],
-                  "right_face_reflected":  dict[_name][FACE_T.RIGHT]["reflected"],
-                  "left_face_reflected":   dict[_name][FACE_T.LEFT]["reflected"]
         }
 
         m_database.insert_row(MODULE_TABLE, d)
@@ -141,7 +150,7 @@ func insert_sid_socket_map(sid_dict:Dictionary):
 func get_module_dict() -> Dictionary:
     m_logger.debug("Get all modules dictionary")
     var module_dict = {}
-    var rows = m_database.select_rows(MODULE_TABLE, "", ["name", "front_face_index", "back_face_index", "top_face_index", "bottom_face_index", "right_face_index", "left_face_index", "front_face_reflected", "back_face_reflected", "top_face_reflected", "bottom_face_reflected", "right_face_reflected", "left_face_reflected"])
+    var rows = m_database.select_rows(MODULE_TABLE, "", ["name", "front_sid", "back_sid", "top_sid", "bottom_sid", "right_sid", "left_sid", "front_face_reflected", "back_face_reflected", "top_face_reflected", "bottom_face_reflected", "right_face_reflected", "left_face_reflected"])
 
     for row in rows:
         var _name = row["name"]
@@ -153,19 +162,12 @@ func get_module_dict() -> Dictionary:
         module_dict[_name][FACE_T.RIGHT ] = {}
         module_dict[_name][FACE_T.LEFT  ] = {}
 
-        module_dict[_name][FACE_T.FRONT ]["sid"] = row["front_face_index"]
-        module_dict[_name][FACE_T.BACK  ]["sid"] = row["back_face_index"]
-        module_dict[_name][FACE_T.TOP   ]["sid"] = row["top_face_index"]
-        module_dict[_name][FACE_T.BOTTOM]["sid"] = row["bottom_face_index"]
-        module_dict[_name][FACE_T.RIGHT ]["sid"] = row["right_face_index"]
-        module_dict[_name][FACE_T.LEFT  ]["sid"] = row["left_face_index"]
-
-        module_dict[_name][FACE_T.FRONT ]["reflected"] = row["front_face_reflected"]
-        module_dict[_name][FACE_T.BACK  ]["reflected"] = row["back_face_reflected"]
-        module_dict[_name][FACE_T.TOP   ]["reflected"] = row["top_face_reflected"]
-        module_dict[_name][FACE_T.BOTTOM]["reflected"] = row["bottom_face_reflected"]
-        module_dict[_name][FACE_T.RIGHT ]["reflected"] = row["right_face_reflected"]
-        module_dict[_name][FACE_T.LEFT  ]["reflected"] = row["left_face_reflected"]
+        module_dict[_name][FACE_T.FRONT ]["sid"] = row["front_sid"]
+        module_dict[_name][FACE_T.BACK  ]["sid"] = row["back_sid"]
+        module_dict[_name][FACE_T.TOP   ]["sid"] = row["top_sid"]
+        module_dict[_name][FACE_T.BOTTOM]["sid"] = row["bottom_sid"]
+        module_dict[_name][FACE_T.RIGHT ]["sid"] = row["right_sid"]
+        module_dict[_name][FACE_T.LEFT  ]["sid"] = row["left_sid"]
 
     return module_dict
 
@@ -180,9 +182,9 @@ func _ready():
     m_tables[MODULE_TABLE]  = MODULE_TABLE_SCHEME
     m_tables[SID_TABLE]     = SID_TABLE_SCHEME
 
-func _face_name_from_index(face_index, base_agnostic = false) -> String:
+func _face_name_from_index(sid, base_agnostic = false) -> String:
     if (base_agnostic):
-        match(face_index):
+        match(sid):
             FACE_T.FRONT:
                 return "ba_front"
             FACE_T.BACK:
@@ -196,7 +198,7 @@ func _face_name_from_index(face_index, base_agnostic = false) -> String:
             FACE_T.LEFT:
                 return "ba_left"
     else:
-        match(face_index):
+        match(sid):
             FACE_T.FRONT:
                 return "front"
             FACE_T.BACK:
