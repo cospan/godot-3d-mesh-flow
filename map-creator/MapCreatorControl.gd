@@ -198,7 +198,7 @@ func _property_changed(prop_name:String, value):
         "clear_db":
             m_config.set_value("config", "clear_db", value)
         "reload_lib_button":
-            m_processor.reload_library()
+            m_flag_load_library = true
         "select_db":
             m_logger.debug("Select DB Button Pressed!")
             m_flag_select_new_db = true

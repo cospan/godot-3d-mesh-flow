@@ -17,8 +17,8 @@ func emit_percent_update(_name:String, _percent:float):
 ##############################################################################
 const GENERATE_FID_DICT_NAME = "Generate FID Dict"
 const GENERATE_MODULE_DICT_NAME = "Generate Module Dict"
-const RESOLVE_FIDS_NAME = "Resolve FIDS"
 const EXPAND_MODULE_DICT_NAME = "Expand Module Dict"
+const INSERT_INTO_DATABASE = "Insert Into Database"
 
 ##############################################################################
 # Members
@@ -29,9 +29,9 @@ var m_db_wfc_adapter
 var m_flag_async_finished:bool = true
 var m_flag_process_database:bool = false
 
-var m_sid_socket_map = {}
 var m_module_face_sid_dict = {}
 var m_expanded_module_face_sid_dict = {}
+var m_reflected_sid_dict = {}
 
 #var m_existing_module_face_sid_dict = {}
 #var m_existing_module_hash_dict = {}
@@ -45,7 +45,7 @@ enum STATE_T {
   GENERATE_FID_DICT,
   GENERATE_MODULE_DICT,
   GENERATE_EXPANDED_MODULE_DICT,
-	INSERT_INTO_DATABASE
+  INSERT_INTO_DATABASE
 }
 var m_state = STATE_T.IDLE
 
@@ -72,16 +72,9 @@ func _process(_delta):
                 m_flag_process_database = false
                 #m_existing_module_face_sid_dict = m_db_wfc_adapter.get_module_dict()
                 #m_existing_module_hash_dict = m_db_wfc_adapter.get_module_hash_dict()
-                _start_generate_sid_dict_from_database()
-                m_state = STATE_T.GENERATE_FID_DICT
-                m_logger.debug("_process: IDLE -> GENERATE_FID_DICT")
-        STATE_T.GENERATE_FID_DICT:
-            if not m_flag_async_finished:
-                emit_signal("continue_step")
-            else:
                 _start_generate_module_dict_from_database()
                 m_state = STATE_T.GENERATE_MODULE_DICT
-                m_logger.debug("_process: GENERATE_FID_DICT -> GENERATE_MODULE_DICT")
+                m_logger.debug("_process: IDLE -> GENERATE_MODULE_DICT")
         STATE_T.GENERATE_MODULE_DICT:
             if not m_flag_async_finished:
                 emit_signal("continue_step")
@@ -94,54 +87,19 @@ func _process(_delta):
             if not m_flag_async_finished:
                 emit_signal("continue_step")
             else:
-                m_logger.debug("_process: GENERATE_EXPANDED_MODULE_DICT -> IDLE")
+                m_logger.debug("_process: GENERATE_EXPANDED_MODULE_DICT -> INSERT_INTO_DATABASE")
+                m_state = STATE_T.INSERT_INTO_DATABASE
+                _start_insert_database()
+                emit_signal("finished_loading")
+        STATE_T.INSERT_INTO_DATABASE:
+            if not m_flag_async_finished:
+                emit_signal("continue_step")
+            else:
+                m_logger.debug("_process: INSERT_INTO_DATABASE -> IDLE")
                 m_state = STATE_T.IDLE
                 emit_signal("finished_loading")
         _:
             pass
-
-########################################
-# Generate FID Dict From Database
-########################################
-func _start_generate_sid_dict_from_database():
-    m_logger.debug("Entered: generate_sid_dict_from_database")
-    var percent = 0.0
-    m_flag_async_finished = false
-    var _pname = GENERATE_FID_DICT_NAME
-
-    var sids_hash_dict = m_db_adapter.get_sids_hash_dict()
-    var hash_dict = m_db_adapter.get_hash_dict()
-    var hash_face_dict = m_db_adapter.get_hash_name_face_tuple_dict()
-    var sids_list = sids_hash_dict.keys()
-    m_sid_socket_map = {}
-
-    var total_size = len(sids_list)
-    call_deferred("emit_percent_update", _pname, percent)
-
-    for i in len(sids_list):
-        var sid = sids_list[i]
-        #var vid = sids_hash_dict
-        var _hash_list = sids_hash_dict[sid]
-        var mlist = []
-        # Generate an array of module, faces that are associated with the FID,
-        # The generated list will have a flags indicating the rotation and the flipped
-
-        for _hash in  _hash_list:
-            for mft in hash_face_dict[_hash]:
-                mft.append(hash_dict[_hash]["symmetric"])
-                mft.append(hash_dict[_hash]["reflected"])
-                mlist.append(mft)
-        m_sid_socket_map[sid] = mlist
-        percent = (float((i + 1)) / total_size) * 100.0
-        call_deferred("emit_percent_update", _pname, percent)
-        await continue_step
-
-    percent = 100
-
-    #XXX: Add the 'sid_socket_map' to the Tile Database
-
-    call_deferred("emit_percent_update", _pname, percent)
-    m_flag_async_finished = true
 
 ########################################
 # Generate Module Dict From Database
@@ -209,9 +167,21 @@ func _start_generate_expanded_module_dict():
     var _pname = EXPAND_MODULE_DICT_NAME
 
     var total_size = len(m_module_face_sid_dict.keys())
+    var sid_list_array = m_db_adapter.get_sids()
+    var sid_list:Array = []
+    for s in sid_list_array:
+        if not sid_list.has(s):
+            sid_list.append(s)
+
 
     call_deferred("emit_percent_update", _pname, percent)
     var index = 0
+    m_reflected_sid_dict = {}
+    sid_list.sort()
+    var next_sid = sid_list[-1] + 1
+
+    for sid in sid_list:
+        m_reflected_sid_dict[sid] = -1
 
     for m in m_module_face_sid_dict.keys():
         var module = m_module_face_sid_dict[m]
@@ -221,54 +191,56 @@ func _start_generate_expanded_module_dict():
         var face_reflect_table = {0:false, 1:false, 2:false, 3:false, 4:false, 5:false}
         for f in module["faces"].keys():
             if not module["faces"][f]["symmetric"]:
+                var s = module["faces"][f]["sid"]
+                if m_reflected_sid_dict[s] == -1:
+                    m_reflected_sid_dict[s] = next_sid
+                    next_sid += 1
+
                 face_asymmetric_table[f] = true
             if module["faces"][f]["reflected"]:
                 face_reflect_table[f] = true
 
+        # Check if any face is asymmetric, if so we want to create a unique sid for the reflected version of the SID
+
         # Copy the module to the expanded module dict
-        m_expanded_module_face_sid_dict[m] = module.duplicate()
+        var emodule = module.duplicate(true)
+        for f in module["faces"]:
+            emodule["faces"][f] = module["faces"][f]["sid"]
+        m_expanded_module_face_sid_dict[m] = emodule
 
         # Check if the front:0 and back:1 are reflected, if so generate a new module
         # Where we flip along the x axis, this means the front and back faces are now
         # unreflected but the left and right faces are still reflected and the left is now the right
         # and the right is now the left
         if face_asymmetric_table[0] or face_asymmetric_table[1]:
-            var new_module = module.duplicate()
+            var new_module = emodule.duplicate(true)
             new_module["x_flip"] = true
             new_module["y_flip"] = false
-            if module["faces"][0]["symmetric"]:
-                new_module["faces"][0]["reflected"] = not module["faces"][0]["reflected"]
-            if module["faces"][1]["symmetric"]:
-                new_module["faces"][1]["reflected"] = not module["faces"][1]["reflected"]
-            new_module["faces"][4] = module["faces"][5]
-            new_module["faces"][5] = module["faces"][4]
+            if not module["faces"][0]["symmetric"]:
+                new_module["faces"][0] = m_reflected_sid_dict[emodule["faces"][0]]
+            if not module["faces"][1]["symmetric"]:
+                new_module["faces"][1] = m_reflected_sid_dict[emodule["faces"][1]]
+            new_module["faces"][4] = emodule["faces"][5]
+            new_module["faces"][5] = emodule["faces"][4]
             var nm_name = m + "_rx"
             m_expanded_module_face_sid_dict[nm_name] = new_module
-            # We now need to update m_sid_socket_map with the new module
-            for face in new_module["faces"].keys():
-                var sid = new_module["faces"][face]["sid"]
-                m_sid_socket_map[sid].append([nm_name, face, new_module["faces"][face]["reflected"]])
 
         # Check if the right:4 and left:5 are reflected, if so generate a new module
         # Where we flip along the y axis, this means the right and left faces are now
         # unreflected but the front and back faces are still reflected and the front is now the back
         # and the back is now the front
         if face_asymmetric_table[4] or face_asymmetric_table[5]:
-            var new_module = module.duplicate()
+            var new_module = emodule.duplicate(true)
             new_module["x_flip"] = false
             new_module["y_flip"] = true
-            if module["faces"][4]["symmetric"]:
-                new_module["faces"][4]["reflected"] = not module["faces"][4]["reflected"]
-            if module["faces"][5]["symmetric"]:
-                new_module["faces"][5]["reflected"] = not module["faces"][5]["reflected"]
-            new_module["faces"][0] = module["faces"][1]
-            new_module["faces"][1] = module["faces"][0]
+            if not module["faces"][4]["symmetric"]:
+                new_module["faces"][4] = m_reflected_sid_dict[emodule["faces"][4]]
+            if not module["faces"][5]["symmetric"]:
+                new_module["faces"][5] = m_reflected_sid_dict[emodule["faces"][5]]
+            new_module["faces"][0] = emodule["faces"][1]
+            new_module["faces"][1] = emodule["faces"][0]
             var nm_name = m + "_ry"
             m_expanded_module_face_sid_dict[nm_name] = new_module
-            # We now need to update m_sid_socket_map with the new module
-            for face in new_module["faces"].keys():
-                var sid = new_module["faces"][face]["sid"]
-                m_sid_socket_map[sid].append([nm_name, face, new_module["faces"][face]["reflected"]])
 
         # Check if a face in the front or back and a face in the left or right are reflected
         # if so generate a new module where we flip along the x and y axis
@@ -276,27 +248,23 @@ func _start_generate_expanded_module_dict():
         # unreflected and the front is now the back and the back is now the front and the left is now the right
         # and the right is now the left
         if (face_asymmetric_table[0] or face_asymmetric_table[1]) and (face_asymmetric_table[4] or face_asymmetric_table[5]):
-            var new_module = module.duplicate()
+            var new_module = emodule.duplicate(true)
             new_module["x_flip"] = true
             new_module["y_flip"] = true
-            if module["faces"][0]["symmetric"]:
-                new_module["faces"][0]["reflected"] = not module["faces"][0]["reflected"]
-            if module["faces"][1]["symmetric"]:
-                new_module["faces"][1]["reflected"] = not module["faces"][1]["reflected"]
-            if module["faces"][4]["symmetric"]:
-                new_module["faces"][4]["reflected"] = not module["faces"][4]["reflected"]
-            if module["faces"][5]["symmetric"]:
-                new_module["faces"][5]["reflected"] = not module["faces"][5]["reflected"]
-            new_module["faces"][0] = module["faces"][1]
-            new_module["faces"][1] = module["faces"][0]
-            new_module["faces"][4] = module["faces"][5]
-            new_module["faces"][5] = module["faces"][4]
+            if not module["faces"][0]["symmetric"]:
+                new_module["faces"][0] = m_reflected_sid_dict[emodule["faces"][0]]
+            if not module["faces"][1]["symmetric"]:
+                new_module["faces"][1] = m_reflected_sid_dict[emodule["faces"][1]]
+            if not module["faces"][4]["symmetric"]:
+                new_module["faces"][4] = m_reflected_sid_dict[emodule["faces"][4]]
+            if not module["faces"][5]["symmetric"]:
+                new_module["faces"][5] = m_reflected_sid_dict[emodule["faces"][5]]
+            new_module["faces"][0] = emodule["faces"][1]
+            new_module["faces"][1] = emodule["faces"][0]
+            new_module["faces"][4] = emodule["faces"][5]
+            new_module["faces"][5] = emodule["faces"][4]
             var nm_name = m + "_rxry"
             m_expanded_module_face_sid_dict[nm_name] = new_module
-            # We now need to update m_sid_socket_map with the new module
-            for face in new_module["faces"].keys():
-                var sid = new_module["faces"][face]["sid"]
-                m_sid_socket_map[sid].append([nm_name, face, new_module["faces"][face]["reflected"]])
 
 
 
@@ -306,20 +274,69 @@ func _start_generate_expanded_module_dict():
         await continue_step
 
     percent = 100
+    #m_db_wfc_adapter.insert_expanded_modules_and_sids(
+    #            m_expanded_module_face_sid_dict,
+    #            m_reflected_sid_dict)
     call_deferred("emit_percent_update", _pname, percent)
     m_flag_async_finished = true
 
 func _start_insert_database():
-		m_logger.debug("Entered: insert_database")
-		m_flag_async_finished = false
-		var _pname = RESOLVE_FIDS_NAME
-		var percent = 0.0
-		call_deferred("emit_percent_update", _pname, percent)
-		for module in m_expanded_module_face_sid_dict.keys():
-				percent += 1.0
-				call_deferred("emit_percent_update", _pname, percent)
-				await continue_step
+    m_logger.debug("Entered: insert_database")
+    m_db_wfc_adapter.clear_tables()
+    m_flag_async_finished = false
+    var _pname = INSERT_INTO_DATABASE
+    var percent = 0.0
+    var total_size = len(m_reflected_sid_dict.keys())
+    call_deferred("emit_percent_update", _pname, percent)
+    # Insert Reflected SID Elements
+    m_logger.debug("Insert Reflected SID Elements")
+    percent = 0.0
+    for sid in m_reflected_sid_dict.keys():
+        m_db_wfc_adapter.insert_reflected_sid(sid, m_reflected_sid_dict[sid])
+        percent += 1.0
+        call_deferred("emit_percent_update", _pname, percent)
+        await continue_step
 
-		percent = 100
-		call_deferred("emit_percent_update", _pname, percent)
-		m_flag_async_finished = true
+    percent = 100.0
+    call_deferred("emit_percent_update", _pname, percent)
+    # Insert Expanded Module Elements
+
+    var sid_dict = {}
+
+    percent = 0.0
+    _pname = "Insert Expanded Module Elements"
+    m_logger.debug("Insert Expanded Module Elements")
+    for module in m_expanded_module_face_sid_dict.keys():
+        var d = m_expanded_module_face_sid_dict[module]
+        m_db_wfc_adapter.insert_expanded_module(module, d["x_flip"], d["y_flip"], d["faces"])
+        for f in d["faces"].keys():
+            var fsid = d["faces"][f]
+            if not sid_dict.has(fsid):
+                if not m_reflected_sid_dict.has(fsid):
+                    # This means we are looking at a reflected face, not an original
+                    continue
+                sid_dict[fsid] = {"asymmetric": 0, "module_list": []}
+                if m_reflected_sid_dict[fsid] != -1:
+                    sid_dict[fsid]["asymmetric"] = 1
+            sid_dict[fsid]["module_list"].append(module)
+
+        percent += 1.0
+        call_deferred("emit_percent_update", _pname, percent)
+        await continue_step
+
+    percent = 100
+    call_deferred("emit_percent_update", _pname, percent)
+
+    _pname = "Insert SID Module List"
+    m_logger.debug("Insert SID Module List")
+    percent = 0.0
+    for sid in sid_dict.keys():
+        m_db_wfc_adapter.insert_sid_mapping(sid, sid_dict[sid]["asymmetric"], sid_dict[sid]["module_list"])
+        percent += 1.0
+        call_deferred("emit_percent_update", _pname, percent)
+        await continue_step
+
+    percent = 100
+    call_deferred("emit_percent_update", _pname, percent)
+    m_flag_async_finished = true
+

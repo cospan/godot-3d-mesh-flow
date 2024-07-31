@@ -26,6 +26,8 @@ const LOGGER_NAME = "WFC DB Adapter"
 ##############################################################################
 var m_logger = LogStream.new(LOGGER_NAME, LogStream.LogLevel.INFO)
 var m_database : SQLite
+var m_sid_dict = {}
+var m_reflected_sid_dict = {}
 
 ##############################################################################
 # Table Definitions
@@ -46,13 +48,14 @@ const MODULE_TABLE = "modules"
 const MODULE_TABLE_SCHEME = {
     "name": {"data_type":"text", "primary_key":true, "not_null":true, "auto_increment":false},
     "md5" :  {"data_type":"text", "not_null":false},
-
-    "front_sid"  : {"data_type":"int", "not_null":false},
-    "back_sid"   : {"data_type":"int", "not_null":false},
-    "top_sid"    : {"data_type":"int", "not_null":false},
-    "bottom_sid" : {"data_type":"int", "not_null":false},
-    "right_sid"  : {"data_type":"int", "not_null":false},
-    "left_sid"   : {"data_type":"int", "not_null":false}
+    "x_flip": {"data_type":"int", "not_null":false},
+    "y_flip": {"data_type":"int", "not_null":false},
+    "front"  : {"data_type":"int", "not_null":false},
+    "back"   : {"data_type":"int", "not_null":false},
+    "top"    : {"data_type":"int", "not_null":false},
+    "bottom" : {"data_type":"int", "not_null":false},
+    "right"  : {"data_type":"int", "not_null":false},
+    "left"   : {"data_type":"int", "not_null":false}
 }
 
 const SID_TABLE = "sid"
@@ -65,7 +68,7 @@ const SID_TABLE_SCHEME = {
 
 const REFLECTED_SID_TABLE = "reflected_sids"
 const REFLECTED_SID_TABLE_SCHEME = {
-    "new_sid" : {"data_type":"int", "primary_key":true, "not_null":true, "auto_increment":false},
+    "sid" : {"data_type":"int", "primary_key":true, "not_null":true, "auto_increment":false},
     "reflected_sid" : {"data_type":"int", "not_null":true}
 }
 
@@ -109,78 +112,96 @@ func open_database(database_path: String, clear_rows: bool = false, force_new_ta
             m_database.create_table(table, m_tables[table])
 
 
-funct clear_module_table():
-    m_logger.debug("Entered clear_module_table")
-    m_database.delete_rows(MODULE_TABLE, "*")
-
-func insert_module(_name:String, _mesh_dict:Dictionary):
-    m_logger.debug("Entered insert_module")
-    pass
-
-func insert_modules(dict):
+func insert_expanded_modules_and_sids(dict = {}, reflected_dict = {}):
     m_logger.debug("Entered update_module")
     m_database.delete_rows(MODULE_TABLE, "*")
-    for _name in dict.keys():
-        #Change the face indexes to the text label
-        var d = { "name": _name,
-                  "front_sid":      dict[_name][FACE_T.FRONT]["sid"],
-                  "back_sid":       dict[_name][FACE_T.BACK]["sid"],
-                  "top_sid":        dict[_name][FACE_T.TOP]["sid"],
-                  "bottom_sid":     dict[_name][FACE_T.BOTTOM]["sid"],
-                  "right_sid":      dict[_name][FACE_T.RIGHT]["sid"],
-                  "left_sid":       dict[_name][FACE_T.LEFT]["sid"],
+    m_database.delete_rows(REFLECTED_SID_TABLE, "*")
+    m_database.delete_rows(SID_TABLE, "*")
 
+    m_logger.debug("Writing Reflected SID Table")
+    for s in reflected_dict.keys():
+        var d = { "sid": s,
+                  "reflected_sid": reflected_dict[s]
+        }
+        m_database.insert_row(REFLECTED_SID_TABLE, d)
+
+    m_sid_dict = {}
+
+    m_logger.debug("Writing Module Table")
+    for _name in dict.keys():
+        var d = { "name":       _name,
+                  "x_flip":     dict[_name]["x_flip"],
+                  "y_flip":     dict[_name]["y_flip"],
+                  "front":      dict[_name]["faces"][FACE_T.FRONT],
+                  "back":       dict[_name]["faces"][FACE_T.BACK],
+                  "top":        dict[_name]["faces"][FACE_T.TOP],
+                  "bottom":     dict[_name]["faces"][FACE_T.BOTTOM],
+                  "right":      dict[_name]["faces"][FACE_T.RIGHT],
+                  "left":       dict[_name]["faces"][FACE_T.LEFT],
         }
 
         m_database.insert_row(MODULE_TABLE, d)
 
-func insert_sid_socket_map(sid_dict:Dictionary):
-    m_logger.debug("Entered insert_sids")
-    #Each SID is dictionary with the following keys:
-    # "sid" : int
-    # "asymmetric" : int
-    # "module_list" : Array of Strings
-    m_database.delete_rows(SID_TABLE, "*")
-    for sid in sid_dict.keys():
-        var d = { "sid" : sid,
-                  "asymmetric" : sid_dict[sid]["asymmetric"],
-                  "module_list" : sid_dict[sid]["module_list"] }
+        for f in dict[_name]["faces"].keys():
+            var fsid = dict[_name]["faces"][f]
+            if not m_sid_dict.has(fsid):
+                if not reflected_dict.keys().has(fsid):
+                    continue
+                m_sid_dict[fsid] = {"asymmetric": 0, "module_list": []}
+                if reflected_dict[fsid] != -1:
+                    m_sid_dict[fsid]["asymmetric"] = 1
+
+            m_sid_dict[fsid]["module_list"].append([name, f])
+
+    m_logger.debug("Writing SID Table")
+    for sid in m_sid_dict.keys():
+        var d = { "sid": sid,
+                  "asymmetric": m_sid_dict[sid]["asymmetric"],
+                  "module_list": var_to_bytes(m_sid_dict[sid]["module_list"])
+        }
         m_database.insert_row(SID_TABLE, d)
 
-func get_module_dict() -> Dictionary:
-    m_logger.debug("Get all modules dictionary")
-    var module_dict = {}
-    var rows = m_database.select_rows(MODULE_TABLE, "", ["name", "front_sid", "back_sid", "top_sid", "bottom_sid", "right_sid", "left_sid", "front_face_reflected", "back_face_reflected", "top_face_reflected", "bottom_face_reflected", "right_face_reflected", "left_face_reflected"])
 
-    for row in rows:
-        var _name = row["name"]
-        module_dict[_name] = {}
-        module_dict[_name][FACE_T.FRONT]  = {}
-        module_dict[_name][FACE_T.BACK  ] = {}
-        module_dict[_name][FACE_T.TOP   ] = {}
-        module_dict[_name][FACE_T.BOTTOM] = {}
-        module_dict[_name][FACE_T.RIGHT ] = {}
-        module_dict[_name][FACE_T.LEFT  ] = {}
+func clear_tables():
+        m_logger.debug("Entered clear_tables")
+        m_database.delete_rows(MODULE_TABLE, "*")
+        m_database.delete_rows(REFLECTED_SID_TABLE, "*")
+        m_database.delete_rows(SID_TABLE, "*")
 
-        module_dict[_name][FACE_T.FRONT ]["sid"] = row["front_sid"]
-        module_dict[_name][FACE_T.BACK  ]["sid"] = row["back_sid"]
-        module_dict[_name][FACE_T.TOP   ]["sid"] = row["top_sid"]
-        module_dict[_name][FACE_T.BOTTOM]["sid"] = row["bottom_sid"]
-        module_dict[_name][FACE_T.RIGHT ]["sid"] = row["right_sid"]
-        module_dict[_name][FACE_T.LEFT  ]["sid"] = row["left_sid"]
+func insert_reflected_sid(sid, reflected_sid):
+        var d = { "sid": sid,
+                            "reflected_sid": reflected_sid
+        }
+        m_database.insert_row(REFLECTED_SID_TABLE, d)
 
-    return module_dict
+func insert_expanded_module(name, x_flip, y_flip, faces):
+        m_logger.debug("Entered insert_expanded_module")
+        var d = { "name":       name,
+                            "x_flip":     x_flip,
+                            "y_flip":     y_flip,
+                            "front":      faces[FACE_T.FRONT],
+                            "back":       faces[FACE_T.BACK],
+                            "top":        faces[FACE_T.TOP],
+                            "bottom":     faces[FACE_T.BOTTOM],
+                            "right":      faces[FACE_T.RIGHT],
+                            "left":       faces[FACE_T.LEFT],
+        }
+        m_database.insert_row(MODULE_TABLE, d)
+
+func insert_sid_mapping(sid:int, asymmetric_flag:int, module_list: Array):
+        m_logger.debug("Entered insert_sid_mapping")
+        var d = { "sid": sid,
+                            "asymmetric": asymmetric_flag,
+                            "module_list": var_to_bytes(module_list)
+        }
+        m_database.insert_row(SID_TABLE, d)
 
 
 ###############################################################################
-# Functions
+# Private Functions
 ###############################################################################
 func _ready():
-    #if DEBUG:
-    #    m_logger.set_current_level = LogStream.LogLevel.DEBUG
-    m_tables[CONFIG_TABLE]  = CONFIG_TABLE_SCHEME
-    m_tables[MODULE_TABLE]  = MODULE_TABLE_SCHEME
-    m_tables[SID_TABLE]     = SID_TABLE_SCHEME
+    m_logger.debug("Entered _ready")
 
 func _face_name_from_index(sid, base_agnostic = false) -> String:
     if (base_agnostic):
