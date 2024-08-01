@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://map-creator/MapCreatorControl.gd" id="1_yif36"]
 [ext_resource type="PackedScene" uid="uid://bjn216f0xxwjc" path="res://utils/DictProperty.tscn" id="2_chocf"]
 [ext_resource type="Script" path="res://map-creator/SVPContainerMapView.gd" id="3_ed66u"]
-[ext_resource type="Script" path="res://map-creator/MapView.gd" id="4_sb11a"]
+[ext_resource type="PackedScene" uid="uid://danpho43p7mup" path="res://map-creator/MapView.tscn" id="4_t6mls"]
 [ext_resource type="PackedScene" uid="uid://cusy2ap8wcgj3" path="res://map-creator/MapCreatorProcessor.tscn" id="5_0gjwp"]
 [ext_resource type="PackedScene" uid="uid://d1xbj35rutf18" path="res://utils/ConfirmDialogAsync.tscn" id="6_7l1ty"]
 [ext_resource type="Script" path="res://map-creator/DatabaseFileDialog.gd" id="7_qiabe"]
@@ -46,8 +46,7 @@ handle_input_locally = false
 physics_object_picking = true
 render_target_update_mode = 4
 
-[node name="MapView" type="Node3D" parent="HBMain/VBMain/SVPContainer/SVP"]
-script = ExtResource("4_sb11a")
+[node name="MapView" parent="HBMain/VBMain/SVPContainer/SVP" instance=ExtResource("4_t6mls")]
 
 [node name="VBFaceVectorView" type="VBoxContainer" parent="HBMain"]
 visible = false

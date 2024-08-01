@@ -197,7 +197,7 @@ func set_camera_top_view():
 func _ready():
     if DEBUG:
       m_logger.set_current_level = LogStream.LogLevel.DEBUG
-    m_camera = $Camera
+    m_camera = $Camera3D
     m_camera_dest_pos = m_camera_top_pos
     m_camera_dest_rot = m_camera_top_rotation
 
