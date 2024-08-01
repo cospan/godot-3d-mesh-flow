@@ -151,7 +151,7 @@ func insert_expanded_modules_and_sids(dict = {}, reflected_dict = {}):
                 if reflected_dict[fsid] != -1:
                     m_sid_dict[fsid]["asymmetric"] = 1
 
-            m_sid_dict[fsid]["module_list"].append([name, f])
+            m_sid_dict[fsid]["module_list"].append([_name, f])
 
     m_logger.debug("Writing SID Table")
     for sid in m_sid_dict.keys():
@@ -163,38 +163,38 @@ func insert_expanded_modules_and_sids(dict = {}, reflected_dict = {}):
 
 
 func clear_tables():
-        m_logger.debug("Entered clear_tables")
-        m_database.delete_rows(MODULE_TABLE, "*")
-        m_database.delete_rows(REFLECTED_SID_TABLE, "*")
-        m_database.delete_rows(SID_TABLE, "*")
+    m_logger.debug("Entered clear_tables")
+    m_database.delete_rows(MODULE_TABLE, "*")
+    m_database.delete_rows(REFLECTED_SID_TABLE, "*")
+    m_database.delete_rows(SID_TABLE, "*")
 
 func insert_reflected_sid(sid, reflected_sid):
-        var d = { "sid": sid,
-                            "reflected_sid": reflected_sid
-        }
-        m_database.insert_row(REFLECTED_SID_TABLE, d)
+    var d = { "sid": sid,
+              "reflected_sid": reflected_sid
+    }
+    m_database.insert_row(REFLECTED_SID_TABLE, d)
 
-func insert_expanded_module(name, x_flip, y_flip, faces):
-        m_logger.debug("Entered insert_expanded_module")
-        var d = { "name":       name,
-                            "x_flip":     x_flip,
-                            "y_flip":     y_flip,
-                            "front":      faces[FACE_T.FRONT],
-                            "back":       faces[FACE_T.BACK],
-                            "top":        faces[FACE_T.TOP],
-                            "bottom":     faces[FACE_T.BOTTOM],
-                            "right":      faces[FACE_T.RIGHT],
-                            "left":       faces[FACE_T.LEFT],
-        }
-        m_database.insert_row(MODULE_TABLE, d)
+func insert_expanded_module(_name, x_flip, y_flip, faces):
+    m_logger.debug("Entered insert_expanded_module")
+    var d = { "name":       _name,
+              "x_flip":     x_flip,
+              "y_flip":     y_flip,
+              "front":      faces[FACE_T.FRONT],
+              "back":       faces[FACE_T.BACK],
+              "top":        faces[FACE_T.TOP],
+              "bottom":     faces[FACE_T.BOTTOM],
+              "right":      faces[FACE_T.RIGHT],
+              "left":       faces[FACE_T.LEFT],
+    }
+    m_database.insert_row(MODULE_TABLE, d)
 
 func insert_sid_mapping(sid:int, asymmetric_flag:int, module_list: Array):
-        m_logger.debug("Entered insert_sid_mapping")
-        var d = { "sid": sid,
-                            "asymmetric": asymmetric_flag,
-                            "module_list": var_to_bytes(module_list)
-        }
-        m_database.insert_row(SID_TABLE, d)
+    m_logger.debug("Entered insert_sid_mapping")
+    var d = { "sid": sid,
+              "asymmetric": asymmetric_flag,
+              "module_list": var_to_bytes(module_list)
+    }
+    m_database.insert_row(SID_TABLE, d)
 
 
 ###############################################################################

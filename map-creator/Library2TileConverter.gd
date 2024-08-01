@@ -291,11 +291,14 @@ func _start_insert_database():
     # Insert Reflected SID Elements
     m_logger.debug("Insert Reflected SID Elements")
     percent = 0.0
+    var index = 0
     for sid in m_reflected_sid_dict.keys():
         m_db_wfc_adapter.insert_reflected_sid(sid, m_reflected_sid_dict[sid])
-        percent += 1.0
+        index+= 1
+        percent = (float((index)) / total_size) * 100.0
         call_deferred("emit_percent_update", _pname, percent)
         await continue_step
+
 
     percent = 100.0
     call_deferred("emit_percent_update", _pname, percent)
@@ -306,6 +309,8 @@ func _start_insert_database():
     percent = 0.0
     _pname = "Insert Expanded Module Elements"
     m_logger.debug("Insert Expanded Module Elements")
+    total_size = len(m_expanded_module_face_sid_dict.keys())
+    index = 0
     for module in m_expanded_module_face_sid_dict.keys():
         var d = m_expanded_module_face_sid_dict[module]
         m_db_wfc_adapter.insert_expanded_module(module, d["x_flip"], d["y_flip"], d["faces"])
@@ -319,8 +324,8 @@ func _start_insert_database():
                 if m_reflected_sid_dict[fsid] != -1:
                     sid_dict[fsid]["asymmetric"] = 1
             sid_dict[fsid]["module_list"].append(module)
-
-        percent += 1.0
+        index += 1
+        percent = (float((index)) / total_size) * 100.0
         call_deferred("emit_percent_update", _pname, percent)
         await continue_step
 
@@ -330,9 +335,12 @@ func _start_insert_database():
     _pname = "Insert SID Module List"
     m_logger.debug("Insert SID Module List")
     percent = 0.0
+    total_size = len(sid_dict.keys())
+    index = 0
     for sid in sid_dict.keys():
         m_db_wfc_adapter.insert_sid_mapping(sid, sid_dict[sid]["asymmetric"], sid_dict[sid]["module_list"])
-        percent += 1.0
+        index += 1
+        percent = (float((index)) / total_size) * 100.0
         call_deferred("emit_percent_update", _pname, percent)
         await continue_step
 

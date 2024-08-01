@@ -1,6 +1,6 @@
-[gd_scene load_steps=2 format=3 uid="uid://cv7wmeojxldk0"]
+[gd_scene load_steps=2 format=3 uid="uid://ckr0tepfuifuc"]
 
-[ext_resource type="Script" path="res://utils/TileDatabaseAdapter.gd" id="1_ys5t6"]
+[ext_resource type="Script" path="res://map-creator/TileDatabaseAdapter.gd" id="1_1pd4x"]
 
 [node name="TileDatabaseAdapter" type="Node"]
-script = ExtResource("1_ys5t6")
+script = ExtResource("1_1pd4x")
