@@ -111,59 +111,9 @@ func open_database(database_path: String, clear_rows: bool = false, force_new_ta
             m_logger.debug("{0} does not exist, creating it now.".format({0:table}))
             m_database.create_table(table, m_tables[table])
 
-
-func insert_expanded_modules_and_sids(dict = {}, reflected_dict = {}):
-    m_logger.debug("Entered update_module")
-    m_database.delete_rows(MODULE_TABLE, "*")
-    m_database.delete_rows(REFLECTED_SID_TABLE, "*")
-    m_database.delete_rows(SID_TABLE, "*")
-
-    m_logger.debug("Writing Reflected SID Table")
-    for s in reflected_dict.keys():
-        var d = { "sid": s,
-                  "reflected_sid": reflected_dict[s]
-        }
-        m_database.insert_row(REFLECTED_SID_TABLE, d)
-
-    m_sid_dict = {}
-
-    m_logger.debug("Writing Module Table")
-    for _name in dict.keys():
-        var d = { "name":       _name,
-                  "x_flip":     dict[_name]["x_flip"],
-                  "y_flip":     dict[_name]["y_flip"],
-                  "front":      dict[_name]["faces"][FACE_T.FRONT],
-                  "back":       dict[_name]["faces"][FACE_T.BACK],
-                  "top":        dict[_name]["faces"][FACE_T.TOP],
-                  "bottom":     dict[_name]["faces"][FACE_T.BOTTOM],
-                  "right":      dict[_name]["faces"][FACE_T.RIGHT],
-                  "left":       dict[_name]["faces"][FACE_T.LEFT],
-        }
-
-        m_database.insert_row(MODULE_TABLE, d)
-
-        for f in dict[_name]["faces"].keys():
-            var fsid = dict[_name]["faces"][f]
-            if not m_sid_dict.has(fsid):
-                if not reflected_dict.keys().has(fsid):
-                    continue
-                m_sid_dict[fsid] = {"asymmetric": 0, "module_list": []}
-                if reflected_dict[fsid] != -1:
-                    m_sid_dict[fsid]["asymmetric"] = 1
-
-            m_sid_dict[fsid]["module_list"].append([_name, f])
-
-    m_logger.debug("Writing SID Table")
-    for sid in m_sid_dict.keys():
-        var d = { "sid": sid,
-                  "asymmetric": m_sid_dict[sid]["asymmetric"],
-                  "module_list": var_to_bytes(m_sid_dict[sid]["module_list"])
-        }
-        m_database.insert_row(SID_TABLE, d)
-
-
 func clear_tables():
     m_logger.debug("Entered clear_tables")
+    m_database.delete_rows(CONFIG_TABLE, "*")
     m_database.delete_rows(MODULE_TABLE, "*")
     m_database.delete_rows(REFLECTED_SID_TABLE, "*")
     m_database.delete_rows(SID_TABLE, "*")
@@ -196,6 +146,85 @@ func insert_sid_mapping(sid:int, asymmetric_flag:int, module_list: Array):
     }
     m_database.insert_row(SID_TABLE, d)
 
+func set_default_size_3d(_size:Vector3):
+    m_logger.debug("Entered set_default_size_3d")
+    var d = { "name": "default_size_x",
+              "data_group": "config",
+              "type": "float",
+              "float_value": _size.x
+    }
+    m_database.insert_row(CONFIG_TABLE, d)
+    d = { "name": "default_size_y",
+              "data_group": "config",
+              "type": "float",
+              "float_value": _size.y
+    }
+    m_database.insert_row(CONFIG_TABLE, d)
+    d = { "name": "default_size_z",
+              "data_group": "config",
+              "type": "float",
+              "float_value": _size.z
+    }
+    m_database.insert_row(CONFIG_TABLE, d)
+
+func get_default_size_3d() -> Vector3:
+    m_logger.debug("Entered get_default_size_3d")
+    var sel_string = "SELECT float_value FROM config WHERE name = 'default_size_x'"
+    m_database.query(sel_string)
+    var x = m_database.query_result[0][0]
+    sel_string = "SELECT float_value FROM config WHERE name = 'default_size_y'"
+    m_database.query(sel_string)
+    var y = m_database.query_result[0][0]
+    sel_string = "SELECT float_value FROM config WHERE name = 'default_size_z'"
+    m_database.query(sel_string)
+    var z = m_database.query_result[0][0]
+    return Vector3(x, y, z)
+
+func get_default_size_2d() -> Vector2:
+    m_logger.debug("Entered get_default_size_2d")
+    var sel_string = "SELECT float_value FROM config WHERE name = 'default_size_x'"
+    m_database.query(sel_string)
+    var x = m_database.query_result[0][0]
+    sel_string = "SELECT float_value FROM config WHERE name = 'default_size_y'"
+    m_database.query(sel_string)
+    var y = m_database.query_result[0][0]
+    return Vector2(x, y)
+
+func get_module_dict() -> Dictionary:
+    m_logger.debug("Entered get_module_dict")
+    var sel_string = "SELECT * FROM modules"
+    m_database.query(sel_string)
+    var module_dict = {}
+    for row in m_database.query_result:
+        var name = row[0]
+        var md5 = row[1]
+        var x_flip = row[2]
+        var y_flip = row[3]
+        var faces = [row[4], row[5], row[6], row[7], row[8], row[9]]
+        var front = row[4]
+        var back = row[5]
+        var top = row[6]
+        var bottom = row[7]
+        var right = row[8]
+        var left = row[9]
+        module_dict[name] = {"md5": md5,
+                             "x_flip": x_flip,
+                             "y_flip": y_flip,
+                             "faces": faces}
+    return module_dict
+
+func get_sid_dict() -> Dictionary:
+    m_logger.debug("Entered get_sid_dict")
+    var sel_string = "SELECT * FROM sid"
+    m_database.query(sel_string)
+    var sid_dict = {}
+    for row in m_database.query_result:
+        var sid = row[0]
+        var asymmetric = row[1]
+        var module_list = bytes_to_var(row[2])
+        sid_dict[sid] = {"asymmetric": asymmetric,
+                         "module_list": module_list}
+    return sid_dict
 
 ###############################################################################
 # Private Functions

@@ -274,15 +274,15 @@ func _start_generate_expanded_module_dict():
         await continue_step
 
     percent = 100
-    #m_db_wfc_adapter.insert_expanded_modules_and_sids(
-    #            m_expanded_module_face_sid_dict,
-    #            m_reflected_sid_dict)
     call_deferred("emit_percent_update", _pname, percent)
     m_flag_async_finished = true
 
 func _start_insert_database():
     m_logger.debug("Entered: insert_database")
     m_db_wfc_adapter.clear_tables()
+    var d3d_size = m_db_adapter.get_default_size_3d()
+    m_db_wfc_adapter.set_default_size_3d(d3d_size)
+
     m_flag_async_finished = false
     var _pname = INSERT_INTO_DATABASE
     var percent = 0.0
