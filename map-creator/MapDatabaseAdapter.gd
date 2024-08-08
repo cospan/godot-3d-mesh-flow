@@ -28,17 +28,17 @@ const KEY_SHIFT_VAL = (2 ** KEY_SHIFT_SIZE)
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("Location Database Adapter", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("Map Database Adapter", LogStream.LogLevel.DEBUG)
 var m_database : SQLite
 
 #######################################
 # Thread Members
 #######################################
 
-var m_task_db_adapter_to_thread_queue:ThreadSafeQueue
-var m_task_db_adapter_from_thread_queue:ThreadSafeQueue
-
-var m_task_db_adapter = null
+#var m_task_db_adapter_to_thread_queue:ThreadSafeQueue
+#var m_task_db_adapter_from_thread_queue:ThreadSafeQueue
+#
+#var m_task_db_adapter = null
 
 #######################################
 # Exports
@@ -227,7 +227,7 @@ func _init():
     m_tables[POS_TABLE] = POS_TABLE_SCHEME
     m_task_db_adapter_to_thread_queue = ThreadSafeQueue.new()
     m_task_db_adapter_from_thread_queue = ThreadSafeQueue.new()
-    m_task_db_adapter = TaskManager.create_task(_background_db_adapter, false, "Manage Database in the background")
+    #m_task_db_adapter = TaskManager.create_task(_background_db_adapter, false, "Manage Database in the background")
 
 
 func _exit_tree():

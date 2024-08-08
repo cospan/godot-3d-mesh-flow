@@ -1,12 +1,17 @@
-[gd_scene load_steps=8 format=3 uid="uid://dc67rgul2jeyv"]
+[gd_scene load_steps=13 format=3 uid="uid://dc67rgul2jeyv"]
 
 [ext_resource type="Script" path="res://map-creator/MapCreatorControl.gd" id="1_yif36"]
 [ext_resource type="PackedScene" uid="uid://bjn216f0xxwjc" path="res://utils/DictProperty.tscn" id="2_chocf"]
 [ext_resource type="Script" path="res://map-creator/SVPContainerMapView.gd" id="3_ed66u"]
 [ext_resource type="PackedScene" uid="uid://danpho43p7mup" path="res://map-creator/MapView.tscn" id="4_t6mls"]
-[ext_resource type="PackedScene" uid="uid://cusy2ap8wcgj3" path="res://map-creator/MapCreatorProcessor.tscn" id="5_0gjwp"]
 [ext_resource type="PackedScene" uid="uid://d1xbj35rutf18" path="res://utils/ConfirmDialogAsync.tscn" id="6_7l1ty"]
+[ext_resource type="PackedScene" uid="uid://dxy2gpemojfnr" path="res://map-creator/MapComposer.tscn" id="7_f7ynj"]
 [ext_resource type="Script" path="res://map-creator/DatabaseFileDialog.gd" id="7_qiabe"]
+[ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="8_11ggo"]
+[ext_resource type="PackedScene" uid="uid://cwrgrkmmomtfn" path="res://map-creator/sub-composers/DemoComposer.tscn" id="8_vy2qe"]
+[ext_resource type="PackedScene" uid="uid://cc3s1jqv47qgl" path="res://map-creator/Library2TileConverter.tscn" id="9_mp2oe"]
+[ext_resource type="PackedScene" uid="uid://2pm1gnt1y3c" path="res://map-creator/MapDatabaseAdapter.tscn" id="9_q2cax"]
+[ext_resource type="PackedScene" uid="uid://ckr0tepfuifuc" path="res://map-creator/TileDatabaseAdapter.tscn" id="10_cp806"]
 
 [node name="MapCreatorControl" type="Control"]
 layout_mode = 3
@@ -53,8 +58,6 @@ visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MapCreatorProcessor" parent="." instance=ExtResource("5_0gjwp")]
-
 [node name="ConfirmDialogAsync" parent="." instance=ExtResource("6_7l1ty")]
 initial_position = 2
 
@@ -67,3 +70,15 @@ access = 2
 filters = PackedStringArray("*.db")
 show_hidden_files = true
 script = ExtResource("7_qiabe")
+
+[node name="MapComposer" parent="." instance=ExtResource("7_f7ynj")]
+
+[node name="DemoComposer" parent="MapComposer" instance=ExtResource("8_vy2qe")]
+
+[node name="MapDatabaseAdapter" parent="MapComposer" instance=ExtResource("9_q2cax")]
+
+[node name="ModuleDatabaseAdapter" parent="." instance=ExtResource("8_11ggo")]
+
+[node name="Library2TileConverter" parent="." instance=ExtResource("9_mp2oe")]
+
+[node name="TileDatabaseAdapter" parent="." instance=ExtResource("10_cp806")]

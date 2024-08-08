@@ -171,23 +171,23 @@ func get_default_size_3d() -> Vector3:
     m_logger.debug("Entered get_default_size_3d")
     var sel_string = "SELECT float_value FROM config WHERE name = 'default_size_x'"
     m_database.query(sel_string)
-    var x = m_database.query_result[0][0]
+    var x = m_database.query_result[0]["float_value"]
     sel_string = "SELECT float_value FROM config WHERE name = 'default_size_y'"
     m_database.query(sel_string)
-    var y = m_database.query_result[0][0]
+    var y = m_database.query_result[0]["float_value"]
     sel_string = "SELECT float_value FROM config WHERE name = 'default_size_z'"
     m_database.query(sel_string)
-    var z = m_database.query_result[0][0]
+    var z = m_database.query_result[0]["float_value"]
     return Vector3(x, y, z)
 
-func get_default_size_2d() -> Vector2:
-    m_logger.debug("Entered get_default_size_2d")
+func get_tile_size() -> Vector2:
+    m_logger.debug("Entered get_tile_size")
     var sel_string = "SELECT float_value FROM config WHERE name = 'default_size_x'"
     m_database.query(sel_string)
-    var x = m_database.query_result[0][0]
+    var x = m_database.query_result[0]["float_value"]
     sel_string = "SELECT float_value FROM config WHERE name = 'default_size_y'"
     m_database.query(sel_string)
-    var y = m_database.query_result[0][0]
+    var y = m_database.query_result[0]["float_value"]
     return Vector2(x, y)
 
 func get_module_dict() -> Dictionary:
@@ -196,17 +196,11 @@ func get_module_dict() -> Dictionary:
     m_database.query(sel_string)
     var module_dict = {}
     for row in m_database.query_result:
-        var name = row[0]
-        var md5 = row[1]
-        var x_flip = row[2]
-        var y_flip = row[3]
-        var faces = [row[4], row[5], row[6], row[7], row[8], row[9]]
-        var front = row[4]
-        var back = row[5]
-        var top = row[6]
-        var bottom = row[7]
-        var right = row[8]
-        var left = row[9]
+        var name = row["name"]
+        var md5 = row["md5"]
+        var x_flip = row["x_flip"]
+        var y_flip = row["y_flip"]
+        var faces = [row["front"], row["back"], row["top"], row["bottom"], row["right"], row["left"]]
         module_dict[name] = {"md5": md5,
                              "x_flip": x_flip,
                              "y_flip": y_flip,

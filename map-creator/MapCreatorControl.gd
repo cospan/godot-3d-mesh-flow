@@ -41,8 +41,14 @@ var m_state = STATE_TYPE.RESET
 ##############################################################################
 # Scenes
 ##############################################################################
+var m_library_db_adapter = null
+var m_library_2_tile_converter = null
+var m_tile_db_adapter = null
+var m_composer = null
+
 var m_properties = null
-var m_processor = null
+var m_drawer = null
+var m_view = null
 
 ##############################################################################
 # Exports
@@ -75,7 +81,16 @@ func _ready():
     m_logger.debug("Ready Entered!")
     m_logger.set_name("MC (%s)" % m_config.get_value("config", "name"))
     m_properties = $HBMain/DictProperty
-    m_processor = $MapCreatorProcessor
+    m_drawer = $MapDrawer
+    m_view = $HBMain/VBMain/SVPContainer/SVP/MapView
+
+    m_library_db_adapter = $ModuleDatabaseAdapter
+    m_library_2_tile_converter = $Library2TileConverter
+    m_tile_db_adapter = $TileDatabaseAdapter
+    m_composer = $MapComposer
+
+    m_composer.set_map_view(m_view)
+    m_drawer.set_map_view(m_view)
     if not m_config.has_section_key("config", "database_path"):
         var _dir = m_config.get_value("config", "path")
         m_config.set_value("config", "database_path", "%s/%s" % [_dir, DATABASE_NAME])
@@ -94,7 +109,7 @@ func _ready():
 
     # Connect Signals
     m_properties.property_changed.connect(_property_changed)
-    m_processor.loading_finished.connect(_loading_finished)
+    m_library_2_tile_converter.finished_loading.connect(_loading_finished)
     m_flag_ready = true
 
 
@@ -117,7 +132,7 @@ func _process(_delta):
                 var library_db_path = m_config.get_value("config", "library_database")
                 var tile_db_path = m_config.get_value("config", "database_path")
 
-                m_processor.convert_library_db_2_tile_db(library_db_path, tile_db_path, false, m_flag_reset_tile_db)
+                _convert_library_db_2_tile_db(library_db_path, tile_db_path, false, m_flag_reset_tile_db)
                 m_flag_reset_tile_db = false
                 m_state = STATE_TYPE.LOADING
             if m_flag_select_new_db:
@@ -125,6 +140,8 @@ func _process(_delta):
                 m_state = STATE_TYPE.RESET
         STATE_TYPE.LOADING:
             if m_flag_load_finished:
+                m_drawer.set_tile_size(m_tile_db_adapter.get_tile_size())
+                m_drawer.set_module_dict(m_tile_db_adapter.get_module_dict())
                 m_flag_load_finished = false
                 m_logger.debug("Loading Finished!")
                 m_state = STATE_TYPE.IDLE
@@ -181,7 +198,11 @@ func _check_library_database_path(clear_db = false) -> bool:
     return false
 
 
-
+func _convert_library_db_2_tile_db(_library_db_path:String, _tile_db_path:String, _clear_rows:bool, _force_new_tables:bool):
+    m_logger.debug("Converting Library DB to Tile DB")
+    m_library_db_adapter.open_database(_library_db_path)
+    m_tile_db_adapter.open_database(_tile_db_path, _clear_rows, _force_new_tables)
+    m_library_2_tile_converter.process_database(m_library_db_adapter, m_tile_db_adapter)
 
 
 ##############################################################################
@@ -214,3 +235,7 @@ func _property_changed(prop_name:String, value):
 
 func _loading_finished():
     m_flag_load_finished = true
+
+
+
+

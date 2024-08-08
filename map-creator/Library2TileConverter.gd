@@ -82,7 +82,6 @@ func _process(_delta):
                 m_logger.debug("_process: GENERATE_MODULE_DICT -> GENERATE_EXPANDED_MODULE_DICT")
                 _start_generate_expanded_module_dict()
                 m_state = STATE_T.GENERATE_EXPANDED_MODULE_DICT
-                emit_signal("finished_loading")
         STATE_T.GENERATE_EXPANDED_MODULE_DICT:
             if not m_flag_async_finished:
                 emit_signal("continue_step")
@@ -90,7 +89,6 @@ func _process(_delta):
                 m_logger.debug("_process: GENERATE_EXPANDED_MODULE_DICT -> INSERT_INTO_DATABASE")
                 m_state = STATE_T.INSERT_INTO_DATABASE
                 _start_insert_database()
-                emit_signal("finished_loading")
         STATE_T.INSERT_INTO_DATABASE:
             if not m_flag_async_finished:
                 emit_signal("continue_step")

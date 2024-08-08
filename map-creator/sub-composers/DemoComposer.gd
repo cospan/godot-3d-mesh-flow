@@ -1,5 +1,4 @@
-extends Control
-
+extends Node
 
 ##############################################################################
 # Signals
@@ -12,7 +11,14 @@ extends Control
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("Template", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("DemoComposer", LogStream.LogLevel.DEBUG)
+
+var m_map_database_adapter = null
+
+#######################################
+# Exports
+#######################################
+@export var enabled = true
 
 ##############################################################################
 # Scenes
@@ -26,6 +32,9 @@ var m_logger = LogStream.new("Template", LogStream.LogLevel.DEBUG)
 # Public Functions
 ##############################################################################
 
+func setup(map_database_adapter):
+    m_logger.debug("Setup Entered!")
+    m_map_database_adapter = map_database_adapter
 
 
 ##############################################################################
@@ -35,6 +44,7 @@ var m_logger = LogStream.new("Template", LogStream.LogLevel.DEBUG)
 # Called when the node enters the scene tree for the first time.
 func _ready():
     m_logger.debug("Ready Entered!")
+    add_to_group("subcomposer")
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
