@@ -85,7 +85,7 @@ func _ready():
 
 
     m_props["back"] = {"type": "Button", "name": "Back", "value": "Return", "tooltip": "Return to the previous screen"}
-    m_properties.update_dict(m_props)
+    m_properties.set_properties_dict(m_props)
 
     # Connect Signals
     m_properties.property_changed.connect(_property_changed)

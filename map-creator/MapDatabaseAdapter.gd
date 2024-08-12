@@ -25,20 +25,46 @@ const KEY_MASK = (2 ** KEY_SIZE) - 1
 const KEY_SHIFT_SIZE = KEY_SIZE - 1
 const KEY_SHIFT_VAL = (2 ** KEY_SHIFT_SIZE)
 
+enum COMMANDS_T {
+    ADD_MESH = 0,
+    ADD_TILE = 1,
+    ADD_LINE = 2,
+    ADD_POINT = 3,
+    ADD_TEXT = 4,
+    ADD_CIRCLE = 5,
+    ADD_RECT = 6,
+    ADD_POLYGON = 7,
+    REMOVE = 8
+}
+
 ##############################################################################
 # Members
 ##############################################################################
 var m_logger = LogStream.new("Map Database Adapter", LogStream.LogLevel.DEBUG)
 var m_database : SQLite
+var m_map_data:Dictionary = {}
+var m_curr_id:int = 0
+var m_commands:Array = []
+
+# TODO: Adda member that will dictate how far away from the player we will load
+# the map data. This will be used to determine how much data we need to load
+# from the database.
+@export var load_distance:float = 100.0:
+    set(v):
+        load_distance = v
+        m_logger.info("Load Distance: %s" % str(v))
+    get:
+        return load_distance
+
 
 #######################################
 # Thread Members
 #######################################
 
-#var m_task_db_adapter_to_thread_queue:ThreadSafeQueue
-#var m_task_db_adapter_from_thread_queue:ThreadSafeQueue
-#
-#var m_task_db_adapter = null
+var m_task_db_adapter_to_thread_queue:ThreadSafeQueue
+var m_task_db_adapter_from_thread_queue:ThreadSafeQueue
+
+var m_task_db_adapter = null
 
 #######################################
 # Exports
@@ -216,6 +242,51 @@ func get_pos_dict_in_region_xyz_threaded(start_xyz: Vector3i, end_xyz: Vector3i)
     var d = ['r', start_xyz, end_xyz]
     m_task_db_adapter_to_thread_queue.push(d)
 
+
+
+
+# TODO: Implement this function
+func read_all_commands_from_database(pos:Vector3, load_all:bool = false):
+    m_logger.debug("Read all commands from database")
+
+    # populate the local dictionary with data from the database.
+    # XXX: We can isolate this to range dictated by the location we are at
+    # (so we don't need to load everything)
+
+func subcomposer_add_mesh(_submodule:String, _mesh:Mesh, _transfrom:Transform3D, _color=null) -> int:
+    # Submit a command to the local dictionary and submit it to the database
+    # in a background thread.
+    # Return a unique ID that can be used to reference the command
+    # The ID will be the key to the dictionary and the ID in the database
+    # in order to avoid constantly searching for the command in the database
+    # when we need to update it we will use a dictionary to store the command
+    # and the ID in the database. This will allow us to update the command
+    #m_database.insert_row(POS_TABLE, command)
+    if not m_map_data.has(_submodule):
+        m_map_data[_submodule] = {}
+    m_map_data[_submodule][m_curr_id] = {"mesh":_mesh, "transform":_transfrom, "color":_color}
+    m_commands.push_back([COMMANDS_T.ADD_MESH, _mesh, _transfrom, _color, m_curr_id])
+    return m_curr_id
+
+func subcomposer_remove_mesh(_submodule:String, _id:int):
+    # Submit a command to remove a command from the local dictionary and
+    # submit it to the database in a background thread.
+    # The ID will be the key to the dictionary and the ID in the database
+    # in order to avoid constantly searching for the command in the database
+    # when we need to update it we will use a dictionary to store the command
+    # and the ID in the database. This will allow us to update the command
+    #m_database.delete_rows(POS_TABLE, "id = %s" % str(_id))
+    if m_map_data.has(_submodule):
+        if m_map_data[_submodule].has(_id):
+            m_map_data[_submodule].erase(_id)
+            # XXX Remove from the database
+            m_commands.push_back([COMMANDS_T.REMOVE, _id])
+
+func composer_read_step_commands() -> Array:
+    var tcmds = m_commands.duplicate(true)
+    m_commands.clear()
+    return tcmds
+
 ##############################################################################
 # Private Functions
 ##############################################################################
@@ -227,7 +298,7 @@ func _init():
     m_tables[POS_TABLE] = POS_TABLE_SCHEME
     m_task_db_adapter_to_thread_queue = ThreadSafeQueue.new()
     m_task_db_adapter_from_thread_queue = ThreadSafeQueue.new()
-    #m_task_db_adapter = TaskManager.create_task(_background_db_adapter, false, "Manage Database in the background")
+    m_task_db_adapter = TaskManager.create_task(_background_db_adapter, false, "Manage Database in the background")
 
 
 func _exit_tree():

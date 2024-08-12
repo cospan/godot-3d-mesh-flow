@@ -6,7 +6,7 @@
 script = ExtResource("1_tg2le")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.22141, 1.98525)
+transform = Transform3D(1, 0, 0, 0, 0.951051, 0.309034, 0, -0.309034, 0.951051, 0, 2.33981, 3.16698)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 5, 0)

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://d07t2kfytp7k0"]
+
+[ext_resource type="Script" path="res://utils/thread_safe_queue.gd" id="1_wpeok"]
+
+[node name="ThreadSafeQueue" type="Node"]
+script = ExtResource("1_wpeok")

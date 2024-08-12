@@ -47,7 +47,7 @@ var m_tile_db_adapter = null
 var m_composer = null
 
 var m_properties = null
-var m_drawer = null
+var m_map_composer = null
 var m_view = null
 
 ##############################################################################
@@ -81,7 +81,7 @@ func _ready():
     m_logger.debug("Ready Entered!")
     m_logger.set_name("MC (%s)" % m_config.get_value("config", "name"))
     m_properties = $HBMain/DictProperty
-    m_drawer = $MapDrawer
+    m_map_composer = $MapComposer
     m_view = $HBMain/VBMain/SVPContainer/SVP/MapView
 
     m_library_db_adapter = $ModuleDatabaseAdapter
@@ -90,7 +90,7 @@ func _ready():
     m_composer = $MapComposer
 
     m_composer.set_map_view(m_view)
-    m_drawer.set_map_view(m_view)
+    m_map_composer.set_map_view(m_view)
     if not m_config.has_section_key("config", "database_path"):
         var _dir = m_config.get_value("config", "path")
         m_config.set_value("config", "database_path", "%s/%s" % [_dir, DATABASE_NAME])
@@ -105,7 +105,8 @@ func _ready():
     m_props["clear_db"] = {"type": "CheckBox", "name": "Clear DB", "value": m_config.get_value("config", "clear_db"), "tooltip": "Clear all database rows on Start"}
     m_props["select_db"] = {"type": "Button", "name": "Select DB", "tooltip": "Select Library Database Path"}
     m_props["reset_tile_db"] = {"type": "Button", "name": "Reset Tile DB", "tooltip": "Regenerate the Tile DB from the library DB"}
-    m_properties.update_dict(m_props)
+    m_properties.set_properties_dict(m_props)
+    m_properties.interrogate_tree("map-creator-properties")
 
     # Connect Signals
     m_properties.property_changed.connect(_property_changed)
@@ -140,8 +141,8 @@ func _process(_delta):
                 m_state = STATE_TYPE.RESET
         STATE_TYPE.LOADING:
             if m_flag_load_finished:
-                m_drawer.set_tile_size(m_tile_db_adapter.get_tile_size())
-                m_drawer.set_module_dict(m_tile_db_adapter.get_module_dict())
+                m_map_composer.set_tile_size(m_tile_db_adapter.get_tile_size())
+                m_map_composer.set_module_dict(m_tile_db_adapter.get_module_dict())
                 m_flag_load_finished = false
                 m_logger.debug("Loading Finished!")
                 m_state = STATE_TYPE.IDLE
@@ -173,7 +174,7 @@ func _check_library_database_path(clear_db = false) -> bool:
         print ("Auto Accept: %s" % auto_accept)
         if auto_accept:
             m_props["library_database"]["value"] = database_path
-            m_properties.update_dict(m_props)
+            m_properties.set_value("library_database", database_path)
             m_config.set_value("config", "library_database", database_path)
             m_config.save(m_config_file)
             return true
@@ -185,14 +186,14 @@ func _check_library_database_path(clear_db = false) -> bool:
         var result = await fdialog.finished
         if result:
             m_props["library_database"]["value"] = fdialog.selected_file
-            m_properties.update_dict(m_props)
+            m_properties.set_value("library_database", fdialog.selected_file)
             m_config.set_value("config", "library_database", fdialog.selected_file)
             m_config.save(m_config_file)
             return true
         else:
             m_logger.error("Library Database Path is not set, please set it manually")
             m_props["library_database"]["value"] = ""
-            m_properties.update_dict(m_props)
+            m_properties.set_value("library_database", "")
             m_config.set_value("config", "library_database", "")
             m_config.save(m_config_file)
     return false

@@ -18,6 +18,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Log="*res://addons/logger/logger.gd"
+TaskManager="*res://autoload/task_manager.gd"
 
 [display]
 

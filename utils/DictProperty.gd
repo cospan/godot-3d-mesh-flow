@@ -4,14 +4,15 @@ class_name DebugDictProperty
 
 signal property_changed(property_name, property_value)
 
+var m_node_dict = {}
 var m_widget_dict = {}
 @export var LABEL_MIN_X_SIZE:int = 200
 
 func _init(property_dict = null):
     if property_dict != null:
-        update_dict(property_dict)
+        set_properties_dict(property_dict)
 
-func update_dict(property_dict = {}):
+func set_properties_dict(property_dict = {}):
     for key in property_dict:
         if key in m_widget_dict:
             m_widget_dict[key]["label"].queue_free()
@@ -19,140 +20,165 @@ func update_dict(property_dict = {}):
             m_widget_dict.erase(key)
 
     for key in property_dict:
-        var label = Label.new()
-        var prop = null
-        label.text = property_dict[key]["name"]
-        add_child(label)
-        label.custom_minimum_size = Vector2i(LABEL_MIN_X_SIZE, 0)
-        match property_dict[key]["type"]:
-            "Button":
-                #print ("Button")
-                label.text = ""
-                prop = Button.new()
-                prop.text = property_dict[key]["name"]
-                add_child(prop)
-                m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
-                prop.connect("pressed", func() : _property_update(key, true))
-            "CheckBox":
-                #print ("BOOL")
-                prop = CheckBox.new()
-                prop.button_pressed = property_dict[key]["value"]
-                add_child(prop)
-                m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
-                prop.connect("pressed", func() : _property_update(key, prop.button_pressed))
-            "OptionButton":
-                #print ("OPTION")
-                prop = OptionButton.new()
-                for option in property_dict[key]["options"]:
-                    prop.add_item(option)
-                prop.selected = property_dict[key]["value"]
-                add_child(prop)
-                m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
-                prop.connect("item_selected", func(_val) : _property_update(key, m_widget_dict[key]["widget"].get_item_text(_val)))
-            "SpinBox":
-                #print("FLOAT")
-                if "value" in property_dict[key]:
-                    if property_dict[key]["value"] is Vector2 or property_dict[key]["value"] is Vector2i:
-                        add_child(add_vector2_spinbox(key, property_dict[key], label))
-                        if "visible" in property_dict[key]:
-                            set_spinbox_vector2_visible(key, property_dict[key]["visible"])
-                        continue
-                    elif property_dict[key]["value"] is Vector3 or property_dict[key]["value"] is Vector3i:
-                        add_child(add_vector3_spinbox(key, property_dict[key], label))
-                        if "visible" in property_dict[key]:
-                            set_spinbox_vector3_visible(key, property_dict[key]["visible"])
-                        continue
-                    else:
-                        add_child(add_float_spinbox(key, property_dict[key], label))
-                        if "visible" in property_dict[key]:
-                            set_prop_visible(key, property_dict[key]["visible"])
-            "ProgressBar":
-                #print("FLOAT")
-                prop = ProgressBar.new()
-                prop.value = property_dict[key]["value"]
-                if "min" in property_dict[key]:
-                    prop.min_value = property_dict[key]["min"]
-                if "max" in property_dict[key]:
-                    prop.max_value = property_dict[key]["max"]
-                add_child(prop)
-                m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
-            "HSlider":
-                #print("FLOAT")
-                prop = HSlider.new()
-                prop.custom_minimum_size = Vector2(200, 0) # Set minimum size
-                prop.min_value = property_dict[key]["min"]
-                prop.max_value = property_dict[key]["max"]
-                prop.value = property_dict[key]["value"]
-                if "step" in property_dict[key]:
-                    prop.step = property_dict[key]["step"]
+        add_property(key, property_dict[key])
+
+func add_property(_name:String, property_dict:Dictionary):
+
+    var label = Label.new()
+    var prop = null
+    label.text = property_dict["name"]
+    add_child(label)
+    label.custom_minimum_size = Vector2i(LABEL_MIN_X_SIZE, 0)
+    match property_dict["type"]:
+        "Button":
+            #print ("Button")
+            label.text = ""
+            prop = Button.new()
+            prop.text = property_dict["name"]
+            add_child(prop)
+            m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
+            prop.connect("pressed", func() : _property_update(_name, true))
+        "CheckBox":
+            #print ("BOOL")
+            prop = CheckBox.new()
+            prop.button_pressed = property_dict["value"]
+            add_child(prop)
+            m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
+            prop.connect("pressed", func() : _property_update(_name, prop.button_pressed))
+        "OptionButton":
+            #print ("OPTION")
+            prop = OptionButton.new()
+            for option in property_dict["options"]:
+                prop.add_item(option)
+            prop.selected = property_dict["value"]
+            add_child(prop)
+            m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
+            prop.connect("item_selected", func(_val) : _property_update(_name, m_widget_dict[_name]["widget"].get_item_text(_val)))
+        "SpinBox":
+            #print("FLOAT")
+            if "value" in property_dict:
+                if property_dict["value"] is Vector2 or property_dict["value"] is Vector2i:
+                    add_child(add_vector2_spinbox(_name, property_dict, label))
+                    if "visible" in property_dict:
+                        set_spinbox_vector2_visible(_name, property_dict["visible"])
+                    return
+                elif property_dict["value"] is Vector3 or property_dict["value"] is Vector3i:
+                    add_child(add_vector3_spinbox(_name, property_dict, label))
+                    if "visible" in property_dict:
+                        set_spinbox_vector3_visible(_name, property_dict["visible"])
+                    return
                 else:
-                    prop.step = 1.0
-                add_child(prop)
-                m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
-                prop.connect("value_changed", func(_val) : _property_update(key, _val))
-            "LineEdit":
-                #print("STRING")
-                prop = LineEdit.new()
-                prop.text = property_dict[key]["value"]
-                if "readonly" in property_dict[key]:
-                    prop.editable = !property_dict[key]["readonly"]
+                    add_child(add_float_spinbox(_name, property_dict, label))
+                    if "visible" in property_dict:
+                        set_prop_visible(_name, property_dict["visible"])
+        "ProgressBar":
+            #print("FLOAT")
+            prop = ProgressBar.new()
+            prop.value = property_dict["value"]
+            if "min" in property_dict:
+                prop.min_value = property_dict["min"]
+            if "max" in property_dict:
+                prop.max_value = property_dict["max"]
+            add_child(prop)
+            m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
+        "HSlider":
+            #print("FLOAT")
+            prop = HSlider.new()
+            prop.custom_minimum_size = Vector2(200, 0) # Set minimum size
+            prop.min_value = property_dict["min"]
+            prop.max_value = property_dict["max"]
+            prop.value = property_dict["value"]
+            if "step" in property_dict:
+                prop.step = property_dict["step"]
+            else:
+                prop.step = 1.0
+            add_child(prop)
+            m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
+            prop.connect("value_changed", func(_val) : _property_update(_name, _val))
+        "LineEdit":
+            #print("STRING")
+            prop = LineEdit.new()
+            prop.text = property_dict["value"]
+            if "readonly" in property_dict:
+                prop.editable = !property_dict["readonly"]
 
-                add_child(prop)
-                m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
-                prop.connect("text_submitted", func(_val) : _property_update(key, _val))
-            "Label":
-                prop = Label.new()
-                prop.text = property_dict[key]["value"]
-                add_child(prop)
-                m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
-            "ItemList":
-                var scroll_box = ScrollContainer.new()
-                prop = ItemList.new()
-                scroll_box.add_child(prop)
-                if "size" in property_dict[key]:
-                    scroll_box.custom_minimum_size = property_dict[key]["size"]
-                    prop.custom_minimum_size = property_dict[key]["size"]
-                prop.auto_height = true
-                if "items" in property_dict[key]:
-                    for item in property_dict[key]["items"]:
-                        if item is Array:
-                            var sub_texture = Texture2D
-                            var sub_string = ""
-                            var sub_select = false
-                            for sub_item in item:
-                                if sub_item is String:
-                                    sub_string = sub_item
-                                if sub_item is Texture2D:
-                                    sub_texture = sub_item
-                                if sub_item is bool:
-                                    sub_select = sub_item
+            add_child(prop)
+            m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
+            prop.connect("text_submitted", func(_val) : _property_update(_name, _val))
+        "Label":
+            prop = Label.new()
+            prop.text = property_dict["value"]
+            add_child(prop)
+            m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
+        "ItemList":
+            var scroll_box = ScrollContainer.new()
+            prop = ItemList.new()
+            scroll_box.add_child(prop)
+            if "size" in property_dict:
+                scroll_box.custom_minimum_size = property_dict["size"]
+                prop.custom_minimum_size = property_dict["size"]
+            prop.auto_height = true
+            if "items" in property_dict:
+                for item in property_dict["items"]:
+                    if item is Array:
+                        var sub_texture = Texture2D
+                        var sub_string = ""
+                        var sub_select = false
+                        for sub_item in item:
+                            if sub_item is String:
+                                sub_string = sub_item
+                            if sub_item is Texture2D:
+                                sub_texture = sub_item
+                            if sub_item is bool:
+                                sub_select = sub_item
 
-                            prop.add_item(sub_string, sub_texture, sub_select)
-                        elif item is String:
-                            prop.add_item(item)
-                        elif item is Texture2D:
-                            prop.add_item("", item)
+                        prop.add_item(sub_string, sub_texture, sub_select)
+                    elif item is String:
+                        prop.add_item(item)
+                    elif item is Texture2D:
+                        prop.add_item("", item)
 
-                #add_child(prop)
-                add_child(scroll_box)
-                m_widget_dict[key] = {"type": property_dict[key]["type"], "label": label, "widget": prop}
-                prop.connect("item_selected", func(_val) : _property_update(key, m_widget_dict[key]["widget"].get_item_text(_val)))
-            _:
-                print ("Unknown Property: %s" % key["type"])
+            #add_child(prop)
+            add_child(scroll_box)
+            m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
+            prop.connect("item_selected", func(_val) : _property_update(_name, m_widget_dict[_name]["widget"].get_item_text(_val)))
+        _:
+            print ("Unknown Property: %s" % property_dict["type"])
 
-        if "tooltip" in property_dict[key] and prop != null:
-            prop.tooltip_text = property_dict[key]["tooltip"]
+    if "callback" in property_dict:
+        prop.set_meta("callback", property_dict["callback"])
 
-        if property_dict[key].has("visible"):
-            label.visible = property_dict[key]["visible"]
-            if prop:
-                if prop.get_parent() is ScrollContainer:
-                    prop = prop.get_parent()
-                prop.visible = property_dict[key]["visible"]
+    if "tooltip" in property_dict and prop != null:
+        prop.tooltip_text = property_dict["tooltip"]
+
+    if property_dict.has("visible"):
+        label.visible = property_dict["visible"]
+        if prop:
+            if prop.get_parent() is ScrollContainer:
+                prop = prop.get_parent()
+            prop.visible = property_dict["visible"]
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
     columns = 2
+
+func interrogate_tree(group_name):
+    var nodes = get_tree().get_nodes_in_group(group_name)
+    for node in nodes:
+        print(node.get_name())
+        # Get the properties from the node
+        m_node_dict[node.get_name()] = node.get_properties()
+        for prop in m_node_dict[node.get_name()]:
+            add_property(prop, m_node_dict[node.get_name()][prop])
+        node.child_exiting_tree.connect(_on_node_exiting_tree)
+
+func _on_node_exiting_tree(node):
+    if m_node_dict.has(node.get_name()):
+        for key in m_node_dict[node.get_name()]:
+            if key in m_widget_dict:
+                m_widget_dict[key]["label"].queue_free()
+                m_widget_dict[key]["widget"].queue_free()
+                m_widget_dict.erase(key)
 
 func set_label(n, text):
     m_widget_dict[n]["label"].text = text
@@ -276,7 +302,10 @@ func get_value(n):
             return m_widget_dict[n]["widget"].text
 
 func _property_update(property_name, property_value):
-    property_changed.emit(property_name, property_value)
+    if m_widget_dict[property_name]["widget"].has_meta("callback"):
+        m_widget_dict[property_name]["widget"].get_meta("callback").call(property_name, property_value)
+    else:
+      property_changed.emit(property_name, property_value)
 
 func set_spinbox_vector2_visible(n, enable:bool):
     if !m_widget_dict.has(n):

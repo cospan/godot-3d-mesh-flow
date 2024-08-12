@@ -68,7 +68,7 @@ func _ready():
     m_module_face_view = $VB/ModuleFaceView
     assert(m_module_face_view != null)
     m_debug_props["back_button"] = {"type": "Button", "name": "Back", "value": "Back"}
-    m_debug_dict_view.update_dict(m_debug_props)
+    m_debug_dict_view.set_properties_dict(m_debug_props)
     m_debug_dict_view.property_changed.connect(_on_debug_dict_property_changed)
 
 func _on_debug_dict_property_changed(_property_name, _property_value):
