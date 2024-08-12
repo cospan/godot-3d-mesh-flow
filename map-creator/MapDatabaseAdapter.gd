@@ -266,7 +266,9 @@ func subcomposer_add_mesh(_submodule:String, _mesh:Mesh, _transfrom:Transform3D,
         m_map_data[_submodule] = {}
     m_map_data[_submodule][m_curr_id] = {"mesh":_mesh, "transform":_transfrom, "color":_color}
     m_commands.push_back([COMMANDS_T.ADD_MESH, _mesh, _transfrom, _color, m_curr_id])
-    return m_curr_id
+    var curr_id = m_curr_id
+    m_curr_id = m_curr_id + 1
+    return curr_id
 
 func subcomposer_remove_mesh(_submodule:String, _id:int):
     # Submit a command to remove a command from the local dictionary and

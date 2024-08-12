@@ -1,11 +1,9 @@
-[gd_scene load_steps=7 format=3 uid="uid://cusy2ap8wcgj3"]
+[gd_scene load_steps=5 format=3 uid="uid://cusy2ap8wcgj3"]
 
 [ext_resource type="Script" path="res://map-creator/MapCreatorProcessor.gd" id="1_dk12l"]
 [ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="2_0tlg6"]
 [ext_resource type="PackedScene" uid="uid://ckr0tepfuifuc" path="res://map-creator/TileDatabaseAdapter.tscn" id="3_alaj1"]
-[ext_resource type="Script" path="res://map-creator/TileDatabaseAdapter.gd" id="4_k7m38"]
 [ext_resource type="PackedScene" uid="uid://cc3s1jqv47qgl" path="res://map-creator/Library2TileConverter.tscn" id="5_8k7fq"]
-[ext_resource type="Script" path="res://map-creator/Library2TileConverter.gd" id="6_6usaq"]
 
 [node name="MapCreatorProcessor" type="Node"]
 script = ExtResource("1_dk12l")
@@ -13,7 +11,5 @@ script = ExtResource("1_dk12l")
 [node name="ModuleDatabaseAdapter" parent="." instance=ExtResource("2_0tlg6")]
 
 [node name="TileDatabaseAdapter" parent="." instance=ExtResource("3_alaj1")]
-script = ExtResource("4_k7m38")
 
 [node name="Library2TileConverter" parent="." instance=ExtResource("5_8k7fq")]
-script = ExtResource("6_6usaq")
