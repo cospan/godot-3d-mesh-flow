@@ -16,9 +16,6 @@ var m_logger = LogStream.new("DemoComposer", LogStream.LogLevel.DEBUG)
 var m_debug_count = 0
 var m_st:SurfaceTool
 
-#Flags
-var m_flag_reset:bool = false
-
 #######################################
 # Exports
 #######################################
@@ -26,8 +23,7 @@ var m_flag_reset:bool = false
 
 
 var m_map_db_adapter = null
-var m_properties = {"_demo_composer_enable": {"type": "CheckBox", "name" : "Enable Demo Composer", "value": enabled, "callback": _on_property_changed},
-                    "_demo_composer_reset" : {"type": "Button",   "name" : "Reset Demo Composer",  "value": enabled, "callback": _on_property_changed}}
+var m_properties = {"_demo_composer_enable": {"type": "CheckBox", "name" : "Enable Demo Composer", "value": enabled, "callback": _on_property_changed}}
 
 
 ##############################################################################
@@ -50,55 +46,85 @@ func get_properties():
     return m_properties
 
 func step():
-    if m_flag_reset:
-        m_flag_reset = false
-        var curr_ids = m_map_db_adapter.m_map_data[SUBCOMPOSER_ID].keys()
-        for _id in curr_ids:
-            m_logger.debug("Removing mesh: %d" % _id)
-            m_map_db_adapter.subcomposer_remove_mesh(SUBCOMPOSER_ID, _id)
-        m_debug_count = 0
-
     if enabled and m_debug_count == 0:
         var t = Transform3D()
         m_logger.debug("Demo Composer Enabled!")
+
+        var vertices  := PackedVector3Array(
+          [
+            Vector3(0, 1, 0),
+            Vector3(1, 1, 0),
+            Vector3(1, 1, 1),
+            Vector3(0, 1, 1),
+
+            Vector3(0, 0, 0),
+            Vector3(1, 0, 0),
+            Vector3(1, 0, 1),
+            Vector3(0, 0, 1)
+          ]
+        )
+
+        var indices := PackedInt32Array(
+          [
+            0, 1, 2,
+            0, 2, 3,
+            3, 2, 7,
+            2, 6, 7,
+            2, 1, 6,
+            1, 5, 6,
+            1, 4, 5,
+            1, 0, 4,
+            0, 3, 7,
+            4, 0, 7,
+            6, 5, 4,
+            4, 7, 6
+          ]
+        )
+
+
         # Create a surface tool to create a new mesh
         # Prepare attributes for add_vertex.
         m_st.clear()
 
         m_st.begin(Mesh.PRIMITIVE_TRIANGLES)
 
-
-        m_st.set_normal(Vector3(0, 0, 1))
         m_st.set_uv(Vector2(0, 0))
-        # Call last for each vertex, adds the above attributes.
-        m_st.add_vertex(Vector3(-1, -1, 1))
+        m_st.add_vertex(vertices[0])
 
-        m_st.set_normal(Vector3(0, 0, 1))
         m_st.set_uv(Vector2(0, 1))
-        m_st.add_vertex(Vector3(-1, 1, 0))
+        m_st.add_vertex(vertices[1])
 
-        m_st.set_normal(Vector3(0, 0, 1))
         m_st.set_uv(Vector2(1, 1))
-        m_st.add_vertex(Vector3(1, 1, 0))
+        m_st.add_vertex(vertices[2])
+
+        m_st.set_uv(Vector2(1, 0))
+        m_st.add_vertex(vertices[3])
+
+
+        m_st.set_uv(Vector2(0, 0))
+        m_st.add_vertex(vertices[4])
+
+        m_st.set_uv(Vector2(0, 1))
+        m_st.add_vertex(vertices[5])
+
+        m_st.set_uv(Vector2(1, 1))
+        m_st.add_vertex(vertices[6])
+
+        m_st.add_vertex(vertices[7])
+
 
         # Creates a quad from four corner vertices.
         # add_index does not need to be called before add_vertex.
-        m_st.add_index(0)
-        m_st.add_index(1)
-        m_st.add_index(2)
+        for i in range(indices.size()):
+            m_st.add_index(indices[i])
 
-        m_st.add_index(1)
-        m_st.add_index(3)
-        m_st.add_index(2)
-
-        #m_st.generate_normals()
-        m_st.generate_tangents()
+        m_st.generate_normals()
+        #m_st.generate_tangents()
 
         # Commit to a mesh.
         var mesh = m_st.commit()
         m_debug_count += 1
-        var _id = m_map_db_adapter.subcomposer_add_mesh(SUBCOMPOSER_ID, mesh, t, Color.GREEN)
-        m_logger.debug("Adding mesh: %d" % _id)
+        m_map_db_adapter.subcomposer_add_mesh(SUBCOMPOSER_ID, mesh, t, Color.GREEN)
 
 
 ##############################################################################
@@ -123,13 +149,4 @@ func _process(_delta):
 
 
 func _on_property_changed(property_name, property_value):
-    match property_name:
-        "_demo_composer_enable":
-            m_logger.debug("Demo Composer Enable: %s" % str(property_value))
-            enabled = !property_value
-
-        "_demo_composer_reset":
-            m_logger.debug("User Reset Demo Composer")
-            m_flag_reset = true
-
-
+    m_logger.debug("Property Changed: %s = %s" % [property_name, property_value])

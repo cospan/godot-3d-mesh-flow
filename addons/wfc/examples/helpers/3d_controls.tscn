@@ -9,19 +9,19 @@ var sensitivity: float = 0.01
 var _pitch: float = 0.0
 
 func _ready():
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+    Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _unhandled_input(event):
-	if event is InputEventMouseMotion:
-		rotate(Vector3.UP, event.relative.x * sensitivity)
+    if event is InputEventMouseMotion:
+        rotate(Vector3.UP, event.relative.x * sensitivity)
 
-		_pitch = clamp(_pitch + event.relative.y * sensitivity, -0.25 * PI, 0.15 * PI)
-		$camera_container.rotation.x = _pitch
-	elif event is InputEventMouseButton:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-			$camera_container.scale *= 0.9
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-			$camera_container.scale *= 1.1
+        _pitch = clamp(_pitch + event.relative.y * sensitivity, -0.25 * PI, 0.15 * PI)
+        $camera_container.rotation.x = _pitch
+    elif event is InputEventMouseButton:
+        if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+            $camera_container.scale *= 0.9
+        elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+            $camera_container.scale *= 1.1
 "
 
 [sub_resource type="Environment" id="Environment_71f77"]

@@ -196,12 +196,12 @@ func get_module_dict() -> Dictionary:
     m_database.query(sel_string)
     var module_dict = {}
     for row in m_database.query_result:
-        var name = row["name"]
+        var _name = row["name"]
         var md5 = row["md5"]
         var x_flip = row["x_flip"]
         var y_flip = row["y_flip"]
         var faces = [row["front"], row["back"], row["top"], row["bottom"], row["right"], row["left"]]
-        module_dict[name] = {"md5": md5,
+        module_dict[_name] = {"md5": md5,
                              "x_flip": x_flip,
                              "y_flip": y_flip,
                              "faces": faces}

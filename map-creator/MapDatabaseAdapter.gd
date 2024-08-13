@@ -246,8 +246,9 @@ func get_pos_dict_in_region_xyz_threaded(start_xyz: Vector3i, end_xyz: Vector3i)
 
 
 # TODO: Implement this function
-func read_all_commands_from_database(pos:Vector3, load_all:bool = false):
+func read_all_commands_from_database(_pos:Vector3, _load_all:bool = false):
     m_logger.debug("Read all commands from database")
+    m_logger.warn("Not Implemented Yet")
 
     # populate the local dictionary with data from the database.
     # XXX: We can isolate this to range dictated by the location we are at

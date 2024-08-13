@@ -101,53 +101,53 @@ func _process_map_data():
                 #_draw_mesh(mesh, transform.origin, transform, color, _id)
                 _draw_mesh(mesh, transform, color, _id)
             m_map_db_adapter.COMMANDS_T.ADD_TILE:
-                var tile = c[1]
-                var transform = c[2]
-                var color = c[3]
+                var _tile = c[1]
+                var _transform = c[2]
+                var _color = c[3]
                 var _id = c[4]
-                m_logger.debug("Draw Tile: " + str(tile))
+                m_logger.debug("Draw Tile: " + str(_tile))
                 #_draw_tile(tile, transform.origin, transform, color, _id)
             m_map_db_adapter.COMMANDS_T.ADD_LINE:
-                var line = c[1]
-                var transform = c[2]
-                var color = c[3]
+                var _line = c[1]
+                var _transform = c[2]
+                var _color = c[3]
                 var _id = c[4]
-                m_logger.debug("Draw Line: " + str(line))
+                m_logger.debug("Draw Line: " + str(_line))
                 #_draw_line(line, transform.origin, transform, color, _id)
             m_map_db_adapter.COMMANDS_T.ADD_POINT:
-                var point = c[1]
-                var transform = c[2]
-                var color = c[3]
+                var _point = c[1]
+                var _transform = c[2]
+                var _color = c[3]
                 var _id = c[4]
-                m_logger.debug("Draw Point: " + str(point))
+                m_logger.debug("Draw Point: " + str(_point))
                 #_draw_point(point, transform.origin, transform, color, _id)
             m_map_db_adapter.COMMANDS_T.ADD_TEXT:
-                var text = c[1]
-                var transform = c[2]
-                var color = c[3]
+                var _text = c[1]
+                var _transform = c[2]
+                var _color = c[3]
                 var _id = c[4]
-                m_logger.debug("Draw Text: " + str(text))
+                m_logger.debug("Draw Text: " + str(_text))
                 #_draw_text(text, transform.origin, transform, color, _id)
             m_map_db_adapter.COMMANDS_T.ADD_CIRCLE:
-                var circle = c[1]
-                var transform = c[2]
-                var color = c[3]
+                var _circle = c[1]
+                var _transform = c[2]
+                var _color = c[3]
                 var _id = c[4]
-                m_logger.debug("Draw Circle: " + str(circle))
+                m_logger.debug("Draw Circle: " + str(_circle))
                 #_draw_circle(circle, transform.origin, transform, color, _id)
             m_map_db_adapter.COMMANDS_T.ADD_RECT:
-                var rect = c[1]
-                var transform = c[2]
-                var color = c[3]
+                var _rect = c[1]
+                var _transform = c[2]
+                var _color = c[3]
                 var _id = c[4]
-                m_logger.debug("Draw Rect: " + str(rect))
+                m_logger.debug("Draw Rect: " + str(_rect))
                 #_draw_rect(rect, transform.origin, transform, color, _id)
             m_map_db_adapter.COMMANDS_T.ADD_POLYGON:
-                var polygon = c[1]
-                var transform = c[2]
-                var color = c[3]
+                var _polygon = c[1]
+                var _transform = c[2]
+                var _color = c[3]
                 var _id = c[4]
-                m_logger.debug("Draw Polygon: " + str(polygon))
+                m_logger.debug("Draw Polygon: " + str(_polygon))
                 #_draw_polygon(polygon, transform.origin, transform, color, _id)
             m_map_db_adapter.COMMANDS_T.REMOVE:
                 m_logger.debug("Remove Object with ID: " + str(c[1]))
