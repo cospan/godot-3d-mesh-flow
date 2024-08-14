@@ -29,6 +29,8 @@ var m_logger = LogStream.new("Map View", LogStream.LogLevel.DEBUG)
 var m_camera_angle=0
 var m_camera_pitch:float = 0.0
 
+var m_max_size = Vector2(10, 10)
+
 ##############################################################################
 # Exports
 ##############################################################################
@@ -58,6 +60,9 @@ func _ready():
     m_camera = $Camera3D
     m_camera_dest_pos = m_camera_top_pos
     m_camera_dest_rot = m_camera_top_rotation
+    #child_entered_tree.connect(_child_entered_tree)
+    #child_exiting_tree.connect(_child_exiting_tree)
+
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -70,6 +75,11 @@ func _physics_process(_delta):
     if not m_enable_mouse:
         m_camera.position = m_camera.position.lerp(m_camera_dest_pos, _delta * CAMERA_LERP_SPEED)
         m_camera.rotation = m_camera.rotation.lerp(m_camera_dest_rot, _delta * CAMERA_LERP_SPEED)
+
+
+##############################################################################
+# Signal Handlers
+##############################################################################
 
 func _input(event):
     if m_enable_mouse and event is InputEventMouseMotion:
@@ -96,4 +106,37 @@ func _input(event):
         if event.button_index == MOUSE_BUTTON_MIDDLE:
             if event.pressed:
                 m_enable_mouse = not m_enable_mouse
+
+func _child_entered_tree(n):
+    _evaluate_child_size(n)
+
+func _child_exiting_tree(n):
+    m_max_size = Vector2(1, 1)
+    for c in get_children():
+        if c == n:
+            continue
+        if c is MeshInstance3D:
+            _evaluate_child_size(c)
+
+func _evaluate_child_size(n):
+    var m = n.mesh
+    m_logger.debug("Evaluate Child: %s" % m)
+    var mesh_aabb = m.get_aabb()
+    var x_min = mesh_aabb.position[0]
+    var x_max = mesh_aabb.end[0]
+    var y_min = mesh_aabb.position[1]
+    var y_max = mesh_aabb.end[1]
+    if abs(x_min) > (m_max_size[0] / 2):
+        m_max_size[0] = abs(x_min) * 2
+        m_logger.debug("x_min is smaller, new size: %s" % str(m_max_size))
+    if abs(x_max) > (m_max_size[0] / 2):
+        m_max_size[0] = abs(x_max) * 2
+        m_logger.debug("x_max is smaller, new size: %s" % str(m_max_size))
+
+    if abs(y_min) > (m_max_size[1] / 2):
+        m_max_size[1] = abs(y_min) * 2
+        m_logger.debug("y_min is smaller, new size: %s" % str(m_max_size))
+    if abs(y_max) > (m_max_size[1] / 2):
+        m_max_size[1] = abs(y_max) * 2
+        m_logger.debug("y_max is smaller, new size: %s" % str(m_max_size))
 

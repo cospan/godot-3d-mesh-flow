@@ -14,6 +14,7 @@ enum DRAW_TYPE {
 }
 var m_draw_type = DRAW_TYPE.BOX
 
+var PROP_LABEL:String
 var PROP_ENABLE:String
 var PROP_DRAW_SELECT:String
 ##############################################################################
@@ -201,17 +202,24 @@ func draw_box():
 func _ready():
     m_logger.debug("Ready Entered!: Name: %s" % name)
 
+    PROP_LABEL = name + "_label"
     PROP_ENABLE = name + "_demo_composer_enable"
     PROP_DRAW_SELECT = name + "_demo_composer_draw_select"
 
     m_properties = {
+        PROP_LABEL:
+        {
+          "type": "Label",
+          "name": name + "_label",
+          "value": name,
+        },
         PROP_ENABLE:
         {
           "type": "CheckBox",
           "name" : "Enable Demo Composer",
           "value": enabled,
           "callback": _on_property_changed,
-          "tooltip": "Enable Demo Composer"
+          "tooltip": name + ": Enable Demo Composer"
         },
         PROP_DRAW_SELECT:
         {
@@ -219,7 +227,7 @@ func _ready():
           "name" : "Draw Select",
           "items":["box", "terrain"],
           "callback": _on_property_changed,
-          "tooltip": "Select the type of draw to use",
+          "tooltip": name + ": Select the type of draw to use",
           "size": Vector2(100, 100)
         }
     }

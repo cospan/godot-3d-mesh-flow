@@ -19,7 +19,7 @@ var m_module_dict:Dictionary = {}
 var m_map_view = null
 var m_map_db_adapter = null
 var m_map_object_dict:Dictionary = {}
-var m_material:ORMMaterial3D
+#var m_material:ORMMaterial3D
 
 enum STATE_TYPE {
   RESET,
@@ -61,7 +61,7 @@ func set_module_dict(module_dict:Dictionary):
 # Called when the node enters the scene tree for the first time.
 func _ready():
     m_logger.debug("Ready Entered!")
-    m_material = ORMMaterial3D.new()
+    #m_material = ORMMaterial3D.new()
     m_state = STATE_TYPE.RESET
     m_map_db_adapter = $MapDatabaseAdapter
 
@@ -164,8 +164,9 @@ func _draw_mesh(_mesh:Mesh, _transform: Transform3D, _modifiers:Dictionary, _id:
             match key:
                 "color":
                     m_logger.debug("Color: " + str(_modifiers["color"]))
-                    m_material.albedo_color = _modifiers["color"]
-                    mi.material_override = m_material
+                    var mat = ORMMaterial3D.new()
+                    mat.albedo_color = _modifiers["color"]
+                    mi.material_override = mat
     m_map_object_dict[_id] = mi
     m_map_view.add_child(mi)
 

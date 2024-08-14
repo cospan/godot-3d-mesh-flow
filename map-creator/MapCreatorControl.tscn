@@ -74,6 +74,7 @@ script = ExtResource("7_qiabe")
 [node name="MapComposer" parent="." instance=ExtResource("7_f7ynj")]
 
 [node name="DemoComposer1" parent="MapComposer" instance=ExtResource("8_vy2qe")]
+mesh_priority = 1
 
 [node name="DemoComposer2" parent="MapComposer" instance=ExtResource("8_vy2qe")]
 mesh_color = Color(0, 1, 1, 1)
