@@ -95,72 +95,77 @@ func _process_map_data():
             m_map_db_adapter.COMMANDS_T.ADD_MESH:
                 var mesh = c[1]
                 var transform = c[2]
-                var color = c[3]
+                var modifiers = c[3]
                 var _id = c[4]
                 m_logger.debug("Draw Mesh: " + str(mesh))
-                #_draw_mesh(mesh, transform.origin, transform, color, _id)
-                _draw_mesh(mesh, transform, color, _id)
+                #_draw_mesh(mesh, transform.origin, transform, modifiers, _id)
+                _draw_mesh(mesh, transform, modifiers, _id)
             m_map_db_adapter.COMMANDS_T.ADD_TILE:
                 var _tile = c[1]
                 var _transform = c[2]
-                var _color = c[3]
+                var _modifiers = c[3]
                 var _id = c[4]
                 m_logger.debug("Draw Tile: " + str(_tile))
-                #_draw_tile(tile, transform.origin, transform, color, _id)
+                #_draw_tile(tile, transform.origin, transform, modifiers, _id)
             m_map_db_adapter.COMMANDS_T.ADD_LINE:
                 var _line = c[1]
                 var _transform = c[2]
-                var _color = c[3]
+                var _modifiers = c[3]
                 var _id = c[4]
                 m_logger.debug("Draw Line: " + str(_line))
-                #_draw_line(line, transform.origin, transform, color, _id)
+                #_draw_line(line, transform.origin, transform, modifiers, _id)
             m_map_db_adapter.COMMANDS_T.ADD_POINT:
                 var _point = c[1]
                 var _transform = c[2]
-                var _color = c[3]
+                var _modifiers = c[3]
                 var _id = c[4]
                 m_logger.debug("Draw Point: " + str(_point))
-                #_draw_point(point, transform.origin, transform, color, _id)
+                #_draw_point(point, transform.origin, transform, modifiers, _id)
             m_map_db_adapter.COMMANDS_T.ADD_TEXT:
                 var _text = c[1]
                 var _transform = c[2]
-                var _color = c[3]
+                var _modifiers = c[3]
                 var _id = c[4]
                 m_logger.debug("Draw Text: " + str(_text))
-                #_draw_text(text, transform.origin, transform, color, _id)
+                #_draw_text(text, transform.origin, transform, modifiers, _id)
             m_map_db_adapter.COMMANDS_T.ADD_CIRCLE:
                 var _circle = c[1]
                 var _transform = c[2]
-                var _color = c[3]
+                var _modifiers = c[3]
                 var _id = c[4]
                 m_logger.debug("Draw Circle: " + str(_circle))
-                #_draw_circle(circle, transform.origin, transform, color, _id)
+                #_draw_circle(circle, transform.origin, transform, modifiers, _id)
             m_map_db_adapter.COMMANDS_T.ADD_RECT:
                 var _rect = c[1]
                 var _transform = c[2]
-                var _color = c[3]
+                var _modifiers = c[3]
                 var _id = c[4]
                 m_logger.debug("Draw Rect: " + str(_rect))
-                #_draw_rect(rect, transform.origin, transform, color, _id)
+                #_draw_rect(rect, transform.origin, transform, modifiers, _id)
             m_map_db_adapter.COMMANDS_T.ADD_POLYGON:
                 var _polygon = c[1]
                 var _transform = c[2]
-                var _color = c[3]
+                var _modifiers = c[3]
                 var _id = c[4]
                 m_logger.debug("Draw Polygon: " + str(_polygon))
-                #_draw_polygon(polygon, transform.origin, transform, color, _id)
+                #_draw_polygon(polygon, transform.origin, transform, modifiers, _id)
             m_map_db_adapter.COMMANDS_T.REMOVE:
                 m_logger.debug("Remove Object with ID: " + str(c[1]))
                 _remove_object(c[1])
 
 
-func _draw_mesh(_mesh:Mesh, _transform: Transform3D, _color:Color, _id:int):
+func _draw_mesh(_mesh:Mesh, _transform: Transform3D, _modifiers:Dictionary, _id:int):
     var mi = MeshInstance3D.new()
     mi.mesh = _mesh
     mi.transform = _transform
-    if _color != null:
-        m_material.albedo_color = _color
-        mi.material_override = m_material
+    if _modifiers != null:
+        m_logger.debug("Modifiers: " + str(_modifiers))
+        for key in _modifiers.keys():
+            match key:
+                "color":
+                    m_logger.debug("Color: " + str(_modifiers["color"]))
+                    m_material.albedo_color = _modifiers["color"]
+                    mi.material_override = m_material
     m_map_object_dict[_id] = mi
     m_map_view.add_child(mi)
 

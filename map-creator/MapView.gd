@@ -90,7 +90,7 @@ func _input(event):
             m_camera.scale *= 1.1
         # Disable mouse if right click
         if event.button_index == MOUSE_BUTTON_RIGHT:
-            m_camera.scale = 1.0
+            m_camera.scale = Vector3(1, 1, 1)
             set_camera_top_view()
 
         if event.button_index == MOUSE_BUTTON_MIDDLE:

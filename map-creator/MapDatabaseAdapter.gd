@@ -45,6 +45,7 @@ var m_database : SQLite
 var m_map_data:Dictionary = {}
 var m_curr_id:int = 0
 var m_commands:Array = []
+var m_prev_commands:Array = []
 
 # TODO: Adda member that will dictate how far away from the player we will load
 # the map data. This will be used to determine how much data we need to load
@@ -55,7 +56,6 @@ var m_commands:Array = []
         m_logger.info("Load Distance: %s" % str(v))
     get:
         return load_distance
-
 
 #######################################
 # Thread Members
@@ -71,8 +71,6 @@ var m_task_db_adapter = null
 #######################################
 @export var DATABASE_NAME:String = "wfc_database.db"
 @export var DEBUG:bool = true
-
-
 
 ########################################
 # Table Definitions
@@ -254,7 +252,7 @@ func read_all_commands_from_database(_pos:Vector3, _load_all:bool = false):
     # XXX: We can isolate this to range dictated by the location we are at
     # (so we don't need to load everything)
 
-func subcomposer_add_mesh(_submodule:String, _mesh:Mesh, _transfrom:Transform3D, _color=null) -> int:
+func subcomposer_add_mesh(_submodule:String, _mesh:Mesh, _transfrom:Transform3D, _modifiers:Dictionary={}) -> int:
     # Submit a command to the local dictionary and submit it to the database
     # in a background thread.
     # Return a unique ID that can be used to reference the command
@@ -265,8 +263,8 @@ func subcomposer_add_mesh(_submodule:String, _mesh:Mesh, _transfrom:Transform3D,
     #m_database.insert_row(POS_TABLE, command)
     if not m_map_data.has(_submodule):
         m_map_data[_submodule] = {}
-    m_map_data[_submodule][m_curr_id] = {"mesh":_mesh, "transform":_transfrom, "color":_color}
-    m_commands.push_back([COMMANDS_T.ADD_MESH, _mesh, _transfrom, _color, m_curr_id])
+    m_map_data[_submodule][m_curr_id] = {"mesh":_mesh, "transform":_transfrom, "modifiers":_modifiers}
+    m_commands.push_back([COMMANDS_T.ADD_MESH, _mesh, _transfrom, _modifiers, m_curr_id])
     var curr_id = m_curr_id
     m_curr_id = m_curr_id + 1
     return curr_id
@@ -286,9 +284,12 @@ func subcomposer_remove_mesh(_submodule:String, _id:int):
             m_commands.push_back([COMMANDS_T.REMOVE, _id])
 
 func composer_read_step_commands() -> Array:
-    var tcmds = m_commands.duplicate(true)
+    m_prev_commands = m_commands.duplicate(true)
     m_commands.clear()
-    return tcmds
+    return m_prev_commands
+
+func subcomposer_read_previous_commands() -> Array:
+    return m_prev_commands
 
 ##############################################################################
 # Private Functions

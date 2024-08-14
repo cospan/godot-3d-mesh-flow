@@ -73,7 +73,10 @@ script = ExtResource("7_qiabe")
 
 [node name="MapComposer" parent="." instance=ExtResource("7_f7ynj")]
 
-[node name="DemoComposer" parent="MapComposer" instance=ExtResource("8_vy2qe")]
+[node name="DemoComposer1" parent="MapComposer" instance=ExtResource("8_vy2qe")]
+
+[node name="DemoComposer2" parent="MapComposer" instance=ExtResource("8_vy2qe")]
+mesh_color = Color(0, 1, 1, 1)
 
 [node name="MapDatabaseAdapter" parent="MapComposer" instance=ExtResource("9_q2cax")]
 
