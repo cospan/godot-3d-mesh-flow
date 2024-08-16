@@ -210,13 +210,13 @@ func _ready():
         PROP_LABEL:
         {
           "type": "Label",
-          "name": name + "_label",
+          "name": "",
           "value": name,
         },
         PROP_ENABLE:
         {
           "type": "CheckBox",
-          "name" : "Enable Demo Composer",
+          "name" : "Enable",
           "value": enabled,
           "callback": _on_property_changed,
           "tooltip": name + ": Enable Demo Composer"

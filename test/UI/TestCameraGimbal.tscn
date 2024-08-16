@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=3 uid="uid://bu4ft1lutltyw"]
+
+[ext_resource type="PackedScene" uid="uid://dx7o1jsbu7kt4" path="res://assets/3D/Space Kit/craft_racer.dae" id="1_16kjs"]
+[ext_resource type="Script" path="res://test/UI/TestCameraGimbal.gd" id="1_bgwwt"]
+[ext_resource type="PackedScene" uid="uid://ctdwqlq2354wd" path="res://utils/CameraGimbal.tscn" id="2_qfayk"]
+
+[node name="TestCameraGimbal" type="Node3D"]
+script = ExtResource("1_bgwwt")
+
+[node name="craft_racer" parent="." instance=ExtResource("1_16kjs")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.931586, 0, 0)
+
+[node name="CameraGimbal" parent="." node_paths=PackedStringArray("TARGET") instance=ExtResource("2_qfayk")]
+TARGET = NodePath("../craft_racer")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.76181, -0.259813, -0.593417, 0.647801, 0.305538, 0.697854, 0, -0.916048, 0.401069, -6.73196, 6.56357, 2.73536)

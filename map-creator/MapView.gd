@@ -28,13 +28,15 @@ var m_logger = LogStream.new("Map View", LogStream.LogLevel.DEBUG)
 
 var m_camera_angle=0
 var m_camera_pitch:float = 0.0
+var m_camera_focal_point:Vector3 = Vector3(0, 0, 0)
+var m_camera_rot_quat:Quaternion = Quaternion.IDENTITY
 
-var m_max_size = Vector2(10, 10)
+var m_max_size = Vector2(1, 1)
 
 ##############################################################################
 # Exports
 ##############################################################################
-@export var MOUSE_Y_SENSITIVITY = 0.10
+@export var MOUSE_Y_SENSITIVITY = 0.01
 @export var MOUSE_X_SENSITIVITY = 0.01
 
 ##############################################################################
@@ -53,6 +55,41 @@ func set_camera_top_view():
 # Private Functions
 ##############################################################################
 
+func _recalculate_camera_pos():
+    var hyp_val = sqrt(m_max_size[0] * m_max_size[0] + m_max_size[1] * m_max_size[1])
+    var theta = deg_to_rad(m_camera.fov * 0.5)
+    var y_offset = hyp_val / tan(theta)
+    m_camera_top_pos = Vector3(m_max_size[0] / 2, y_offset, m_max_size[1] / 2)
+    set_camera_top_view()
+
+func _evaluate_child_size(n):
+    var m = n.mesh
+    var mesh_aabb = m.get_aabb()
+    m_logger.debug("Evaluate Child with AABB: %s" % str(mesh_aabb))
+    m_logger.debug("  Start: %s" % str(mesh_aabb.position))
+    m_logger.debug("  End: %s" % str(mesh_aabb.end))
+    var x_min = mesh_aabb.position[0]
+    var x_max = mesh_aabb.end[0]
+    var y_min = mesh_aabb.position[2]
+    var y_max = mesh_aabb.end[2]
+    if abs(x_min) > (m_max_size[0] / 2):
+        m_max_size[0] = abs(x_min) * 2
+        m_logger.debug("x_min is smaller, new size: %s" % str(m_max_size))
+    if abs(x_max) > (m_max_size[0] / 2):
+        m_max_size[0] = abs(x_max) * 2
+        m_logger.debug("x_max is smaller, new size: %s" % str(m_max_size))
+
+    if abs(y_min) > (m_max_size[1] / 2):
+        m_max_size[1] = abs(y_min) * 2
+        m_logger.debug("y_min is smaller, new size: %s" % str(m_max_size))
+    if abs(y_max) > (m_max_size[1] / 2):
+        m_max_size[1] = abs(y_max) * 2
+        m_logger.debug("y_max is smaller, new size: %s" % str(m_max_size))
+
+
+##############################################################################
+# Signal Handlers
+##############################################################################
 # Called when the node enters the scene tree for the first time.
 func _ready():
     if DEBUG:
@@ -60,39 +97,49 @@ func _ready():
     m_camera = $Camera3D
     m_camera_dest_pos = m_camera_top_pos
     m_camera_dest_rot = m_camera_top_rotation
-    #child_entered_tree.connect(_child_entered_tree)
-    #child_exiting_tree.connect(_child_exiting_tree)
-
-
+    child_entered_tree.connect(_child_entered_tree)
+    child_exiting_tree.connect(_child_exiting_tree)
+    m_camera_focal_point = global_transform.origin
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
-    pass
-
-func _physics_process(_delta):
     if not m_camera:
         return
     if not m_enable_mouse:
         m_camera.position = m_camera.position.lerp(m_camera_dest_pos, _delta * CAMERA_LERP_SPEED)
         m_camera.rotation = m_camera.rotation.lerp(m_camera_dest_rot, _delta * CAMERA_LERP_SPEED)
+    else:
 
+        var to_focus = m_camera_focal_point - m_camera.global_transform.origin
+        var up = to_focus.cross(m_camera.global_transform.basis.x)
+        m_camera.look_at(m_camera_focal_point, up)
+        m_camera.rotation = m_camera_rot_quat.get_euler()
 
-##############################################################################
-# Signal Handlers
-##############################################################################
+func _physics_process(_delta):
+    pass
+
 
 func _input(event):
     if m_enable_mouse and event is InputEventMouseMotion:
 
-        m_camera_pitch = clamp(m_camera_pitch + event.relative.y * MOUSE_X_SENSITIVITY, -0.5 * PI, 0.5 * PI)
-        m_camera.rotation.x = m_camera_pitch
-        #m_camera.rotation.y += event.relative.x * MOUSE_SENSITIVITY
+        #rotation_degrees.x -= event.relative.x * MOUSE_X_SENSITIVITY
+        #rotation_degrees.y -= event.relative.y * MOUSE_Y_SENSITIVITY
+        #rotation_degrees.x = clamp(rotation_degrees.x, -90, 90)
 
-        m_camera.rotate_y(deg_to_rad(-event.relative.x*MOUSE_Y_SENSITIVITY))
-        #var changev=-event.relative.y*MOUSE_X_SENSITIVITY
-        #if m_camera_angle+changev>-50 and m_camera_angle+changev<50:
-        #    m_camera_angle+=changev
-        #    m_camera.rotate_x(deg_to_rad(changev))
+        var x_rot = Quaternion(Vector3.UP, -event.relative.x * MOUSE_X_SENSITIVITY * PI / 180.0)
+        var y_rot = Quaternion(Vector3.RIGHT, -event.relative.y * MOUSE_Y_SENSITIVITY * PI / 180.0)
+        m_camera_rot_quat = x_rot * y_rot * m_camera_rot_quat
+
+
+        #m_camera_pitch = clamp(m_camera_pitch + event.relative.y * MOUSE_X_SENSITIVITY, -0.5 * PI, 0.5 * PI)
+        #m_camera.rotation.x = m_camera_pitch
+        ##m_camera.rotation.y += event.relative.x * MOUSE_SENSITIVITY
+
+        #m_camera.rotate_y(deg_to_rad(-event.relative.x*MOUSE_Y_SENSITIVITY))
+        ##var changev=-event.relative.y*MOUSE_X_SENSITIVITY
+        ##if m_camera_angle+changev>-50 and m_camera_angle+changev<50:
+        ##    m_camera_angle+=changev
+        ##    m_camera.rotate_x(deg_to_rad(changev))
     if event is InputEventMouseButton:
         if event.button_index == MOUSE_BUTTON_WHEEL_UP:
             m_camera.scale *= 0.9
@@ -109,6 +156,7 @@ func _input(event):
 
 func _child_entered_tree(n):
     _evaluate_child_size(n)
+    _recalculate_camera_pos()
 
 func _child_exiting_tree(n):
     m_max_size = Vector2(1, 1)
@@ -117,26 +165,6 @@ func _child_exiting_tree(n):
             continue
         if c is MeshInstance3D:
             _evaluate_child_size(c)
+    _recalculate_camera_pos()
 
-func _evaluate_child_size(n):
-    var m = n.mesh
-    m_logger.debug("Evaluate Child: %s" % m)
-    var mesh_aabb = m.get_aabb()
-    var x_min = mesh_aabb.position[0]
-    var x_max = mesh_aabb.end[0]
-    var y_min = mesh_aabb.position[1]
-    var y_max = mesh_aabb.end[1]
-    if abs(x_min) > (m_max_size[0] / 2):
-        m_max_size[0] = abs(x_min) * 2
-        m_logger.debug("x_min is smaller, new size: %s" % str(m_max_size))
-    if abs(x_max) > (m_max_size[0] / 2):
-        m_max_size[0] = abs(x_max) * 2
-        m_logger.debug("x_max is smaller, new size: %s" % str(m_max_size))
-
-    if abs(y_min) > (m_max_size[1] / 2):
-        m_max_size[1] = abs(y_min) * 2
-        m_logger.debug("y_min is smaller, new size: %s" % str(m_max_size))
-    if abs(y_max) > (m_max_size[1] / 2):
-        m_max_size[1] = abs(y_max) * 2
-        m_logger.debug("y_max is smaller, new size: %s" % str(m_max_size))
 
