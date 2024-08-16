@@ -16,6 +16,10 @@ var m_mouse_control = true
 
 
 var m_camera_top_pos = Vector3(0, 5, 0)
+var m_prev_target = null
+
+#### Flags
+var m_flag_change_target = false
 
 ##############################################################################
 # Scenes
@@ -31,6 +35,7 @@ var m_camera_top_pos = Vector3(0, 5, 0)
 
 @export var MAX_Y_ROT_SPEED:float = 30
 
+@export_range(0.05, 1.0) var CHANGE_TARGET_SPEED:float = 0.1
 # Zoom Settings
 @export var MAX_ZOOM:float = 10.0
 @export var MIN_ZOOM:float = 0.4
@@ -40,6 +45,7 @@ var m_zoom = 1.5
 
 @onready var m_inner = $InnerGimbal
 @onready var m_camera = $InnerGimbal/Camera3D
+
 
 ##############################################################################
 # Public Functions
@@ -65,14 +71,30 @@ func enable_mouse_caputre_mode(enable:bool):
 func _ready():
     enable_mouse_caputre_mode(m_mouse_control)
     set_bound_size(Vector2(3, 3))
+    m_prev_target = TARGET
 
 func _process(_delta):
     m_inner.rotation.x = clamp(m_inner.rotation.x, -1.4, -0.01)
     scale = lerp(scale, Vector3.ONE * m_zoom, ZOOM_SPEED)
-    if TARGET:
-        global_position = TARGET.global_position
+    if m_prev_target != TARGET:
+        m_flag_change_target = true
+
+    if m_flag_change_target:
+        var tpos = Vector3.ZERO if TARGET == null else TARGET.global_position
+        if tpos.is_equal_approx(global_position):
+            m_logger.debug("Lerp Finished")
+            m_flag_change_target = false
+        else:
+            global_position = lerp(global_position, tpos, CHANGE_TARGET_SPEED)
     else:
-        global_position = Vector3.ZERO
+        if TARGET:
+            global_position = TARGET.global_position
+        else:
+            global_position = Vector3.ZERO
+
+
+    m_prev_target = TARGET
+
 
 func _unhandled_input(event):
     if event.is_action_pressed("toggle_mouse_control"):
