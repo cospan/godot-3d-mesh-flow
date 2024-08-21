@@ -529,6 +529,3 @@ func _get_wfc_tile_sockets(tile_name, direction = null):
             sockets[d] = -1 * tile[v]["sid"]
 
     return sockets
-
-
-
