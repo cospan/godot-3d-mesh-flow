@@ -1,5 +1,4 @@
-extends Control
-
+extends _BASE_
 
 ##############################################################################
 # Signals
@@ -12,7 +11,9 @@ extends Control
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("Template", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("_BASE_", LogStream.LogLevel.DEBUG)
+
+## Flags ##
 
 ##############################################################################
 # Scenes
@@ -26,18 +27,17 @@ var m_logger = LogStream.new("Template", LogStream.LogLevel.DEBUG)
 # Public Functions
 ##############################################################################
 
-
-
 ##############################################################################
 # Private Functions
 ##############################################################################
 
-# Called when the node enters the scene tree for the first time.
+##############################################################################
+# Signal Handlers
+##############################################################################
+
 func _ready():
     m_logger.debug("Ready Entered!")
 
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
     pass
 
