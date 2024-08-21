@@ -29,8 +29,8 @@ func add_property(_name:String, property_dict:Dictionary):
     label.text = property_dict["name"]
     add_child(label)
     label.custom_minimum_size = Vector2i(LABEL_MIN_X_SIZE, 0)
-    match property_dict["type"]:
-        "Button":
+    match property_dict["type"].to_lower():
+        "button":
             #print ("Button")
             label.text = ""
             prop = Button.new()
@@ -38,14 +38,14 @@ func add_property(_name:String, property_dict:Dictionary):
             add_child(prop)
             m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
             prop.connect("pressed", func() : _property_update(_name, true))
-        "CheckBox":
+        "checkbox":
             #print ("BOOL")
             prop = CheckBox.new()
             prop.button_pressed = property_dict["value"]
             add_child(prop)
             m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
             prop.connect("pressed", func() : _property_update(_name, prop.button_pressed))
-        "OptionButton":
+        "optionbutton":
             #print ("OPTION")
             prop = OptionButton.new()
             for option in property_dict["options"]:
@@ -54,7 +54,7 @@ func add_property(_name:String, property_dict:Dictionary):
             add_child(prop)
             m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
             prop.connect("item_selected", func(_val) : _property_update(_name, m_widget_dict[_name]["widget"].get_item_text(_val)))
-        "SpinBox":
+        "spinbox":
             #print("FLOAT")
             if "value" in property_dict:
                 if property_dict["value"] is Vector2 or property_dict["value"] is Vector2i:
@@ -71,7 +71,7 @@ func add_property(_name:String, property_dict:Dictionary):
                     add_child(add_float_spinbox(_name, property_dict, label))
                     if "visible" in property_dict:
                         set_prop_visible(_name, property_dict["visible"])
-        "ProgressBar":
+        "progressbar":
             #print("FLOAT")
             prop = ProgressBar.new()
             prop.value = property_dict["value"]
@@ -81,7 +81,7 @@ func add_property(_name:String, property_dict:Dictionary):
                 prop.max_value = property_dict["max"]
             add_child(prop)
             m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
-        "HSlider":
+        "hslider":
             #print("FLOAT")
             prop = HSlider.new()
             prop.custom_minimum_size = Vector2(200, 0) # Set minimum size
@@ -95,7 +95,7 @@ func add_property(_name:String, property_dict:Dictionary):
             add_child(prop)
             m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
             prop.connect("value_changed", func(_val) : _property_update(_name, _val))
-        "LineEdit":
+        "lineedit":
             #print("STRING")
             prop = LineEdit.new()
             prop.text = property_dict["value"]
@@ -105,12 +105,12 @@ func add_property(_name:String, property_dict:Dictionary):
             add_child(prop)
             m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
             prop.connect("text_submitted", func(_val) : _property_update(_name, _val))
-        "Label":
+        "label":
             prop = Label.new()
             prop.text = property_dict["value"]
             add_child(prop)
             m_widget_dict[_name] = {"type": property_dict["type"], "label": label, "widget": prop}
-        "ItemList":
+        "itemlist":
             var scroll_box = ScrollContainer.new()
             prop = ItemList.new()
             scroll_box.add_child(prop)
