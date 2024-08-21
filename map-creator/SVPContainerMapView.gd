@@ -111,6 +111,3 @@ func on_root_resize():
 
         m_parent.position.y = 0
         m_parent.size.y = m_root.size.y
-
-
-

@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://dc67rgul2jeyv"]
+[gd_scene load_steps=14 format=3 uid="uid://dc67rgul2jeyv"]
 
 [ext_resource type="Script" path="res://map-creator/MapCreatorControl.gd" id="1_yif36"]
 [ext_resource type="PackedScene" uid="uid://bjn216f0xxwjc" path="res://utils/DictProperty.tscn" id="2_chocf"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://cc3s1jqv47qgl" path="res://map-creator/Library2TileConverter.tscn" id="9_mp2oe"]
 [ext_resource type="PackedScene" uid="uid://2pm1gnt1y3c" path="res://map-creator/MapDatabaseAdapter.tscn" id="9_q2cax"]
 [ext_resource type="PackedScene" uid="uid://ckr0tepfuifuc" path="res://map-creator/TileDatabaseAdapter.tscn" id="10_cp806"]
+[ext_resource type="PackedScene" uid="uid://6ev6pvupvogi" path="res://map-creator/sub-composers/NoiseTerrainComposer.tscn" id="10_sohyi"]
 
 [node name="MapCreatorControl" type="Control"]
 layout_mode = 3
@@ -74,12 +75,15 @@ script = ExtResource("7_qiabe")
 [node name="MapComposer" parent="." instance=ExtResource("7_f7ynj")]
 
 [node name="DemoComposer1" parent="MapComposer" instance=ExtResource("8_vy2qe")]
-mesh_priority = 1
+mesh_priority = 2
 
 [node name="DemoComposer2" parent="MapComposer" instance=ExtResource("8_vy2qe")]
 mesh_color = Color(0, 1, 1, 1)
+enabled = false
 
 [node name="MapDatabaseAdapter" parent="MapComposer" instance=ExtResource("9_q2cax")]
+
+[node name="NoiseTerrainComposer" parent="MapComposer" instance=ExtResource("10_sohyi")]
 
 [node name="ModuleDatabaseAdapter" parent="." instance=ExtResource("8_11ggo")]
 

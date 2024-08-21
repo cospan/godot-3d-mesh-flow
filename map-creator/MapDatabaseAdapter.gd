@@ -42,7 +42,8 @@ enum COMMANDS_T {
 ##############################################################################
 var m_logger = LogStream.new("Map Database Adapter", LogStream.LogLevel.DEBUG)
 var m_database : SQLite
-var m_map_data:Dictionary = {}
+var m_map_dict:Dictionary = {}
+var m_id_subcomposer_dict:Dictionary = {}
 var m_curr_id:int = 0
 var m_commands:Array = []
 var m_prev_commands:Array = []
@@ -261,9 +262,10 @@ func subcomposer_add_mesh(_submodule:String, _mesh:Mesh, _transfrom:Transform3D,
     # when we need to update it we will use a dictionary to store the command
     # and the ID in the database. This will allow us to update the command
     #m_database.insert_row(POS_TABLE, command)
-    if not m_map_data.has(_submodule):
-        m_map_data[_submodule] = {}
-    m_map_data[_submodule][m_curr_id] = {"mesh":_mesh, "transform":_transfrom, "modifiers":_modifiers}
+    if not m_map_dict.has(_submodule):
+        m_map_dict[_submodule] = {}
+    m_map_dict[_submodule][m_curr_id] = {"mesh":_mesh, "transform":_transfrom, "modifiers":_modifiers}
+    m_id_subcomposer_dict[m_curr_id] = _submodule
     m_commands.push_back([COMMANDS_T.ADD_MESH, _mesh, _transfrom, _modifiers, m_curr_id])
     var curr_id = m_curr_id
     m_curr_id = m_curr_id + 1
@@ -277,9 +279,10 @@ func subcomposer_remove_mesh(_submodule:String, _id:int):
     # when we need to update it we will use a dictionary to store the command
     # and the ID in the database. This will allow us to update the command
     #m_database.delete_rows(POS_TABLE, "id = %s" % str(_id))
-    if m_map_data.has(_submodule):
-        if m_map_data[_submodule].has(_id):
-            m_map_data[_submodule].erase(_id)
+    if m_map_dict.has(_submodule):
+        if m_map_dict[_submodule].has(_id):
+            m_map_dict[_submodule].erase(_id)
+            m_id_subcomposer_dict.erase(_id)
             # XXX Remove from the database
             m_commands.push_back([COMMANDS_T.REMOVE, _id])
 
@@ -290,6 +293,11 @@ func composer_read_step_commands() -> Array:
 
 func subcomposer_read_previous_commands() -> Array:
     return m_prev_commands
+
+func get_subcomposer_name(_id:int) -> String:
+    if m_id_subcomposer_dict.has(_id):
+        return m_id_subcomposer_dict[_id]
+    return ""
 
 ##############################################################################
 # Private Functions

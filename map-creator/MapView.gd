@@ -15,7 +15,6 @@ const DEFAULT_CAMERA_HEIGHT = 5.0
 # Members
 ##############################################################################
 
-var m_camera = null
 var m_enable_mouse = false
 var m_camera_dest_pos = Vector3(0, DEFAULT_CAMERA_HEIGHT, 0)
 var m_camera_dest_rot = Vector3(-1.5708, 0, 0)
@@ -34,33 +33,31 @@ var m_camera_rot_quat:Quaternion = Quaternion.IDENTITY
 var m_max_size = Vector2(1, 1)
 
 ##############################################################################
+# Scenes
+##############################################################################
+
+#var m_camera = null
+var m_camera_gimbal = null
+
+##############################################################################
 # Exports
 ##############################################################################
-@export var MOUSE_Y_SENSITIVITY = 0.01
-@export var MOUSE_X_SENSITIVITY = 0.01
 
 ##############################################################################
 # Public Functions
 ##############################################################################
 
+func set_target(target:Node3D):
+    m_logger.debug("Setting Target: %s" % str(target))
+    m_camera_gimbal.set_target(target)
 
 ##################
 # GUI Functions
 ##################
-func set_camera_top_view():
-    m_camera_dest_pos = m_camera_top_pos
-    m_camera_dest_rot = m_camera_top_rotation
 
 ##############################################################################
 # Private Functions
 ##############################################################################
-
-func _recalculate_camera_pos():
-    var hyp_val = sqrt(m_max_size[0] * m_max_size[0] + m_max_size[1] * m_max_size[1])
-    var theta = deg_to_rad(m_camera.fov * 0.5)
-    var y_offset = hyp_val / tan(theta)
-    m_camera_top_pos = Vector3(m_max_size[0] / 2, y_offset, m_max_size[1] / 2)
-    set_camera_top_view()
 
 func _evaluate_child_size(n):
     var m = n.mesh
@@ -94,69 +91,14 @@ func _evaluate_child_size(n):
 func _ready():
     if DEBUG:
       m_logger.set_current_level = LogStream.LogLevel.DEBUG
-    m_camera = $Camera3D
-    m_camera_dest_pos = m_camera_top_pos
-    m_camera_dest_rot = m_camera_top_rotation
-    child_entered_tree.connect(_child_entered_tree)
-    child_exiting_tree.connect(_child_exiting_tree)
-    m_camera_focal_point = global_transform.origin
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(_delta):
-    if not m_camera:
-        return
-    if not m_enable_mouse:
-        m_camera.position = m_camera.position.lerp(m_camera_dest_pos, _delta * CAMERA_LERP_SPEED)
-        m_camera.rotation = m_camera.rotation.lerp(m_camera_dest_rot, _delta * CAMERA_LERP_SPEED)
-    else:
-
-        var to_focus = m_camera_focal_point - m_camera.global_transform.origin
-        var up = to_focus.cross(m_camera.global_transform.basis.x)
-        m_camera.look_at(m_camera_focal_point, up)
-        m_camera.rotation = m_camera_rot_quat.get_euler()
-
-func _physics_process(_delta):
-    pass
-
-
-func _input(event):
-    if m_enable_mouse and event is InputEventMouseMotion:
-
-        #rotation_degrees.x -= event.relative.x * MOUSE_X_SENSITIVITY
-        #rotation_degrees.y -= event.relative.y * MOUSE_Y_SENSITIVITY
-        #rotation_degrees.x = clamp(rotation_degrees.x, -90, 90)
-
-        var x_rot = Quaternion(Vector3.UP, -event.relative.x * MOUSE_X_SENSITIVITY * PI / 180.0)
-        var y_rot = Quaternion(Vector3.RIGHT, -event.relative.y * MOUSE_Y_SENSITIVITY * PI / 180.0)
-        m_camera_rot_quat = x_rot * y_rot * m_camera_rot_quat
-
-
-        #m_camera_pitch = clamp(m_camera_pitch + event.relative.y * MOUSE_X_SENSITIVITY, -0.5 * PI, 0.5 * PI)
-        #m_camera.rotation.x = m_camera_pitch
-        ##m_camera.rotation.y += event.relative.x * MOUSE_SENSITIVITY
-
-        #m_camera.rotate_y(deg_to_rad(-event.relative.x*MOUSE_Y_SENSITIVITY))
-        ##var changev=-event.relative.y*MOUSE_X_SENSITIVITY
-        ##if m_camera_angle+changev>-50 and m_camera_angle+changev<50:
-        ##    m_camera_angle+=changev
-        ##    m_camera.rotate_x(deg_to_rad(changev))
-    if event is InputEventMouseButton:
-        if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-            m_camera.scale *= 0.9
-        if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-            m_camera.scale *= 1.1
-        # Disable mouse if right click
-        if event.button_index == MOUSE_BUTTON_RIGHT:
-            m_camera.scale = Vector3(1, 1, 1)
-            set_camera_top_view()
-
-        if event.button_index == MOUSE_BUTTON_MIDDLE:
-            if event.pressed:
-                m_enable_mouse = not m_enable_mouse
+    m_camera_gimbal = $CameraGimbal
+    m_camera_gimbal.set_top_view()
 
 func _child_entered_tree(n):
     _evaluate_child_size(n)
-    _recalculate_camera_pos()
+    #_recalculate_camera_pos()
+    m_camera_gimbal.set_bound_size(m_max_size)
+
 
 func _child_exiting_tree(n):
     m_max_size = Vector2(1, 1)
@@ -165,6 +107,4 @@ func _child_exiting_tree(n):
             continue
         if c is MeshInstance3D:
             _evaluate_child_size(c)
-    _recalculate_camera_pos()
-
-
+    m_camera_gimbal.set_bound_size(m_max_size)

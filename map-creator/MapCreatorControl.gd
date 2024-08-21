@@ -236,7 +236,3 @@ func _property_changed(prop_name:String, value):
 
 func _loading_finished():
     m_flag_load_finished = true
-
-
-
-

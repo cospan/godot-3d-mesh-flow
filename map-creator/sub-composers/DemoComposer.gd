@@ -1,4 +1,4 @@
-extends Node
+extends SubComposerBase
 
 ##############################################################################
 # Signals
@@ -14,8 +14,6 @@ enum DRAW_TYPE {
 }
 var m_draw_type = DRAW_TYPE.BOX
 
-var PROP_LABEL:String
-var PROP_ENABLE:String
 var PROP_DRAW_SELECT:String
 ##############################################################################
 # Members
@@ -23,19 +21,19 @@ var PROP_DRAW_SELECT:String
 var m_logger = LogStream.new("DemoComposer", LogStream.LogLevel.DEBUG)
 var m_st:SurfaceTool
 
+
+## Flags ##
 var m_flag_reset = false
 
 #######################################
 # Exports
 #######################################
-@export var enabled = true
 @export var mesh_color:Color = Color.GREEN
-@export var mesh_layer = 0
-@export var mesh_priority = 0
 
 
-var m_map_db_adapter = null
-var m_properties = null
+# Flags
+var m_flag_go = false
+
 ##############################################################################
 # Scenes
 ##############################################################################
@@ -56,18 +54,23 @@ func get_properties():
     return m_properties
 
 func step():
-    if enabled:
-        # Remove all previous meshes
-        if m_map_db_adapter.m_map_data.has(name):
-            var m_dict = m_map_db_adapter.m_map_data[name]
-            for k in m_dict.keys():
-                m_map_db_adapter.subcomposer_remove_mesh(name, k)
-        enabled = false
+    if m_flag_go:
+        m_flag_go = false
+        remove_all_meshes()
         match m_draw_type:
             DRAW_TYPE.BOX:
                 draw_box()
             DRAW_TYPE.TERRAIN:
                 draw_terrain()
+
+func remove_all_meshes():
+    # Remove all previous meshes
+    if m_map_db_adapter.m_map_dict.has(name):
+        var m_dict = m_map_db_adapter.m_map_dict[name]
+        for k in m_dict.keys():
+            m_map_db_adapter.subcomposer_remove_mesh(name, k)
+
+
 
 func draw_terrain():
 
@@ -97,22 +100,30 @@ func draw_terrain():
 
 
     # Now that we have all these vertices we need to create the triangles
+    var vert = 0
     for z in range(0, TERRAIN_HEIGHT):
         for x in range(0,  TERRAIN_WIDTH):
-            var vert = z * TERRAIN_WIDTH + x
+            #var vert = z * TERRAIN_WIDTH + x
             m_st.add_index(vert + 0)
             m_st.add_index(vert + 1)
             m_st.add_index(vert + TERRAIN_WIDTH + 1)
 
-            m_st.add_index(vert + 0)
             m_st.add_index(vert + TERRAIN_WIDTH + 1)
-            m_st.add_index(vert + TERRAIN_WIDTH)
+            m_st.add_index(vert + 1)
+            m_st.add_index(vert + TERRAIN_WIDTH + 2)
+            vert += 1
+        vert += 1
 
     m_st.generate_normals()
 
     # Commit to a mesh.
     var mesh = m_st.commit()
-    m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, {"color":mesh_color})
+    var modifiers = {
+        "color":mesh_color,
+        "layer":mesh_layer,
+        "priority":mesh_priority
+    }
+    m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
 
 func draw_box():
     var t = Transform3D()
@@ -191,8 +202,16 @@ func draw_box():
 
     # Commit to a mesh.
     var mesh = m_st.commit()
-    m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, {"color":mesh_color})
+    var modifiers = {
+        "color":mesh_color,
+        "layer":mesh_layer,
+        "priority":mesh_priority
+    }
+    m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
 
+
+func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
+    m_logger.debug ("%s: COLLISION: %s -> %s" % [name, local_mesh.name, other_mesh.name])
 
 ##############################################################################
 # Private Functions
@@ -238,6 +257,8 @@ func _ready():
     add_to_group("subcomposer")
     add_to_group("map-creator-properties")
     m_st = SurfaceTool.new()
+    if enabled:
+        m_flag_go = true
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -253,11 +274,16 @@ func _on_property_changed(property_name, property_value):
     m_logger.debug("Property Changed For %s: %s = %s" % [name, property_name, property_value])
     match property_name:
         PROP_ENABLE:
-            enabled = true
+            enabled = property_value
+            if not enabled:
+                remove_all_meshes()
+            else:
+                m_flag_go = true
         PROP_DRAW_SELECT:
             match property_value:
                 "box":
                     m_draw_type = DRAW_TYPE.BOX
                 "terrain":
                     m_draw_type = DRAW_TYPE.TERRAIN
-            enabled = true
+            if enabled:
+                m_flag_go = true
