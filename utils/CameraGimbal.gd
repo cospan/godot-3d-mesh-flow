@@ -12,7 +12,6 @@ extends Node3D
 # Members
 ##############################################################################
 var m_logger = LogStream.new("CameraGimbal", LogStream.LogLevel.DEBUG)
-var m_mouse_control = true
 
 
 var m_camera_top_pos = Vector3(0, 5, 0)
@@ -28,7 +27,10 @@ var m_flag_change_target = false
 ##############################################################################
 # Exports
 ##############################################################################
+@export var MOUSE_CONTROL = false
+
 @export var TARGET:Node3D = null
+
 @export_range(0.0, 2.0) var MOUSE_SENSITIVITY:float = 0.005
 @export var INVERT_X:bool = false
 @export var INVERT_Y:bool = false
@@ -50,14 +52,22 @@ var m_zoom = 1.5
 ##############################################################################
 # Public Functions
 ##############################################################################
+func get_camera():
+    return m_camera
 
 func set_bound_size(_size:Vector2):
-    if m_mouse_control:
+    if MOUSE_CONTROL:
         return
     var hyp_val = sqrt(_size[0] * _size[0] + _size[1] * _size[1])
     var theta = deg_to_rad(m_camera.fov * 0.5)
     m_zoom = hyp_val / tan(theta)
     m_logger.debug("Zoom: %s" % m_zoom)
+
+func set_top_view():
+    m_inner.rotation.x = -1.4
+
+func set_target(target:Node3D):
+    TARGET = target
 
 ##############################################################################
 # Private Functions
@@ -69,7 +79,7 @@ func enable_mouse_caputre_mode(enable:bool):
 # Signal Handler
 ##############################################################################
 func _ready():
-    enable_mouse_caputre_mode(m_mouse_control)
+    enable_mouse_caputre_mode(MOUSE_CONTROL)
     set_bound_size(Vector2(3, 3))
     m_prev_target = TARGET
 
@@ -98,8 +108,8 @@ func _process(_delta):
 
 func _unhandled_input(event):
     if event.is_action_pressed("toggle_mouse_control"):
-        m_mouse_control = not m_mouse_control
-        enable_mouse_caputre_mode(m_mouse_control)
+        MOUSE_CONTROL = not MOUSE_CONTROL
+        enable_mouse_caputre_mode(MOUSE_CONTROL)
 
     if event.is_action_pressed("cam_zoom_in"):
         #m_logger.debug("Zoom In")
@@ -109,7 +119,7 @@ func _unhandled_input(event):
         m_zoom += ZOOM_SPEED
     m_zoom = clamp(m_zoom, MIN_ZOOM, MAX_ZOOM)
 
-    if m_mouse_control and event is InputEventMouseMotion:
+    if MOUSE_CONTROL and event is InputEventMouseMotion:
         if event.relative.x != 0:
             #m_logger.debug("X Rotation: %s" % event.relative.x)
             var dir = 1 if INVERT_X else -1
