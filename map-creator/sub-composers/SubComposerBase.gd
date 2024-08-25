@@ -66,7 +66,7 @@ func test_collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
     collision(local_mesh, other_mesh)
 
 func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
-    print ("COLLISION: %s -> %s" % [local_mesh.name, other_mesh.name])
+    print ("%s: COLLISION: %s -> %s" % [name, local_mesh.name, other_mesh.name])
     print ("OVERRIDE THIS FUNCTION!")
 
 ##############################################################################

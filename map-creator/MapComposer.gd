@@ -125,6 +125,7 @@ func _process(_delta):
 func _process_map_data():
     var commands = m_map_db_adapter.composer_read_step_commands()
     for c in commands:
+        m_logger.debug("  Command: %s" % str(c))
         match c[0]:
             m_map_db_adapter.COMMANDS_T.ADD_MESH:
                 var mesh = c[1]

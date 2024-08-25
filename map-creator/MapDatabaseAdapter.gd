@@ -264,6 +264,7 @@ func subcomposer_add_mesh(_submodule:String, _mesh:Mesh, _transfrom:Transform3D,
     #m_database.insert_row(POS_TABLE, command)
     if not m_map_dict.has(_submodule):
         m_map_dict[_submodule] = {}
+    m_logger.debug("Add Mesh: %s, ID: %d" % [str(_mesh), m_curr_id])
     m_map_dict[_submodule][m_curr_id] = {"mesh":_mesh, "transform":_transfrom, "modifiers":_modifiers}
     m_id_subcomposer_dict[m_curr_id] = _submodule
     m_commands.push_back([COMMANDS_T.ADD_MESH, _mesh, _transfrom, _modifiers, m_curr_id])
