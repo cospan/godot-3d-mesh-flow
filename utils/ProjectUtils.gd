@@ -16,7 +16,7 @@ signal create_finished
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("ProjectUtils", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("ProjectUtils", LogStream.LogLevel.INFO)
 var m_created_project_path = null
 
 var m_folder_name = ""

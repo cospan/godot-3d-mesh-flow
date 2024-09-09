@@ -179,5 +179,3 @@ func _all_hash_indexes_reflected_selected(_hash_index, _in_hash):
 
 
     call_deferred("_populate_all_face_list")
-
-

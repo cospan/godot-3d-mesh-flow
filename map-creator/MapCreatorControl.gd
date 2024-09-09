@@ -11,7 +11,7 @@ extends Control
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("MC", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("MC", LogStream.LogLevel.INFO)
 var m_project_path:String = ""
 var m_config_file:String = ""
 var m_config = null

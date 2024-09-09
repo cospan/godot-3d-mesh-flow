@@ -40,7 +40,7 @@ enum COMMANDS_T {
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("Map Database Adapter", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("Map Database Adapter", LogStream.LogLevel.INFO)
 var m_database : SQLite
 var m_map_dict:Dictionary = {}
 var m_id_subcomposer_dict:Dictionary = {}
@@ -54,7 +54,7 @@ var m_prev_commands:Array = []
 @export var load_distance:float = 100.0:
     set(v):
         load_distance = v
-        m_logger.info("Load Distance: %s" % str(v))
+        m_logger.debug("Load Distance: %s" % str(v))
     get:
         return load_distance
 
@@ -137,7 +137,7 @@ func open_database(database_path: String, clear_rows: bool = false, force_new_ta
     # Create the tables if they don't exist
     ##########################################################################
     for table in m_tables.keys():
-        m_logger.info("Adding Table: %s" % str(table))
+        m_logger.debug("Adding Table: %s" % str(table))
         var sel_string = "SELECT tbl_name FROM sqlite_master WHERE tbl_name = '{0}'".format({0:table})
         m_database.query(sel_string)
         if len(m_database.query_result) == 0:
@@ -305,7 +305,7 @@ func get_subcomposer_name(_id:int) -> String:
 ##############################################################################
 # Called when the node enters the scene tree for the first time.
 func _ready():
-    m_logger.info("_ready Entered")
+    m_logger.debug("_ready Entered")
 
 func _init():
     m_tables[POS_TABLE] = POS_TABLE_SCHEME
@@ -336,9 +336,9 @@ func _background_db_adapter():
     while not finished:
         finished = is_queued_for_deletion()
         var data = m_task_db_adapter_to_thread_queue.pop()
-        m_logger.info("Background Thread Read: %s" % str(data))
+        m_logger.debug("Background Thread Read: %s" % str(data))
         if data == null:
-            m_logger.info("background thread finished")
+            m_logger.debug("background thread finished")
             finished = true
             break
         match data[0]:

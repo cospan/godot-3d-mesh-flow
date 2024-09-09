@@ -64,5 +64,5 @@ func _process(_delta):
 
 func _on_node_clicked(event, target):
     m_logger.debug("Mesh Clicked: %s" % str(target))
-    m_gimbal.TARGET = target
+    m_gimbal.set_target(target)
     get_viewport().set_input_as_handled()

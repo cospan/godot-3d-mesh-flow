@@ -1069,4 +1069,3 @@ func _start_generating_index_dict():
     percent = 100
     call_deferred("_emit_percent_update", _pname, percent)
     m_flag_async_finished = true
-

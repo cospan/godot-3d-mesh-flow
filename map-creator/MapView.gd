@@ -3,6 +3,7 @@ extends Node3D
 ##############################################################################
 # Signals
 ##############################################################################
+signal null_selected
 
 ##############################################################################
 # Constants
@@ -31,6 +32,7 @@ var m_camera_focal_point:Vector3 = Vector3(0, 0, 0)
 var m_camera_rot_quat:Quaternion = Quaternion.IDENTITY
 
 var m_max_size = Vector2(1, 1)
+var m_bound_rect = Rect2(0, 0, 1, 1)
 
 ##############################################################################
 # Scenes
@@ -51,6 +53,13 @@ func set_target(target:Node3D):
     m_logger.debug("Setting Target: %s" % str(target))
     m_camera_gimbal.set_target(target)
 
+func move_target_to(target:Node3D, dest_pos:Vector3):
+    m_logger.debug("Moving Target: %s" % str([target, dest_pos]))
+    target.translate(Vector3(dest_pos.x, target.position.y, dest_pos.z))
+
+func resized(_size:Vector2):
+    pass
+
 ##################
 # GUI Functions
 ##################
@@ -59,29 +68,32 @@ func set_target(target:Node3D):
 # Private Functions
 ##############################################################################
 
-func _evaluate_child_size(n):
+func _calculate_view_rect(n):
     var m = n.mesh
     var mesh_aabb = m.get_aabb()
-    m_logger.debug("Evaluate Child with AABB: %s" % str(mesh_aabb))
-    m_logger.debug("  Start: %s" % str(mesh_aabb.position))
-    m_logger.debug("  End: %s" % str(mesh_aabb.end))
-    var x_min = mesh_aabb.position[0]
-    var x_max = mesh_aabb.end[0]
-    var y_min = mesh_aabb.position[2]
-    var y_max = mesh_aabb.end[2]
-    if abs(x_min) > (m_max_size[0] / 2):
-        m_max_size[0] = abs(x_min) * 2
-        m_logger.debug("x_min is smaller, new size: %s" % str(m_max_size))
-    if abs(x_max) > (m_max_size[0] / 2):
-        m_max_size[0] = abs(x_max) * 2
-        m_logger.debug("x_max is smaller, new size: %s" % str(m_max_size))
+    #m_logger.debug("Evaluate Child with AABB: %s" % str(mesh_aabb))
+    var mesh_g_min = Vector3(mesh_aabb.position.x, 0, mesh_aabb.position.z)
+    var mesh_g_max = Vector3(mesh_aabb.end.x, 0, mesh_aabb.end.z)
+    #m_logger.debug("  Global Position: %s" % str([mesh_g_min, mesh_g_max]))
+    var x_min = mesh_g_min.x
+    var x_max = mesh_g_max.x
+    var y_min = mesh_g_min.z
+    var y_max = mesh_g_max.z
+    m_bound_rect.position = Vector2(x_min, y_min)
+    var end_pos = m_bound_rect.end
+    var start_pos = m_bound_rect.position
+    if x_min < start_pos.x:
+        start_pos.x = x_min
+    if x_max > end_pos.x:
+        end_pos.x = x_max
 
-    if abs(y_min) > (m_max_size[1] / 2):
-        m_max_size[1] = abs(y_min) * 2
-        m_logger.debug("y_min is smaller, new size: %s" % str(m_max_size))
-    if abs(y_max) > (m_max_size[1] / 2):
-        m_max_size[1] = abs(y_max) * 2
-        m_logger.debug("y_max is smaller, new size: %s" % str(m_max_size))
+    if y_min < start_pos.y:
+        start_pos.y = y_min
+    if y_max > end_pos.y:
+        end_pos.y = y_max
+
+    m_bound_rect.position = start_pos
+    m_bound_rect.size = end_pos - start_pos
 
 
 ##############################################################################
@@ -92,19 +104,25 @@ func _ready():
     if DEBUG:
       m_logger.set_current_level = LogStream.LogLevel.DEBUG
     m_camera_gimbal = $CameraGimbal
+    m_camera_gimbal.null_selected.connect(emit_null_selected)
     m_camera_gimbal.set_top_view()
+    child_entered_tree.connect(_child_entered_tree)
+    child_exiting_tree.connect(_child_exiting_tree)
+
+func emit_null_selected():
+    emit_signal("null_selected")
 
 func _child_entered_tree(n):
-    _evaluate_child_size(n)
-    #_recalculate_camera_pos()
-    m_camera_gimbal.set_bound_size(m_max_size)
-
+    #m_logger.debug("+++++++Child Entered Tree: %s" % str(n))
+    _calculate_view_rect(n)
+    m_camera_gimbal.set_bound_rect(m_bound_rect)
 
 func _child_exiting_tree(n):
-    m_max_size = Vector2(1, 1)
+    #m_logger.debug("-------Child Exiting Tree: %s" % str(n))
+    m_bound_rect = Rect2(0, 0, 1, 1)
     for c in get_children():
         if c == n:
             continue
         if c is MeshInstance3D:
-            _evaluate_child_size(c)
-    m_camera_gimbal.set_bound_size(m_max_size)
+            _calculate_view_rect(c)
+    m_camera_gimbal.set_bound_rect(m_bound_rect)

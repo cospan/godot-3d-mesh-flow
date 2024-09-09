@@ -104,4 +104,3 @@ func _draw():
         #r.position = (r.position * m_view_scale) + m_offset
         r.position = (r.position * m_view_scale)
         draw_rect(r, Color.GREEN, false, 1.0)
-

@@ -18,7 +18,7 @@ var PROP_DRAW_SELECT:String
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("DemoComposer", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("DemoComposer", LogStream.LogLevel.INFO)
 var m_st:SurfaceTool
 
 
@@ -76,10 +76,10 @@ func draw_terrain():
 
     var TERRAIN_WIDTH = 10
     var TERRAIN_HEIGHT = 10
-    var TERRAIN_SIZE = 1
+    #var TERRAIN_SIZE = 1
 
-    var TERRAIN_X_OFFSET = -(TERRAIN_WIDTH / 2)
-    var TERRAIN_Z_OFFSET = -(TERRAIN_WIDTH / 2)
+    var TERRAIN_X_OFFSET = -floori(TERRAIN_WIDTH / 2.0)
+    var TERRAIN_Z_OFFSET = -floori(TERRAIN_WIDTH / 2.0)
 
     var t = Transform3D()
 
@@ -118,10 +118,15 @@ func draw_terrain():
 
     # Commit to a mesh.
     var mesh = m_st.commit()
+    var mat = ORMMaterial3D.new()
+    mat.albedo_color = mesh_color
+    mesh.surface_set_material(0, mat)
+
     var modifiers = {
-        "color":mesh_color,
+        #"color":mesh_color,
         "layer":mesh_layer,
-        "priority":mesh_priority
+        "mask":mesh_mask
+        #"priority":mesh_priority
     }
     m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
 
@@ -131,10 +136,23 @@ func draw_box():
 
     var vertices  := PackedVector3Array(
       [
+        # Inside Verticies
+        #Vector3(1, 2, 1),
+        #Vector3(2, 2, 1),
+        #Vector3(2, 2, 2),
+        #Vector3(1, 2, 2),
+
+        #Vector3(1, 1, 1),
+        #Vector3(2, 1, 1),
+        #Vector3(2, 1, 2),
+        #Vector3(1, 1, 2)
+
+        # Corner Vertices
         Vector3(0, 1, 0),
         Vector3(1, 1, 0),
         Vector3(1, 1, 1),
         Vector3(0, 1, 1),
+
 
         Vector3(0, 0, 0),
         Vector3(1, 0, 0),
@@ -202,11 +220,17 @@ func draw_box():
 
     # Commit to a mesh.
     var mesh = m_st.commit()
+    var mat = ORMMaterial3D.new()
+    mat.albedo_color = mesh_color
+    mesh.surface_set_material(0, mat)
     var modifiers = {
-        "color":mesh_color,
+        #"color":mesh_color,
         "layer":mesh_layer,
-        "priority":mesh_priority
+        "mask":mesh_mask
+        #"priority":mesh_priority
     }
+    #var outline_mesh = mesh.create_outline(0.05)
+    #mesh.add_child(outline_mesh)
     m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
 
 

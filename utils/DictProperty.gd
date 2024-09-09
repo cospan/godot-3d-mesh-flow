@@ -165,7 +165,7 @@ func _ready():
 func interrogate_tree(group_name):
     var nodes = get_tree().get_nodes_in_group(group_name)
     for node in nodes:
-        print(node.get_name())
+        #print(node.get_name())
         # Get the properties from the node
         m_node_dict[node.get_name()] = node.get_properties()
         for prop in m_node_dict[node.get_name()]:

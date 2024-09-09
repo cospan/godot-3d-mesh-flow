@@ -12,18 +12,21 @@ extends Node
 const PROP_LABEL:String = "Map Composer"
 const PROP_COLLISIONS:String = "Collisions"
 const PROP_EDIT_MODE:String = "Building Mode"
+const PROP_DRAW_REFERENCE:String = "Draw Reference"
 
 
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("MapDrawer", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("MapDrawer", LogStream.LogLevel.INFO)
 
 var m_vector_size:Vector2 = Vector2(0, 0)
 var m_module_dict:Dictionary = {}
 var m_map_view = null
 var m_map_db_adapter = null
 var m_map_object_dict:Dictionary = {}
+var m_seleted_mesh_instance = null
+@onready var m_outline_shader = load(OUTLINE_SHADER_PATH)
 #var m_material:ORMMaterial3D
 
 enum STATE_TYPE {
@@ -34,10 +37,12 @@ enum STATE_TYPE {
 var m_state:STATE_TYPE = STATE_TYPE.RESET
 var m_subcomposers:Dictionary = {}
 var m_properties:Dictionary = {}
+var m_ref_sphere = null
 
 ## Flags ##
 var m_flag_collisions_enabled = true
 var m_flag_edit_mode = true
+var m_draw_reference = false
 
 ##############################################################################
 # Scenes
@@ -46,12 +51,15 @@ var m_flag_edit_mode = true
 ##############################################################################
 # Exports
 ##############################################################################
+@export var OUTLINE_SHADER_PATH:String = "res://shaders/outline.gdshader"
 
 ##############################################################################
 # Public Functions
 ##############################################################################
 
 func set_map_view(map_view):
+    if m_map_view == null:
+        map_view.null_selected.connect(_deselect_target)
     m_map_view = map_view
 
 func set_map_database_adapter(map_database_adapter):
@@ -83,6 +91,13 @@ func get_properties():
             "value": m_flag_edit_mode,
             "callback": _on_property_changed,
             "tooltip": "When disabled the map can be interacted with by user, when enabled the map is locked for editing."
+        },
+        PROP_DRAW_REFERENCE: {
+            "type": "CheckBox",
+            "name": "Draw Reference",
+            "value": m_draw_reference,
+            "callback": _on_property_changed,
+            "tooltip": "Draw the reference grid"
         }
     }
     return m_properties
@@ -194,41 +209,68 @@ func _process_mesh(_mesh:Mesh, _transform: Transform3D, _modifiers:Dictionary, _
     mi.mesh = _mesh
     mi.set_meta("id", _id)
     mi.transform = _transform
-    if _modifiers != null:
-        m_logger.debug("Modifiers: " + str(_modifiers))
-        for key in _modifiers.keys():
-            match key:
-                "color":
-                    m_logger.debug("Color: " + str(_modifiers["color"]))
-                    var mat = ORMMaterial3D.new()
-                    mat.albedo_color = _modifiers["color"]
-                    mi.material_override = mat
+    var ormm = ORMMaterial3D.new()
+    var sm = ShaderMaterial.new()
+    sm.shader = m_outline_shader
+    sm.set_shader_parameter("color", Color(1.0, 0.0, 0.0, 1.0))
+    sm.set_shader_parameter("border_width", 0.01)
+
+    ormm.albedo_color = mi.mesh.surface_get_material(0).albedo_color
+    ormm.next_pass = sm
+    mi.material_override = ormm
+
+    #if _modifiers != null:
+    #    m_logger.debug("Modifiers: " + str(_modifiers))
+    #    for key in _modifiers.keys():
+    #        match key:
+    #            "color":
+    #                m_logger.debug("Color: " + str(_modifiers["color"]))
+    #                var mat = ORMMaterial3D.new()
+    #                mat.albedo_color = _modifiers["color"]
+    #                mi.material_override = mat
     if m_flag_collisions_enabled:
         var collision_body
         if m_flag_edit_mode:
             collision_body = Area3D.new()
             collision_body.monitoring = true
-            collision_body.area_shape_entered.connect(func(area_rid, area_shape, area_shape_idx, local_shape_idx): \
+            collision_body.area_shape_entered.connect(func(_area_rid, area_shape, _area_shape_idx, _local_shape_idx): \
               _on_area_shape_entered(mi, area_shape.get_parent()))
         else:
             collision_body = StaticBody3D.new()
 
-        var collision_shape = CollisionShape3D.new()
-        var box_shape = BoxShape3D.new()
-        box_shape.size = mi.mesh.get_aabb().size
-        collision_shape.shape = box_shape
+        var collision_shape = _mesh.create_convex_shape()
+
+        var collision_shape_3d = CollisionShape3D.new()
+        collision_shape_3d.shape = collision_shape
 
         mi.add_child(collision_body)
-        collision_body.add_child(collision_shape)
+        collision_body.add_child(collision_shape_3d)
         collision_body.input_event.connect(func(_camera, _event, _pos, _normal, _shape_idx):  \
                                             if _event is InputEventMouseButton and _event.pressed: \
-                                                m_map_view.set_target(mi))
+                                                _set_target(mi, sm))
+                                            #    sm.set_shader_parameter("enable", true))
+                                            #elif _event is InputEventMouseMotion and _event.button_mask == 1: \
+                                            #    m_map_view.move_target_to(mi, _pos))
         collision_body.collision_layer = _modifiers["layer"]
-        collision_body.collision_priority = _modifiers["priority"]
+        collision_body.collision_mask = _modifiers["mask"]
+        #collision_body.collision_priority = _modifiers["priority"]
 
 
     m_map_object_dict[_id] = mi
     m_map_view.add_child(mi)
+
+func _set_target(target:Node3D, sm:ShaderMaterial):
+    m_logger.debug("Setting Target: %s" % str(target))
+    m_map_view.set_target(target)
+    sm.set_shader_parameter("enable", true)
+    if m_seleted_mesh_instance != null:
+        m_seleted_mesh_instance.material_override.next_pass.set_shader_parameter("enable", false)
+    m_seleted_mesh_instance = target
+
+func _deselect_target():
+    if m_seleted_mesh_instance != null:
+        m_seleted_mesh_instance.material_override.next_pass.set_shader_parameter("enable", false)
+        m_seleted_mesh_instance = null
 
 func _remove_object(_id:int):
     if m_map_object_dict.has(_id):
@@ -247,16 +289,45 @@ func _on_property_changed(property_name, property_value):
         PROP_COLLISIONS:
             m_flag_collisions_enabled = property_value
             m_logger.debug("Collisions Enabled: " + str(m_flag_collisions_enabled))
+        PROP_DRAW_REFERENCE:
+            m_draw_reference = property_value
+            if m_draw_reference:
+                if m_ref_sphere == null:
+                    var ref_sphere = SphereMesh.new()
+                    m_ref_sphere = MeshInstance3D.new()
+                    m_ref_sphere.mesh = ref_sphere
+                    m_map_view.add_child(m_ref_sphere)
+            else:
+                if m_ref_sphere != null:
+                    m_map_view.remove_child(m_ref_sphere)
+                    m_ref_sphere = null
+            m_logger.debug("Draw Reference: " + str(m_draw_reference))
 
 
 func _on_area_shape_entered(local_mesh_instance, other_mesh_instance):
     #m_logger.debug("Area Shape Entered: " + str(local_mesh_instance) + " " + str(other_mesh_instance))
     #m_logger.debug("  Mesh IDs: " + str(local_mesh_instance.get_meta("id")) + " " + str(other_mesh_instance.get_meta("id")))
     var local_id = local_mesh_instance.get_meta("id")
-    var other_id = other_mesh_instance.get_meta("id")
+    #var other_id = other_mesh_instance.get_meta("id")
     var local_subcomposer_name = m_map_db_adapter.get_subcomposer_name(local_id)
-    var other_subcomposer_name = m_map_db_adapter.get_subcomposer_name(other_id)
+    if len(local_subcomposer_name) == 0:
+        m_logger.warn("No Subcomposer Name Found for ID: " + str(local_id))
+        assert(false)
+        return
+    #var other_subcomposer_name = m_map_db_adapter.get_subcomposer_name(other_id)
     #m_logger.debug("  Subcomposer Names: " + local_subcomposer_name + " " + other_subcomposer_name)
-    var local_subcomposer = m_subcomposers[m_map_db_adapter.get_subcomposer_name(local_id)]
-    var other_subcomposer = m_subcomposers[m_map_db_adapter.get_subcomposer_name(other_id)]
+    var local_subcomposer = m_subcomposers[local_subcomposer_name]
+    #var other_subcomposer = m_subcomposers[other_subcomposer_name]
     local_subcomposer.test_collision(local_mesh_instance, other_mesh_instance)
+
+func _unhandled_input(event: InputEvent) -> void:
+    if m_seleted_mesh_instance == null:
+        return
+    if event.is_action_pressed("forward"):
+        m_seleted_mesh_instance.translate(Vector3(0, 0, -1))
+    if event.is_action_pressed("back"):
+        m_seleted_mesh_instance.translate(Vector3(0, 0, 1))
+    if event.is_action_pressed("left"):
+        m_seleted_mesh_instance.translate(Vector3(-1, 0, 0))
+    if event.is_action_pressed("right"):
+        m_seleted_mesh_instance.translate(Vector3(1, 0, 0))

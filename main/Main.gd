@@ -20,7 +20,7 @@ enum STATE_T {
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("Main", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("Main", LogStream.LogLevel.INFO)
 var m_config = null
 var m_tab_container = null
 var m_landing_page

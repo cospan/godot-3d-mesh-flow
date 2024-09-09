@@ -31,7 +31,8 @@ var m_properties = null
 ##############################################################################
 @export var enabled = true
 @export var mesh_layer = 1
-@export var mesh_priority = 1
+#@export var mesh_priority = 1
+@export var mesh_mask = 1
 
 ##############################################################################
 # Public Functions
@@ -47,22 +48,12 @@ func step():
     print ("OVERRIDE THIS FUNCTION!")
 
 func test_collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
-    var local_collision_object
-    var other_collision_object
     for c in local_mesh.get_children():
         if c is CollisionObject3D:
-            local_collision_object = c
             break
     for c in other_mesh.get_children():
         if c is CollisionObject3D:
-            other_collision_object = c
             break
-    if local_collision_object.collision_layer != other_collision_object.collision_mask:
-        return
-    if (local_collision_object.collision_mask & (1 << (other_collision_object.collision_layer - 1))) == 0:
-        return
-    if local_collision_object.collision_priority >= other_collision_object.collision_priority:
-        return
     collision(local_mesh, other_mesh)
 
 func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):

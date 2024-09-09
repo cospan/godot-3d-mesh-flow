@@ -23,7 +23,7 @@ const INSERT_INTO_DATABASE = "Insert Into Database"
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("Library 2 Tile Converter", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("Library 2 Tile Converter", LogStream.LogLevel.INFO)
 var m_db_adapter
 var m_db_wfc_adapter
 var m_flag_async_finished:bool = true

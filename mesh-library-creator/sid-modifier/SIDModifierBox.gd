@@ -205,4 +205,3 @@ func _on_neighbor_sid_tree_item_selected():
 func _on_add_remove_faces_button_pressed():
     m_logger.debug("Add/Remove Faces Button Pressed!")
     emit_signal("add_remove_faces", m_module_name, m_face_index)
-

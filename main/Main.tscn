@@ -62,6 +62,7 @@ popup/item_0/text = "Debug"
 popup/item_0/checkable = 1
 popup/item_0/id = 1
 popup/item_1/text = "About"
+popup/item_1/id = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxMain"]
 custom_minimum_size = Vector2(0, 30)
@@ -136,6 +137,7 @@ size_flags_vertical = 3
 texture = ExtResource("8_ysc63")
 
 [node name="TeLogger" parent="VBoxMain" instance=ExtResource("11_nh4p0")]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 
