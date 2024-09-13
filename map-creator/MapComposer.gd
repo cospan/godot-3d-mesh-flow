@@ -219,15 +219,6 @@ func _process_mesh(_mesh:Mesh, _transform: Transform3D, _modifiers:Dictionary, _
     ormm.next_pass = sm
     mi.material_override = ormm
 
-    #if _modifiers != null:
-    #    m_logger.debug("Modifiers: " + str(_modifiers))
-    #    for key in _modifiers.keys():
-    #        match key:
-    #            "color":
-    #                m_logger.debug("Color: " + str(_modifiers["color"]))
-    #                var mat = ORMMaterial3D.new()
-    #                mat.albedo_color = _modifiers["color"]
-    #                mi.material_override = mat
     if m_flag_collisions_enabled:
         var collision_body
         if m_flag_edit_mode:
@@ -248,13 +239,8 @@ func _process_mesh(_mesh:Mesh, _transform: Transform3D, _modifiers:Dictionary, _
         collision_body.input_event.connect(func(_camera, _event, _pos, _normal, _shape_idx):  \
                                             if _event is InputEventMouseButton and _event.pressed: \
                                                 _set_target(mi, sm))
-                                            #    sm.set_shader_parameter("enable", true))
-                                            #elif _event is InputEventMouseMotion and _event.button_mask == 1: \
-                                            #    m_map_view.move_target_to(mi, _pos))
         collision_body.collision_layer = _modifiers["layer"]
         collision_body.collision_mask = _modifiers["mask"]
-        #collision_body.collision_priority = _modifiers["priority"]
-
 
     m_map_object_dict[_id] = mi
     m_map_view.add_child(mi)
@@ -323,11 +309,16 @@ func _on_area_shape_entered(local_mesh_instance, other_mesh_instance):
 func _unhandled_input(event: InputEvent) -> void:
     if m_seleted_mesh_instance == null:
         return
+    var translation = Vector3(0, 0, 0)
     if event.is_action_pressed("forward"):
-        m_seleted_mesh_instance.translate(Vector3(0, 0, -1))
+        translation.z = -1
     if event.is_action_pressed("back"):
-        m_seleted_mesh_instance.translate(Vector3(0, 0, 1))
+        translation.z = 1
     if event.is_action_pressed("left"):
-        m_seleted_mesh_instance.translate(Vector3(-1, 0, 0))
+        translation.x = -1
     if event.is_action_pressed("right"):
-        m_seleted_mesh_instance.translate(Vector3(1, 0, 0))
+        translation.x = 1
+
+    m_seleted_mesh_instance.translate(translation)
+    #m_map_view.force_update_transform()
+    #m_map_view.get_world_3d().space.update()

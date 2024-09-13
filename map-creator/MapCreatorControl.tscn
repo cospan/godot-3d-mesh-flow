@@ -75,6 +75,7 @@ script = ExtResource("7_qiabe")
 [node name="MapComposer" parent="." instance=ExtResource("7_f7ynj")]
 
 [node name="DemoComposer1" parent="MapComposer" instance=ExtResource("8_vy2qe")]
+start_pos = Vector3(-1, 0, -1)
 
 [node name="DemoComposer2" parent="MapComposer" instance=ExtResource("8_vy2qe")]
 mesh_color = Color(0, 1, 1, 1)
@@ -83,6 +84,7 @@ enabled = false
 [node name="MapDatabaseAdapter" parent="MapComposer" instance=ExtResource("9_q2cax")]
 
 [node name="NoiseTerrainComposer" parent="MapComposer" instance=ExtResource("10_sohyi")]
+enabled = false
 mesh_mask = 2
 
 [node name="ModuleDatabaseAdapter" parent="." instance=ExtResource("8_11ggo")]

@@ -1,0 +1,52 @@
+[gd_scene load_steps=8 format=3 uid="uid://davrw4cory74e"]
+
+[ext_resource type="Script" path="res://test/collisions/collision_tester.gd" id="1_4d3u2"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6pnh0"]
+albedo_color = Color(0.207843, 1, 1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_jtotk"]
+material = SubResource("StandardMaterial3D_6pnh0")
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_8gg4v"]
+points = PackedVector3Array(0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_u0lrf"]
+albedo_color = Color(1, 1, 0.447059, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_utork"]
+material = SubResource("StandardMaterial3D_u0lrf")
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_t2vf2"]
+points = PackedVector3Array(0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5)
+
+[node name="CollisionTester" type="Node3D"]
+script = ExtResource("1_4d3u2")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.974757, 0.223267, 0, -0.223267, 0.974757, 0, 0.930789, 4.10538)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.166631, 0.986019, 0, -0.986019, 0.166631, 0, 4.60132, 0)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.79431, 0, 0)
+mesh = SubResource("BoxMesh_jtotk")
+
+[node name="Area3D" type="Area3D" parent="MeshInstance3D"]
+input_capture_on_drag = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D/Area3D"]
+shape = SubResource("ConvexPolygonShape3D_8gg4v")
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.48866, 0, 0)
+mesh = SubResource("BoxMesh_utork")
+
+[node name="Area3D" type="Area3D" parent="MeshInstance3D2"]
+input_capture_on_drag = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MeshInstance3D2/Area3D"]
+shape = SubResource("ConvexPolygonShape3D_t2vf2")
+
+[connection signal="area_shape_entered" from="MeshInstance3D/Area3D" to="." method="_on_area_3d_area_shape_entered"]

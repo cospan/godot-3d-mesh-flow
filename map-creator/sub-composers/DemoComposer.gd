@@ -29,6 +29,7 @@ var m_flag_reset = false
 # Exports
 #######################################
 @export var mesh_color:Color = Color.GREEN
+@export var start_pos:Vector3 = Vector3(0, 0, 0)
 
 
 # Flags
@@ -134,6 +135,8 @@ func draw_box():
     var t = Transform3D()
     m_logger.debug("Demo Composer Enabled!")
 
+    var sp = start_pos
+
     var vertices  := PackedVector3Array(
       [
         # Inside Verticies
@@ -148,16 +151,28 @@ func draw_box():
         #Vector3(1, 1, 2)
 
         # Corner Vertices
-        Vector3(0, 1, 0),
-        Vector3(1, 1, 0),
-        Vector3(1, 1, 1),
-        Vector3(0, 1, 1),
+        #Vector3(0, 1, 0),
+        #Vector3(1, 1, 0),
+        #Vector3(1, 1, 1),
+        #Vector3(0, 1, 1),
 
 
-        Vector3(0, 0, 0),
-        Vector3(1, 0, 0),
-        Vector3(1, 0, 1),
-        Vector3(0, 0, 1)
+        #Vector3(0, 0, 0),
+        #Vector3(1, 0, 0),
+        #Vector3(1, 0, 1),
+        #Vector3(0, 0, 1)
+
+        Vector3(sp.x + 0, sp.y + 1, sp.z + 0),
+        Vector3(sp.x + 1, sp.y + 1, sp.z + 0),
+        Vector3(sp.x + 1, sp.y + 1, sp.z + 1),
+        Vector3(sp.x + 0, sp.y + 1, sp.z + 1),
+
+        Vector3(sp.x + 0, sp.y + 0, sp.z + 0),
+        Vector3(sp.x + 1, sp.y + 0, sp.z + 0),
+        Vector3(sp.x + 1, sp.y + 0, sp.z + 1),
+        Vector3(sp.x + 0, sp.y + 0, sp.z + 1)
+
+
       ]
     )
 

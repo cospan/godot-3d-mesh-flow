@@ -75,6 +75,81 @@ func get_project_path():
 # Private Functions
 ##############################################################################
 
+func _check_library_database_path(clear_db = false) -> bool:
+    # Check if the library database path is set
+    m_logger.debug("Checking Library Database Path")
+    var lib_db_path = ""
+    if not clear_db:
+        lib_db_path = m_config.get_value("config", "library_database")
+    if len(lib_db_path) != 0 and FileAccess.file_exists(lib_db_path):
+        m_logger.info("Library Database Path is set")
+        return true
+
+    # Get parent path from config
+    var parent_path = m_config.get_value("config", "base_path")
+    var database_path = parent_path + "/database.db"
+
+
+    if FileAccess.file_exists(database_path):
+        # Check if the file exists
+        var confirm = $ConfirmDialogAsync
+        confirm.set_text("Okay to set library database path to: \'%s\'?" % database_path)
+        confirm.exclusive = true
+        confirm.show()
+        var auto_accept = await confirm.finished
+        print ("Auto Accept: %s" % auto_accept)
+        if auto_accept:
+            m_props["library_database"]["value"] = database_path
+            m_properties.set_value("library_database", database_path)
+            m_config.set_value("config", "library_database", database_path)
+            m_config.save(m_config_file)
+            return true
+    else:
+        m_logger.info("Library Database Path is not set, please set it manually")
+        var fdialog = $DatabaseFileDialog
+        fdialog.current_dir = parent_path
+        fdialog.show()
+        var result = await fdialog.finished
+        if result:
+            m_props["library_database"]["value"] = fdialog.selected_file
+            m_properties.set_value("library_database", fdialog.selected_file)
+            m_config.set_value("config", "library_database", fdialog.selected_file)
+            m_config.save(m_config_file)
+            return true
+        else:
+            m_logger.error("Library Database Path is not set, please set it manually")
+            m_props["library_database"]["value"] = ""
+            m_properties.set_value("library_database", "")
+            m_config.set_value("config", "library_database", "")
+            m_config.save(m_config_file)
+    return false
+
+func _convert_library_db_2_tile_db(_library_db_path:String, _tile_db_path:String, _clear_rows:bool, _force_new_tables:bool):
+    m_logger.debug("Converting Library DB to Tile DB")
+    m_library_db_adapter.open_database(_library_db_path)
+    m_tile_db_adapter.open_database(_tile_db_path, _clear_rows, _force_new_tables)
+    m_library_2_tile_converter.process_database(m_library_db_adapter, m_tile_db_adapter)
+
+
+func _create_wfc_composer_from_mesh_library(_library_db_path:String, _tile_db_path = null):
+    #XXX: Not implemented yet
+    m_logger.debug("Adding Tile Database")
+    m_logger.debug("If the user doesn't specify the tile database path, it will be created in the configuration file for the project")
+    if _tile_db_path == null:
+        # Get the parent path from the _library_db_path
+        var parent_path = _library_db_path.get_base_dir()
+        var lib_file_name = _library_db_path.get_file()
+        var tile_db_name = lib_file_name.get_basename() + "_tile.db"
+        _tile_db_path = "%s/%s" % [parent_path, tile_db_name]
+
+    # Create a new WFCComposer and add it to the MapComposer
+    var wfc_composer = $WFCComposer
+    m_map_composer.add_child(wfc_composer)
+    m_map_composer.initialize(_library_db_path, _tile_db_path)
+
+##############################################################################
+# Signal Handlers
+##############################################################################
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
@@ -149,66 +224,7 @@ func _process(_delta):
         _:
             m_logger.debug("Unknown State: %s" % m_state)
 
-func _check_library_database_path(clear_db = false) -> bool:
-    # Check if the library database path is set
-    m_logger.debug("Checking Library Database Path")
-    var lib_db_path = ""
-    if not clear_db:
-        lib_db_path = m_config.get_value("config", "library_database")
-    if len(lib_db_path) != 0 and FileAccess.file_exists(lib_db_path):
-        m_logger.info("Library Database Path is set")
-        return true
 
-    # Get parent path from config
-    var parent_path = m_config.get_value("config", "base_path")
-    var database_path = parent_path + "/database.db"
-
-
-    if FileAccess.file_exists(database_path):
-        # Check if the file exists
-        var confirm = $ConfirmDialogAsync
-        confirm.set_text("Okay to set library database path to: \'%s\'?" % database_path)
-        confirm.exclusive = true
-        confirm.show()
-        var auto_accept = await confirm.finished
-        print ("Auto Accept: %s" % auto_accept)
-        if auto_accept:
-            m_props["library_database"]["value"] = database_path
-            m_properties.set_value("library_database", database_path)
-            m_config.set_value("config", "library_database", database_path)
-            m_config.save(m_config_file)
-            return true
-    else:
-        m_logger.info("Library Database Path is not set, please set it manually")
-        var fdialog = $DatabaseFileDialog
-        fdialog.current_dir = parent_path
-        fdialog.show()
-        var result = await fdialog.finished
-        if result:
-            m_props["library_database"]["value"] = fdialog.selected_file
-            m_properties.set_value("library_database", fdialog.selected_file)
-            m_config.set_value("config", "library_database", fdialog.selected_file)
-            m_config.save(m_config_file)
-            return true
-        else:
-            m_logger.error("Library Database Path is not set, please set it manually")
-            m_props["library_database"]["value"] = ""
-            m_properties.set_value("library_database", "")
-            m_config.set_value("config", "library_database", "")
-            m_config.save(m_config_file)
-    return false
-
-
-func _convert_library_db_2_tile_db(_library_db_path:String, _tile_db_path:String, _clear_rows:bool, _force_new_tables:bool):
-    m_logger.debug("Converting Library DB to Tile DB")
-    m_library_db_adapter.open_database(_library_db_path)
-    m_tile_db_adapter.open_database(_tile_db_path, _clear_rows, _force_new_tables)
-    m_library_2_tile_converter.process_database(m_library_db_adapter, m_tile_db_adapter)
-
-
-##############################################################################
-# Signal Handlers
-##############################################################################
 
 func _property_changed(prop_name:String, value):
     m_logger.debug("Property Changed: %s = %s" % [name, value])
