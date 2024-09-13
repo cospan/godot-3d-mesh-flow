@@ -45,7 +45,7 @@ func get_properties():
 
 
 func step():
-    print ("OVERRIDE THIS FUNCTION!")
+    print ("SubComposer Step Function: (OVERRIDE THIS FUNCTION!)")
 
 func test_collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
     for c in local_mesh.get_children():

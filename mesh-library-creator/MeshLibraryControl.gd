@@ -126,7 +126,7 @@ func _ready():
     m_props["load_library"] = {"type": "Button", "name": "Load Library", "value": "Load Library", "tooltip": "Load Library", "visible": not m_config.get_value("config", "auto_load"), }
     m_props["reset_library"] = {"type": "Button", "name": "Reset Library", "value": "Reset Library", "tooltip": "Reset Library and initialize it again"}
     m_props["view_all_modules"] = {"type": "Button", "name": "View All Modules", "value": "View All Modules", "tooltip": "View All Modules"}
-    m_props["module_list"] = {"type": "ItemList", "name": "Module Select", "value": 0, "size": Vector2(100, 200), "tooltip": "Select Module Using List"}
+    m_props["module_list"] = {"type": "ItemList", "name": "Module Select", "value": [], "size": Vector2(100, 200), "tooltip": "Select Module Using List"}
     m_props["module_xy_size"] = {"type": "SpinBox", "name": "Module XZ Size", "value": Vector2(0, 0), "tooltip": "Module XY Size is Calculated and Displayed Here"}
     m_props["sid_modifier"] = {"type": "Button", "name": "SID Modifier", "value": "SID Modifier", "tooltip": "SID Modifier"}
     m_properties.set_properties_dict(m_props)

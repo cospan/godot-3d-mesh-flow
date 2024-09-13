@@ -257,4 +257,3 @@ func _on_file_dialog_new_folder_canceled():
 
 func on_clear_database(_project_dict):
     pass
-

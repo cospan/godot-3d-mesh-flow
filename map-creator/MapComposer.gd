@@ -21,7 +21,6 @@ const PROP_DRAW_REFERENCE:String = "Draw Reference"
 var m_logger = LogStream.new("MapDrawer", LogStream.LogLevel.INFO)
 
 var m_vector_size:Vector2 = Vector2(0, 0)
-var m_module_dict:Dictionary = {}
 var m_map_view = null
 var m_map_db_adapter = null
 var m_map_object_dict:Dictionary = {}
@@ -67,9 +66,6 @@ func set_map_database_adapter(map_database_adapter):
 
 func set_tile_size(tile_size:Vector2):
     m_vector_size = tile_size
-
-func set_module_dict(module_dict:Dictionary):
-    m_module_dict = module_dict
 
 func get_properties():
     m_properties = {

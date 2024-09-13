@@ -118,8 +118,8 @@ func add_property(_name:String, property_dict:Dictionary):
                 scroll_box.custom_minimum_size = property_dict["size"]
                 prop.custom_minimum_size = property_dict["size"]
             prop.auto_height = true
-            if "items" in property_dict:
-                for item in property_dict["items"]:
+            if "value" in property_dict:
+                for item in property_dict["value"]:
                     if item is Array:
                         var sub_texture = Texture2D
                         var sub_string = ""
