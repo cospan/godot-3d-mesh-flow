@@ -62,6 +62,7 @@ rules = SubResource("Resource_3csuy")
 positive_sample = NodePath("../sample")
 solver_settings = SubResource("Resource_mtj5f")
 render_intermediate_results = true
+print_rules = true
 
 [node name="progressIndicator" parent="." node_paths=PackedStringArray("generator") instance=ExtResource("5_o86r7")]
 generator = NodePath("../generator")

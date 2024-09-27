@@ -17,6 +17,7 @@ var m_config_file:String = ""
 var m_config = null
 var m_props = {}
 var m_mesh_lib_dict = {}
+var m_wfc_dict = {}
 @onready var m_wfc_composer_scene = preload("res://map-creator/sub-composers/WFCComposer.tscn")
 
 #######################################
@@ -43,9 +44,6 @@ var m_state = STATE_TYPE.IDLE
 ##############################################################################
 # Scenes
 ##############################################################################
-#var m_library_db_adapter = null
-#var m_library_2_tile_converter = null
-#var m_tile_db_adapter = null
 var m_composer = null
 
 var m_properties = null
@@ -126,28 +124,29 @@ func get_project_path():
 #            m_config.save(m_config_file)
 #    return false
 
-#func _convert_library_db_2_tile_db(_library_db_path:String, _tile_db_path:String, _clear_rows:bool, _force_new_tables:bool):
-#    m_logger.debug("Converting Library DB to Tile DB")
-#    m_library_db_adapter.open_database(_library_db_path)
-#    m_tile_db_adapter.open_database(_tile_db_path, _clear_rows, _force_new_tables)
-#    m_library_2_tile_converter.process_database(m_library_db_adapter, m_tile_db_adapter)
-
 
 func _create_wfc_composer_from_mesh_library(_library_db_path:String, _tile_db_path = null):
     #XXX: Not implemented yet
     m_logger.debug("Adding Tile Database")
     m_logger.debug("If the user doesn't specify the tile database path, it will be created in the configuration file for the project")
+    var parent_path = _library_db_path.get_base_dir()
+    var lib_file_name = _library_db_path.get_file()
+    var wfc_name = lib_file_name.get_basename()
+
     if _tile_db_path == null:
         # Get the parent path from the _library_db_path
-        var parent_path = _library_db_path.get_base_dir()
-        var lib_file_name = _library_db_path.get_file()
-        var tile_db_name = lib_file_name.get_basename() + "_tile.db"
+        var tile_db_name = wfc_name + "_tile.db"
         _tile_db_path = "%s/%s" % [parent_path, tile_db_name]
 
     # Create a new WFCComposer and add it to the MapComposer
     var wfc_composer = m_wfc_composer_scene.instantiate()
     m_map_composer.add_child(wfc_composer)
     wfc_composer.initialize(_library_db_path, _tile_db_path)
+    m_wfc_dict[wfc_name] = wfc_composer
+    #XXX For initial testing add a polygon
+    var p = Polygon2D.new()
+    p.polygon = PackedVector2Array([Vector2(0, 0), Vector2(0, 10), Vector2(10, 10), Vector2(10, 0)])
+    wfc_composer.add_wfc_polygon_area(p, 1.0)
 
 ##############################################################################
 # Signal Handlers
@@ -161,9 +160,6 @@ func _ready():
     m_map_composer = $MapComposer
     m_view = $HBMain/VBMain/SVPContainer/SVP/MapView
 
-    #m_library_db_adapter = $ModuleDatabaseAdapter
-    #m_library_2_tile_converter = $Library2TileConverter
-    #m_tile_db_adapter = $TileDatabaseAdapter
     m_composer = $MapComposer
 
     m_composer.set_map_view(m_view)
@@ -191,7 +187,6 @@ func _ready():
 
     # Connect Signals
     m_properties.property_changed.connect(_property_changed)
-    #m_library_2_tile_converter.finished_loading.connect(_loading_finished)
 
     m_flag_ready = true
     if len(m_mesh_lib_dict.keys()) > 0:
@@ -209,6 +204,7 @@ func _process(_delta):
             if not processed:
                 m_logger.debug("Processing Library: %s" % lib_name)
                 m_mesh_lib_dict[lib_name]["processed"] = true
+                #XXX: Get the name of the wfc composer and wfc composer and put it into a dictionary
                 _create_wfc_composer_from_mesh_library(lib_path)
 
 func _property_changed(prop_name:String, value):

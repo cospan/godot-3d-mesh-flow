@@ -1,13 +1,35 @@
-extends Resource
-## Mapper for 2D WFC
-##
-## The name [b]mapper[/b] describes two functions of this class:
-## it provides an interface between the algorithm and a [b]map[/b] node and
-## [b]map[/b]s tiles from format specific for certain map type to (and from) numbers used by the WFC
-## algorithm.
-## [br]
-## Mapper allows the algorithm to access a map node as something like a 2D-array of numbers.
-class_name WFCMapper2D
+extends Node
+
+
+##############################################################################
+# Signals
+##############################################################################
+
+##############################################################################
+# Constants
+##############################################################################
+
+##############################################################################
+# Members
+##############################################################################
+var m_logger = LogStream.new("Mappder 2D DB", LogStream.LogLevel.DEBUG)
+
+## Flags ##
+
+##############################################################################
+# Scenes
+##############################################################################
+var m_map_db_adapter = null
+
+##############################################################################
+# Exports
+##############################################################################
+
+##############################################################################
+# Public Functions
+##############################################################################
+func set_map_db_adapter(adapter: Node):
+    m_map_db_adapter = adapter
 
 ## Learn tile types from given map node.
 func learn_from(_map: Node):
@@ -95,3 +117,18 @@ func clear():
 ## Return true if this mapper is ready to read/write a map.
 func is_ready() -> bool:
     return size() > 0
+
+
+##############################################################################
+# Private Functions
+##############################################################################
+
+##############################################################################
+# Signal Handlers
+##############################################################################
+
+func _ready():
+    m_logger.debug("Ready Entered!")
+
+func _process(_delta):
+    pass

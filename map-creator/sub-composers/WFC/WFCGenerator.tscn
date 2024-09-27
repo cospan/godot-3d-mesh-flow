@@ -1,0 +1,20 @@
+[gd_scene load_steps=6 format=3 uid="uid://ghoqsmphsc6"]
+
+[ext_resource type="Script" path="res://map-creator/sub-composers/WFCComposer.gd" id="1_6bnal"]
+[ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="2_b23me"]
+[ext_resource type="PackedScene" uid="uid://cc3s1jqv47qgl" path="res://map-creator/Library2TileConverter.tscn" id="3_ppje7"]
+[ext_resource type="PackedScene" uid="uid://ckr0tepfuifuc" path="res://map-creator/TileDatabaseAdapter.tscn" id="4_r71gi"]
+[ext_resource type="PackedScene" uid="uid://c540a5kc8tni4" path="res://map-creator/sub-composers/WFC/WFCMapper2DDB.tscn" id="5_cprqk"]
+
+[node name="WFCComposer" type="Node2D"]
+script = ExtResource("1_6bnal")
+
+[node name="ModuleDatabaseAdapter" parent="." instance=ExtResource("2_b23me")]
+
+[node name="Library2TileConverter" parent="." instance=ExtResource("3_ppje7")]
+
+[node name="TileDatabaseAdapter" parent="." instance=ExtResource("4_r71gi")]
+
+[node name="WFCMapper2DDB" parent="." instance=ExtResource("5_cprqk")]
+
+[node name="WFCGenerator" type="Node" parent="."]

@@ -16,7 +16,7 @@ extends RefCounted
 ## [br]
 ## Must be called at most once on one object.
 func prepare():
-	pass
+    pass
 
 ## Returns initial domain of a cell at given coordinates.
 ## [br]
@@ -24,4 +24,4 @@ func prepare():
 ## [br]
 ## Must not be called before completion of prepare() call.
 func read_domain(coords: Vector2i) -> WFCBitSet:
-	return null
+    return null

@@ -49,7 +49,7 @@ var sparse_history_start: int = 10
 var sparse_history_interval: int = 10
 
 func is_sparse_history_enabled():
-	return sparse_history_start > 0
+    return sparse_history_start > 0
 
 ## Forces use of AC3-like constraint propagation algorithm.
 ## [br]

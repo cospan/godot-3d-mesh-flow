@@ -49,18 +49,18 @@ var ac4_enabled: bool
 var ac4_constraints: Array[WFCProblem.AC4BinaryConstraint]
 
 func _make_initial_state(num_cells: int, initial_domain: WFCBitSet) -> WFCSolverState:
-	var state := WFCSolverState.new()
+    var state := WFCSolverState.new()
 
-	state.cell_domains.resize(num_cells)
-	state.cell_domains.fill(initial_domain)
+    state.cell_domains.resize(num_cells)
+    state.cell_domains.fill(initial_domain)
 
-	state.cell_solution_or_entropy.resize(num_cells)
-	state.cell_solution_or_entropy.fill(-(initial_domain.count_set_bits() - 1))
+    state.cell_solution_or_entropy.resize(num_cells)
+    state.cell_solution_or_entropy.fill(-(initial_domain.count_set_bits() - 1))
 
-	state.unsolved_cells = num_cells
-	state.observations_count = 0
+    state.unsolved_cells = num_cells
+    state.observations_count = 0
 
-	return state
+    return state
 
 ## Current state of the solver.
 ## [br]
@@ -76,212 +76,212 @@ var best_state: WFCSolverState
 
 
 func _init(problem_: WFCProblem, settings_: WFCSolverSettings = WFCSolverSettings.new()):
-	settings = settings_
-	backtracking_enabled = settings.allow_backtracking
+    settings = settings_
+    backtracking_enabled = settings.allow_backtracking
 
-	if settings.is_sparse_history_enabled():
-		assert(settings.sparse_history_interval > 1)
+    if settings.is_sparse_history_enabled():
+        assert(settings.sparse_history_interval > 1)
 
-	problem = problem_
-	ac4_enabled = (not settings.force_ac3) and problem.supports_ac4()
+    problem = problem_
+    ac4_enabled = (not settings.force_ac3) and problem.supports_ac4()
 
-	current_state = _make_initial_state(
-		problem.get_cell_count(),
-		problem.get_default_domain()
-	)
-	best_state = current_state
+    current_state = _make_initial_state(
+        problem.get_cell_count(),
+        problem.get_default_domain()
+    )
+    best_state = current_state
 
-	if ac4_enabled:
-		ac4_constraints = problem.get_ac4_binary_constraints()
+    if ac4_enabled:
+        ac4_constraints = problem.get_ac4_binary_constraints()
 
-	problem.populate_initial_state(current_state)
+    problem.populate_initial_state(current_state)
 
 
 func _propagate_constraints_ac3() -> bool:
-	"""
-	Returns:
-		true iff solution has failed and backtracking should be performed
-	"""
-	assert(current_state != null)
+    """
+    Returns:
+        true iff solution has failed and backtracking should be performed
+    """
+    assert(current_state != null)
 
-	while true:
-		var changed: PackedInt64Array = current_state.extract_changed_cells()
+    while true:
+        var changed: PackedInt64Array = current_state.extract_changed_cells()
 
-		if changed.is_empty():
-			return false
+        if changed.is_empty():
+            return false
 
-		var related: Dictionary = {}
+        var related: Dictionary = {}
 
-		var mark_related: Callable = func(cell_id: int):
-			if current_state.is_cell_solved(cell_id):
-				return
+        var mark_related: Callable = func(cell_id: int):
+            if current_state.is_cell_solved(cell_id):
+                return
 
-			related[cell_id] = true
+            related[cell_id] = true
 
-		for cell_id in changed:
-			problem.mark_related_cells(cell_id, mark_related)
+        for cell_id in changed:
+            problem.mark_related_cells(cell_id, mark_related)
 
-		for related_cell_id in related.keys():
-			var should_backtrack: bool = current_state.set_domain(
-				related_cell_id,
-				problem.compute_cell_domain(
-					current_state, related_cell_id
-				)
-			)
+        for related_cell_id in related.keys():
+            var should_backtrack: bool = current_state.set_domain(
+                related_cell_id,
+                problem.compute_cell_domain(
+                    current_state, related_cell_id
+                )
+            )
 
-			if should_backtrack and backtracking_enabled:
-				return true
+            if should_backtrack and backtracking_enabled:
+                return true
 
-	@warning_ignore("assert_always_false")
-	assert(false) # unreachable
-	return false
+    @warning_ignore("assert_always_false")
+    assert(false) # unreachable
+    return false
 
 func _propagete_constraints_ac4() -> bool:
-	var state := current_state
-	assert(state != null)
+    var state := current_state
+    assert(state != null)
 
-	state.ensure_ac4_state(problem, ac4_constraints)
+    state.ensure_ac4_state(problem, ac4_constraints)
 
-	while true:
-		var changed_cells := state.extract_changed_cells()
-		if changed_cells.is_empty():
-			return false
+    while true:
+        var changed_cells := state.extract_changed_cells()
+        if changed_cells.is_empty():
+            return false
 
-		for cell_id in changed_cells:
-			var new_domain := state.cell_domains[cell_id]
-			var prev_acknowledged_domain := state.ac4_acknowledged_domains[cell_id]
+        for cell_id in changed_cells:
+            var new_domain := state.cell_domains[cell_id]
+            var prev_acknowledged_domain := state.ac4_acknowledged_domains[cell_id]
 
-			# New domain must be a subset of previous domain
-			assert(prev_acknowledged_domain.is_superset_of(new_domain))
+            # New domain must be a subset of previous domain
+            assert(prev_acknowledged_domain.is_superset_of(new_domain))
 
-			if new_domain.equals(prev_acknowledged_domain):
-				continue
+            if new_domain.equals(prev_acknowledged_domain):
+                continue
 
-			state.ac4_acknowledged_domains[cell_id] = new_domain
+            state.ac4_acknowledged_domains[cell_id] = new_domain
 
-			var delta := new_domain.xor(prev_acknowledged_domain).to_array()
+            var delta := new_domain.xor(prev_acknowledged_domain).to_array()
 
-			for constraint_id in range(ac4_constraints.size()):
-				var constraint := ac4_constraints[constraint_id]
-				var dependent_cell := constraint.get_dependent(cell_id)
-				if dependent_cell < 0:
-					continue
+            for constraint_id in range(ac4_constraints.size()):
+                var constraint := ac4_constraints[constraint_id]
+                var dependent_cell := constraint.get_dependent(cell_id)
+                if dependent_cell < 0:
+                    continue
 
-				var dependent_domain := state.cell_domains[dependent_cell]
-				var dependent_domain_changed := false
+                var dependent_domain := state.cell_domains[dependent_cell]
+                var dependent_domain_changed := false
 
-				for this_removed in delta:
-					for dependent_removed in constraint.get_allowed(this_removed):
-						if state.decrement_ac4_counter(dependent_cell, constraint_id, dependent_removed):
-							if dependent_domain.get_bit(dependent_removed):
-								if not dependent_domain_changed:
-									dependent_domain = dependent_domain.copy()
-									dependent_domain_changed = true
-								dependent_domain.set_bit(dependent_removed, false)
+                for this_removed in delta:
+                    for dependent_removed in constraint.get_allowed(this_removed):
+                        if state.decrement_ac4_counter(dependent_cell, constraint_id, dependent_removed):
+                            if dependent_domain.get_bit(dependent_removed):
+                                if not dependent_domain_changed:
+                                    dependent_domain = dependent_domain.copy()
+                                    dependent_domain_changed = true
+                                dependent_domain.set_bit(dependent_removed, false)
 
-				if dependent_domain_changed:
-					if dependent_domain.is_empty():
-						if backtracking_enabled:
-							return true
-						assert(false) # TODO: Handle contradiction in non-backtracking mode
+                if dependent_domain_changed:
+                    if dependent_domain.is_empty():
+                        if backtracking_enabled:
+                            return true
+                        assert(false) # TODO: Handle contradiction in non-backtracking mode
 
-					state.set_domain(dependent_cell, dependent_domain)
+                    state.set_domain(dependent_cell, dependent_domain)
 
-	return false
+    return false
 
 func _propagate_constraints() -> bool:
-	if ac4_enabled:
-		return _propagete_constraints_ac4()
-	else:
-		return _propagate_constraints_ac3()
+    if ac4_enabled:
+        return _propagete_constraints_ac4()
+    else:
+        return _propagate_constraints_ac3()
 
 func _continue_without_backtracking():
-	current_state = best_state
-	backtracking_enabled = false
-	# Backtracking is disabled, so we can free memory occupied by previous states as they will
-	# not be used.
-	current_state.unlink_from_previous()
+    current_state = best_state
+    backtracking_enabled = false
+    # Backtracking is disabled, so we can free memory occupied by previous states as they will
+    # not be used.
+    current_state.unlink_from_previous()
 
 func _try_backtrack() -> bool:
-	if settings.backtracking_limit > 0 and backtracking_count > settings.backtracking_limit:
-		print_debug(
-			'Backtracking limit exceeded after ',
-			backtracking_count,
-			' attempt(s), restarting from best state without backtracking',
-		)
+    if settings.backtracking_limit > 0 and backtracking_count > settings.backtracking_limit:
+        print_debug(
+            'Backtracking limit exceeded after ',
+            backtracking_count,
+            ' attempt(s), restarting from best state without backtracking',
+        )
 
-		_continue_without_backtracking()
+        _continue_without_backtracking()
 
-		return false
+        return false
 
-	current_state = current_state.backtrack(problem)
+    current_state = current_state.backtrack(problem)
 
-	if current_state == null:
-		print_debug(
-			'Backtracking failed completely after ',
-			backtracking_count,
-			' attempt(s)',
-		)
+    if current_state == null:
+        print_debug(
+            'Backtracking failed completely after ',
+            backtracking_count,
+            ' attempt(s)',
+        )
 
-		if not settings.require_backtracking:
-			print_debug('Restarting from best state without backtracking')
+        if not settings.require_backtracking:
+            print_debug('Restarting from best state without backtracking')
 
-			_continue_without_backtracking()
-		else:
-			print_debug('Backtracking is required but failed - terminating with failure')
-			return true
+            _continue_without_backtracking()
+        else:
+            print_debug('Backtracking is required but failed - terminating with failure')
+            return true
 
-	backtracking_count += 1
+    backtracking_count += 1
 
-	return false
+    return false
 
 func _should_keep_previous_state(state: WFCSolverState) -> bool:
-	if not backtracking_enabled:
-		return false
+    if not backtracking_enabled:
+        return false
 
-	if not settings.is_sparse_history_enabled():
-		return true
+    if not settings.is_sparse_history_enabled():
+        return true
 
-	if state.observations_count < settings.sparse_history_start:
-		return true
+    if state.observations_count < settings.sparse_history_start:
+        return true
 
-	if (state.observations_count - settings.sparse_history_start) % settings.sparse_history_interval == 0:
-		return true
+    if (state.observations_count - settings.sparse_history_start) % settings.sparse_history_interval == 0:
+        return true
 
-	return false
+    return false
 
 ## Perform one iteration of problem solution.
 ## [br]
 ## Returns [code]true[/code] iff solution is completed.
 func solve_step() -> bool:
-	assert(current_state != null)
+    assert(current_state != null)
 
-	if current_state.is_all_solved():
-		return true
+    if current_state.is_all_solved():
+        return true
 
-	var backtrack: bool = _propagate_constraints()
+    var backtrack: bool = _propagate_constraints()
 
-	if backtrack:
-		return _try_backtrack()
+    if backtrack:
+        return _try_backtrack()
 
-	if current_state.is_all_solved():
-		return true
-	elif current_state.unsolved_cells < best_state.unsolved_cells:
-		best_state = current_state
+    if current_state.is_all_solved():
+        return true
+    elif current_state.unsolved_cells < best_state.unsolved_cells:
+        best_state = current_state
 
-	current_state.prepare_divergence()
+    current_state.prepare_divergence()
 
-	if _should_keep_previous_state(current_state):
-		var next_state := current_state.diverge(problem)
+    if _should_keep_previous_state(current_state):
+        var next_state := current_state.diverge(problem)
 
-		if next_state == null:
-			return _try_backtrack()
-		else:
-			current_state = next_state
-	else:
-		current_state.diverge_in_place(problem)
+        if next_state == null:
+            return _try_backtrack()
+        else:
+            current_state = next_state
+    else:
+        current_state.diverge_in_place(problem)
 
-	return false
+    return false
 
 ## Solve [member problem].
 ## [br]
@@ -290,7 +290,7 @@ func solve_step() -> bool:
 ## according to the settings (i.e. [member WFCSolverSettings.require_backtracking] in
 ## [member settings] is set to true).
 func solve() -> WFCSolverState:
-	while not solve_step():
-		pass
+    while not solve_step():
+        pass
 
-	return current_state
+    return current_state

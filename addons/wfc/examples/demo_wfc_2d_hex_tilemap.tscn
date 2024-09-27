@@ -1,9 +1,10 @@
-[gd_scene load_steps=9 format=3 uid="uid://bl124iptcoi52"]
+[gd_scene load_steps=10 format=3 uid="uid://bl124iptcoi52"]
 
 [ext_resource type="TileSet" uid="uid://835n3cpedbjf" path="res://addons/wfc/examples/assets/Underearth/Underearth.tres" id="1_nlcwt"]
 [ext_resource type="Script" path="res://addons/wfc/nodes/generator_2d.gd" id="2_jfkjw"]
 [ext_resource type="Script" path="res://addons/wfc/problems/2d/rules_2d.gd" id="3_5c2jl"]
 [ext_resource type="PackedScene" uid="uid://dt2nffs32s7o1" path="res://addons/wfc/examples/helpers/progress_indicator.tscn" id="3_lsnew"]
+[ext_resource type="Script" path="res://addons/wfc/utils/bitmatrix.gd" id="3_r5rdi"]
 [ext_resource type="Script" path="res://addons/wfc/solver/solver_settings.gd" id="4_wh6fi"]
 
 [sub_resource type="GDScript" id="GDScript_ud3rp"]
@@ -21,7 +22,7 @@ func _ready():
 script = ExtResource("3_5c2jl")
 complete_matrices = true
 axes = Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 0), Vector2i(1, -1)])
-axis_matrices = Array[Resource("res://addons/wfc/utils/bitmatrix.gd")]([])
+axis_matrices = Array[ExtResource("3_r5rdi")]([])
 probabilities = []
 probabilities_enabled = true
 edge_condition_meta_name = "wfc_edge"
@@ -47,13 +48,13 @@ layer_1/name = "^"
 layer_1/tile_data = PackedInt32Array(655359, 65536, 2, 655358, 65536, 2, 655357, 65536, 2, 786431, 65536, 2, 720895, 65536, 2, 851972, 65536, 2, 917510, 65536, 2, 983047, 65536, 2, 983046, 65536, 2, 983044, 65536, 2, 917508, 65536, 2, 851971, 65536, 2, 1179647, 65536, 2, 1114111, 65536, 2, 1179648, 65536, 2, 1245184, 65536, 2, 1245185, 65536, 2, 1310721, 65536, 2, 1114118, 65536, 2, 983057, 458752, 2, 1048593, 65536, 2, 1179664, 65536, 2, 1179665, 65536, 2, 1310734, 65536, 2, 1048590, 65536, 2, 983054, 65536, 2, 983053, 65536, 2, 917517, 65536, 2, 983056, 65536, 2)
 layer_2/name = "x\\"
 layer_2/tile_data = PackedInt32Array(720895, 131072, 2, 655359, 131072, 2, 786431, 131072, 2, 851966, 131072, 2, 917501, 131072, 2, 851972, 131072, 2, 917508, 131072, 2, 917510, 131072, 2, 983047, 131072, 2, 1048582, 131072, 2, 1114118, 131072, 2, 1179652, 131072, 2, 1310721, 131072, 2, 1245185, 131072, 2, 1179648, 131072, 2, 1114112, 131072, 2, 1048577, 131072, 2, 1114111, 131072, 2, 1048593, 524288, 2, 1179665, 524288, 2, 1310734, 524288, 2, 983054, 524288, 2, 1245200, 131072, 2, 1245198, 131072, 2, 917517, 131072, 2, 983057, 131072, 2, 1114128, 131072, 2)
-layer_3/name = "x/"
+layer_3/name = "x_"
 layer_3/tile_data = PackedInt32Array(917501, 196608, 2, 851966, 196608, 2, 786431, 196608, 2, 917500, 196608, 2, 917499, 196608, 2, 1310721, 196608, 2, 1245184, 196608, 2, 1179647, 196608, 2, 1179646, 196608, 2, 983042, 196608, 2, 983043, 196608, 2, 1114117, 196608, 2, 1114118, 196608, 2, 983047, 196608, 2, 1179652, 196608, 2, 1114115, 196608, 2, 1048577, 196608, 2, 1310732, 196608, 2, 1048593, 589824, 2, 1310734, 196608, 2, 1179663, 196608, 2, 1310733, 196608, 2, 1245200, 196608, 2, 1179665, 196608, 2)
 layer_4/name = "v"
 layer_4/tile_data = PackedInt32Array(917501, 262144, 2, 917499, 262144, 2, 851963, 262144, 2, 786427, 262144, 2, 917500, 262144, 2, 1114116, 262144, 2, 1179652, 262144, 2, 1114118, 262144, 2, 983044, 262144, 2, 917506, 262144, 2, 1114112, 262144, 2, 1179647, 262144, 2, 1179646, 262144, 2, 1179648, 262144, 2, 1245184, 262144, 2, 1245185, 262144, 2, 1310721, 262144, 2, 1114115, 262144, 2, 983043, 262144, 2, 1310733, 655360, 2, 1048589, 655360, 2, 1179664, 262144, 2, 1245200, 262144, 2, 1310732, 262144, 2, 1245196, 655360, 2, 1179660, 262144, 2, 983053, 262144, 2, 917517, 262144, 2, 1310734, 262144, 2)
 layer_5/name = "\\x"
 layer_5/tile_data = PackedInt32Array(917499, 327680, 2, 851963, 327680, 2, 786427, 327680, 2, 720892, 327680, 2, 655357, 327680, 2, 1310721, 327680, 2, 1245184, 327680, 2, 1179646, 327680, 2, 1114111, 327680, 2, 917506, 327680, 2, 851971, 327680, 2, 917510, 327680, 2, 1048580, 327680, 2, 1114115, 327680, 2, 1048577, 327680, 2, 983042, 327680, 2, 1179648, 327680, 2, 1179652, 327680, 2, 1179660, 720896, 2, 1245200, 327680, 2, 1245196, 327680, 2, 1114125, 327680, 2, 983053, 327680, 2, 917517, 327680, 2, 983056, 327680, 2, 1310732, 327680, 2, 1048589, 327680, 2)
-layer_6/name = "/x"
+layer_6/name = "_x"
 layer_6/tile_data = PackedInt32Array(786427, 393216, 2, 720892, 393216, 2, 655357, 393216, 2, 655358, 393216, 2, 655359, 393216, 2, 1179646, 393216, 2, 1114111, 393216, 2, 917506, 393216, 2, 851971, 393216, 2, 917510, 393216, 2, 1245185, 393216, 2, 1114112, 393216, 2, 1048577, 393216, 2, 1114115, 393216, 2, 983045, 393216, 2, 851972, 393216, 2, 983047, 393216, 2, 917517, 786432, 2, 1179660, 393216, 2, 1048591, 393216, 2, 983056, 393216, 2, 983057, 393216, 2, 1179665, 393216, 2, 983054, 393216, 2)
 
 [node name="target" type="TileMap" parent="."]
@@ -62,12 +63,12 @@ position = Vector2(960, 540)
 scale = Vector2(0.25, 0.25)
 tile_set = ExtResource("1_nlcwt")
 format = 2
-layer_1/tile_data = PackedInt32Array()
-layer_2/tile_data = PackedInt32Array()
-layer_3/tile_data = PackedInt32Array()
-layer_4/tile_data = PackedInt32Array()
-layer_5/tile_data = PackedInt32Array()
-layer_6/tile_data = PackedInt32Array()
+layer_1/name = "Layer1"
+layer_2/name = "Layer2"
+layer_3/name = "Layer3"
+layer_4/name = "Layer4"
+layer_5/name = "Layer5"
+layer_6/name = "Layer6"
 
 [node name="WFC2DGenerator" type="Node" parent="."]
 script = ExtResource("2_jfkjw")

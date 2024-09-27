@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3 uid="uid://brfgrtm2fcn5p"]
+
+[ext_resource type="Script" path="res://test/wfc/TestDBWFC.gd" id="1_omd6x"]
+[ext_resource type="PackedScene" uid="uid://bqfwgg02bwuqc" path="res://map-creator/sub-composers/WFCComposer.tscn" id="2_v2wmv"]
+
+[node name="TestDBWFC" type="Node"]
+script = ExtResource("1_omd6x")
+
+[node name="WFCComposer" parent="." instance=ExtResource("2_v2wmv")]

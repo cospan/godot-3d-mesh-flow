@@ -1,7 +1,8 @@
-[gd_scene load_steps=12 format=3 uid="uid://hdrh51fuavnr"]
+[gd_scene load_steps=13 format=3 uid="uid://hdrh51fuavnr"]
 
 [ext_resource type="MeshLibrary" uid="uid://310b3aggjq0d" path="res://addons/wfc/examples/assets/kenny-nature-kit/meshlib.meshlib" id="1_5g1ur"]
 [ext_resource type="Script" path="res://addons/wfc/nodes/generator_2d.gd" id="2_ygcwd"]
+[ext_resource type="Script" path="res://addons/wfc/utils/bitmatrix.gd" id="3_tk8yn"]
 [ext_resource type="Script" path="res://addons/wfc/problems/2d/rules_2d.gd" id="5_qumw0"]
 [ext_resource type="PackedScene" uid="uid://dheyfh3bip6t7" path="res://addons/wfc/examples/helpers/3d_controls.tscn" id="6_21eh3"]
 [ext_resource type="Script" path="res://addons/wfc/solver/solver_settings.gd" id="6_uls1f"]
@@ -32,7 +33,7 @@ func _on_generator_done():
 script = ExtResource("5_qumw0")
 complete_matrices = true
 axes = Array[Vector2i]([Vector2i(0, 1), Vector2i(1, 0)])
-axis_matrices = Array[Resource("res://addons/wfc/utils/bitmatrix.gd")]([])
+axis_matrices = Array[ExtResource("3_tk8yn")]([])
 probabilities = []
 probabilities_enabled = true
 edge_condition_meta_name = "wfc_edge"
@@ -67,7 +68,6 @@ classes_map = NodePath("../class_map")
 script = SubResource("GDScript_f3n0e")
 
 [node name="sample" type="GridMap" parent="."]
-visible = false
 mesh_library = ExtResource("1_5g1ur")
 cell_size = Vector3(1, 1, 1)
 data = {
