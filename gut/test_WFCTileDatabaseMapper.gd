@@ -77,8 +77,8 @@ func test_get_used_rect_empty_map():
 
 func test_get_used_rect_not_empty_map():
     # Received the used area of a map with an empty map, this should return a rect of 0,0
-    m_map_db_adapter.insert_module_xy("tile_01", Vector2i( 0,  0), 0, 0, 0)
-    m_map_db_adapter.insert_module_xy("tile_02", Vector2i(10, 10), 0, 0, 0)
+    m_map_db_adapter.insert_module_xy(4, Vector2i( 0,  0), 0, 0, 0)
+    m_map_db_adapter.insert_module_xy(8, Vector2i(10, 10), 0, 0, 0)
     var rect = m_mapper.get_used_rect(null)
     assert_eq(Vector2i(0, 0), rect.position, "Should pass")
     assert_eq(Vector2i(10, 10), rect.size, "Should pass")
@@ -163,13 +163,27 @@ func test_write_cell():
     assert_eq(-1, cell, "Should pass")
 
 func test_size():
-    assert_eq(0, 1, "WRITE ME!!")
+    #var results = m_mapper.size()
+    #assert_eq(results, 0, "Should pass")
+    #m_map_db_adapter.insert_module_xy(1, Vector2i(  0,   0),  90, 0, 0, {"wfc_probability":0.5}) # tile000
+    #results = m_mapper.size()
+    #assert_eq(results, 1, "Should pass")
+    #m_mapper.clear()
+    var results = m_mapper.size()
+    assert_eq(results, 12, "Should pass")
 
 func test_supports_map():
-    assert_eq(0, 1, "WRITE ME!!")
+    var results = m_mapper.supports_map(null)
+    assert_eq(results, true, "Should pass")
 
 func test_clear():
-    assert_eq(0, 1, "WRITE ME!!")
+    m_map_db_adapter.insert_module_xy(1, Vector2i(  0,   0),  90, 0, 0, {"wfc_probability":0.5}) # tile000
+    var s = m_mapper.get_used_rect(null)
+    assert_eq(s.size, Vector2i(1, 1), "Should pass")
+    m_mapper.clear()
+    s = m_mapper.get_used_rect(null)
+    assert_eq(s.size, Vector2i(0, 0), "Should pass")
 
 func test_is_ready():
-    assert_eq(0, 1, "WRITE ME!!")
+    var results = m_mapper.is_ready()
+    assert_eq(results, true, "Should pass")

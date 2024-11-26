@@ -42,11 +42,17 @@ enum COMMANDS_T {
 ##############################################################################
 var m_logger = LogStream.new("Map Database Adapter", LogStream.LogLevel.INFO)
 var m_database : SQLite
-var m_map_dict:Dictionary = {}
+var m_submodule_dict:Dictionary = {}
+var m_mesh_dict:Dictionary = {}
+var m_position_dict:Dictionary = {}
 var m_id_subcomposer_dict:Dictionary = {}
 var m_curr_id:int = 0
 var m_commands:Array = []
 var m_prev_commands:Array = []
+
+var m_database_timestamp = 0
+var m_dict_timestamp = 0
+
 
 # TODO: Adda member that will dictate how far away from the player we will load
 # the map data. This will be used to determine how much data we need to load
@@ -91,22 +97,40 @@ const CONFIG_TABLE_SCHEME = {
 
 const POS_TABLE = "pos"
 const POS_TABLE_SCHEME = {
-    "id"        : {"data_type":"int",   "primary_key":true, "not_null":true, "auto_increment":false},
-    "name"      : {"data_type":"text",  "not_null":true},
-    "x"         : {"data_type":"int",   "not_null":false},
-    "y"         : {"data_type":"int",   "not_null":false},
-    "z"         : {"data_type":"int",   "not_null":false},
-    "layer"     : {"data_type":"int",   "not_null":false},
-    "rot_90_cw" : {"data_type":"int",   "not_null":false}, # 0, 90, 180, 270
-    "transform" : {"data_type":"blob",  "not_null":false}, # Extra transform after rotation
-    "metadata"  : {"data_type":"blob",  "not_null":false}
+    "id"            : {"data_type":"int",   "primary_key":true, "not_null":true, "auto_increment":false},
+    "subcomposer_id": {"data_type":"text",  "not_null":false},
+    "module_name"   : {"data_type":"text",  "not_null":true},
+    "x"             : {"data_type":"int",   "not_null":false},
+    "y"             : {"data_type":"int",   "not_null":false},
+    "z"             : {"data_type":"int",   "not_null":false},
+    "layer"         : {"data_type":"int",   "not_null":false},
+    "x_reflect"     : {"data_type":"int",   "not_null":false},
+    "y_reflect"     : {"data_type":"int",   "not_null":false},
+    "rot_x_90_cw"   : {"data_type":"int",   "not_null":false}, # 0, 90, 180, 270
+    "rot_y_90_cw"   : {"data_type":"int",   "not_null":false}, # 0, 90, 180, 270
+    "rot_z_90_cw"   : {"data_type":"int",   "not_null":false}, # 0, 90, 180, 270
+    "scale"         : {"data_type":"real",  "not_null":false},
+    #"transform" : {"data_type":"blob",  "not_null":false}, # Extra transform after rotation
+    "metadata"      : {"data_type":"blob",  "not_null":false}
+}
+
+const MESH_TABLE = "mesh"
+const MESH_TABLE_SCHEME = {
+    "id"        : {"data_type":"int", "primary_key":true, "not_null":true, "auto_increment":true},
+    "name"      : {"data_type":"text", "not_null":true},
+    "mesh"      : {"data_type":"blob", "not_null":true},
+    "vertices"  : {"data_type":"blob", "not_null":true},
+    "indicies"  : {"data_type":"blob", "not_null":true},
+    "normals"   : {"data_type":"blob", "not_null":true},
+    "uvs"       : {"data_type":"blob", "not_null":true},
+    "colors"    : {"data_type":"blob", "not_null":true}
 }
 
 var m_tables = {
     CONFIG_TABLE  : CONFIG_TABLE_SCHEME,
-    POS_TABLE     : POS_TABLE_SCHEME
+    POS_TABLE     : POS_TABLE_SCHEME,
+    MESH_TABLE    : MESH_TABLE_SCHEME
     }
-
 
 ##############################################################################
 # Public Functions
@@ -149,40 +173,127 @@ func clear_tables():
     for table in m_tables.keys():
         m_database.delete_rows(table, "*")
 
-func get_pos_dict() -> Dictionary:
-    var rows = m_database.select_rows(POS_TABLE, "", ["id", "name", "x", "y", "z", "rot_90_cw", "x_reflect", "y_reflect"])
-    var d = {}
-    for row in rows:
-        var k = row["id"]
-        var v = Vector3i(row["x"], row["y"], row["z"])
-        d[k] = {}
-        d[k]["pos"] = v
-        d[k]["rot_90_cw"] = row["rot_90_cw"]
-        d[k]["x_reflect"] = row["x_reflect"]
-        d[k]["y_reflect"] = row["y_reflect"]
-        d[k]["name"] = row["name"]
-    return d
+func clear_pos_table():
+    m_logger.info("Clear all rows in pos table")
+    m_position_dict = {}
+    m_dict_timestamp = 0
+    m_database_timestamp = 0
+    m_database.delete_rows(POS_TABLE, "*")
 
-func set_pos(module_name:String, pos:Vector3i, rot_90_cw:int, x_reflect:int, y_reflect:int):
+func get_pos_dict() -> Dictionary:
+    if _is_dict_out_of_date():
+        var rows = m_database.select_rows(POS_TABLE, "", ["*"])
+        m_position_dict = {}
+        for row in rows:
+            var k = row["id"]
+            m_position_dict[k] = _row_to_dict_entry(row)
+        _update_both_dict_and_database_timestamp()
+    return m_position_dict
+
+func get_module_at_pos(pos:Vector3i) -> Dictionary:
+    # It feels like a long time needed to interface with the database
+    var k = _v3i_to_key(pos)
+    var pos_dict = get_pos_dict()
+    if pos_dict.has(k):
+        return pos_dict[k]
+    return {}
+
+func get_modules_with_attribute(_id:int, _rot:int) -> Array:
+    # Would it be faster to query the database?
+    var res = []
+    var pos_dict = get_pos_dict()
+    for k in pos_dict.keys():
+        var v = pos_dict[k]
+        if v["module_name"] == _id and v["rot_y_90_cw"] == _rot:
+            res.append(v)
+    return res
+
+
+
+func insert_module_xy(  subcomposer_id:String,
+                        module_name:String,
+                        pos:Vector2i,
+                        rot_y_90_cw:int,
+                        x_reflect:int,
+                        y_reflect:int,
+                        metadata:Dictionary = {}):
+    var d:Dictionary = {}
+    # Convert rot_y_90_cw, x_reflect, y_reflect into a transform
+    #var t = _rot_reflect_to_transform(rot_y_90_cw, x_reflect, y_reflect)
+    var k = _v3i_to_key(Vector3i(pos.x, 0, pos.y))
+    d["subcomposer_id"] = subcomposer_id
+    d["module_name"] = module_name
+    d["x"] = pos.x
+    d["y"] = 0
+    d["z"] = pos.y
+    d["x_reflect"] = x_reflect
+    d["y_reflect"] = y_reflect
+    d["rot_x_90_cw"] = 0
+    d["rot_y_90_cw"] = rot_y_90_cw
+    d["rot_z_90_cw"] = 0
+    d["scale"] = 1.0
+    d["metadata"] = var_to_bytes(metadata)
+    #d["transform"] = var_to_bytes(t)
+    d["id"] = k
+    _insert_module(d)
+
+func insert_module( subcomposer_id:String,
+                    module_name: String,
+                    pos:Vector3i,
+                    scale:float,
+                    rot_x_90_cw:int,
+                    rot_y_90_cw:int,
+                    rot_z_90_cw:int,
+                    x_reflect:int,
+                    y_reflect:int,
+                    metadata:Dictionary):
     var d:Dictionary = {}
     var k = _v3i_to_key(pos)
-    d["name"] = module_name
+    d["subcomposer_id"] = subcomposer_id
+    d["module_name"] = module_name
     d["x"] = pos.x
     d["y"] = pos.y
     d["z"] = pos.z
-    d["rot_90_cw"] = rot_90_cw
     d["x_reflect"] = x_reflect
-    d["x_reflect"] = y_reflect
+    d["y_reflect"] = y_reflect
+    d["rot_x_90_cw"] = rot_x_90_cw
+    d["rot_y_90_cw"] = rot_y_90_cw
+    d["rot_z_90_cw"] = rot_z_90_cw
+    d["scale"] = scale
+    d["metadata"] = var_to_bytes(metadata)
     d["id"] = k
-    var select_condition = "id = {0}".format({0:k})
-    var rows = m_database.select_rows(POS_TABLE, select_condition, ["id"])
-    m_logger.debug("Rows: %s" % str(rows))
-    if len(rows):
-        m_logger.debug("Update Rows")
-        m_database.update_rows(POS_TABLE, select_condition, d)
-    else:
-        m_logger.debug("Insert Row")
-        m_database.insert_row(POS_TABLE, d)
+    _insert_module(d)
+
+
+func insert_module_with_mesh(
+                    subcomposer_id:String,
+                    module_name: String,
+                    pos:Vector3i,
+                    scale:float,
+                    rot_x_90_cw:int,
+                    rot_y_90_cw:int,
+                    rot_z_90_cw:int,
+                    x_reflect:int,
+                    y_reflect:int,
+                    metadata:Dictionary,
+                    mesh:Mesh):
+    var d:Dictionary = {}
+    var k = _v3i_to_key(pos)
+    d["subcomposer_id"] = subcomposer_id
+    d["module_name"] = module_name
+    d["x"] = pos.x
+    d["y"] = pos.y
+    d["z"] = pos.z
+    d["x_reflect"] = x_reflect
+    d["y_reflect"] = y_reflect
+    d["rot_x_90_cw"] = rot_x_90_cw
+    d["rot_y_90_cw"] = rot_y_90_cw
+    d["rot_z_90_cw"] = rot_z_90_cw
+    d["scale"] = scale
+    d["metadata"] = var_to_bytes(metadata)
+    d["id"] = k
+    insert_mesh(module_name, mesh)
+    _insert_module(d)
 
 func get_pos_dict_in_region_xyz(start_xyz:Vector3i, end_xyz:Vector3i):
     var x_min:int = start_xyz.x
@@ -193,18 +304,11 @@ func get_pos_dict_in_region_xyz(start_xyz:Vector3i, end_xyz:Vector3i):
     var z_max:int = end_xyz.z
     var d = {}
     var select_condition = "x > {0} and x < {1} and y > {2} and y < {3} and z > {4} and z < {5}".format({0:x_min, 1:x_max, 2:y_min, 3:y_max, 4:z_min, 5:z_max})
-    var rows = m_database.select_rows(POS_TABLE, select_condition, ["id", "name", "x", "y", "z", "rot_90_cw", "x_reflect", "y_reflect"])
+    var rows = m_database.select_rows(POS_TABLE, select_condition, ["*"])
     for row in rows:
         var k = row["id"]
-        var v = Vector3i(row["x"], row["y"], row["z"])
-        d[k] = {}
-        d[k]["pos"] = v
-        d[k]["rot_90_cw"] = row["rot_90_cw"]
-        d[k]["x_reflect"] = row["x_reflect"]
-        d[k]["y_reflect"] = row["y_reflect"]
-        d[k]["name"] = row["name"]
+        d[k] = _row_to_dict_entry(row)
     return d
-
 
 func get_pos_dict_in_region_xz(start_xz: Vector2i, end_xz: Vector2i):
     var x_min = start_xz.x
@@ -213,21 +317,116 @@ func get_pos_dict_in_region_xz(start_xz: Vector2i, end_xz: Vector2i):
     var z_max = end_xz.y
     var d = {}
     var select_condition = "x > {0} and x < {1} and z > {2} and z < {3}".format({0:x_min, 1:x_max, 2:z_min, 3:z_max})
-    var rows = m_database.select_rows(POS_TABLE, select_condition, ["id", "name", "x", "y", "z", "rot_90_cw", "x_reflect", "y_reflect"])
+    #var rows = m_database.select_rows(POS_TABLE, select_condition, ["id", "name", "x", "y", "z", "transform"])
+    var rows = m_database.select_rows(POS_TABLE, select_condition, ["*"])
     for row in rows:
         var k = row["id"]
-        var v = Vector3i(row["x"], row["y"], row["z"])
-        d[k] = {}
-        d[k]["pos"] = v
-        d[k]["rot_90_cw"] = row["rot_90_cw"]
-        d[k]["x_reflect"] = row["x_reflect"]
-        d[k]["y_reflect"] = row["y_reflect"]
-        d[k]["name"] = row["name"]
+        d[k] = _row_to_dict_entry(row)
     return d
 
-func set_pos_threaded(module_name:String, pos:Vector3i, rot_90_cw:int, x_reflect:int, y_reflect:int):
-    var d = ['w', module_name, pos, rot_90_cw, x_reflect, y_reflect]
-    m_task_db_adapter_to_thread_queue.push(d)
+func insert_module_xy_threaded( subcomposer_id:String,
+                                module_name:String,
+                                pos:Vector3i,
+                                rot_y_90_cw:int,
+                                x_reflect:int,
+                                y_reflect:int,
+                                metadata:Dictionary = {}):
+    var d:Dictionary = {}
+    #Convert rot_y_90_cw, x_reflect, y_reflect into a transform
+    #var t = _rot_reflect_to_transform(rot_y_90_cw, x_reflect, y_reflect)
+    var k = _v3i_to_key(pos)
+    d["subcomposer_id"] = subcomposer_id
+    d["module_name"] = module_name
+    d["x"] = pos.x
+    d["y"] = pos.y
+    d["z"] = pos.z
+    d["x_reflect"] = x_reflect
+    d["y_reflect"] = y_reflect
+    d["rot_x_90_cw"] = 0
+    d["rot_y_90_cw"] = rot_y_90_cw
+    d["rot_z_90_cw"] = 0
+    d["scale"] = 1.0
+    d["metadata"] = var_to_bytes(metadata)
+    #d["transform"] = var_to_bytes(t)
+    d["id"] = k
+    m_task_db_adapter_to_thread_queue.push(['w', d])
+
+func insert_module_threaded( subcomposer_id:String,
+                             module_name:String,
+                             pos:Vector3i,
+                             scale:float,
+                             rot_x_90_cw:int,
+                             rot_y_90_cw:int,
+                             rot_z_90_cw:int,
+                             x_reflect:int,
+                             y_reflect:int,
+                             metadata:Dictionary):
+    var d:Dictionary = {}
+    var k = _v3i_to_key(pos)
+    d["subcomposer_id"] = subcomposer_id
+    d["module_name"] = module_name
+    d["x"] = pos.x
+    d["y"] = pos.y
+    d["z"] = pos.z
+    d["x_reflect"] = x_reflect
+    d["y_reflect"] = y_reflect
+    d["rot_x_90_cw"] = rot_x_90_cw
+    d["rot_y_90_cw"] = rot_y_90_cw
+    d["rot_z_90_cw"] = rot_z_90_cw
+    d["scale"] = scale
+    d["metadata"] = var_to_bytes(metadata)
+    d["id"] = k
+    m_task_db_adapter_to_thread_queue.push(['w', d])
+
+func remove_all_subcomposer_modules(_submodule:String):
+    if m_database == null:
+        return
+    # Get a reference to all the keys by finding them in the database
+    var select_condition = "subcomposer_id = '{0}'".format({0:_submodule})
+    var rows = m_database.select_rows(POS_TABLE, select_condition, ["id"])
+    # Remove all the keys from the database
+    m_database.delete_rows(POS_TABLE, select_condition)
+    # Remove all the keys from the local dictionary
+    for row in rows:
+        var k = row["id"]
+        m_position_dict.erase(k)
+        m_commands.push_back([COMMANDS_T.REMOVE, k])
+
+func _xxx_deprecated_subcomposer_add_mesh(_submodule:String, _mesh:Mesh, _transfrom:Transform3D, _modifiers:Dictionary={}) -> int:
+    # Submit a command to the local dictionary and submit it to the database
+    # in a background thread.
+    # Return a unique ID that can be used to reference the command
+    # The ID will be the key to the dictionary and the ID in the database
+    # in order to avoid constantly searching for the command in the database
+    # when we need to update it we will use a dictionary to store the command
+    # and the ID in the database. This will allow us to update the command
+    #m_database.insert_row(POS_TABLE, command)
+    if not m_submodule_dict.has(_submodule):
+        m_submodule_dict[_submodule] = {}
+    m_logger.debug("Add Mesh: %s, ID: %d" % [str(_mesh), m_curr_id])
+    m_submodule_dict[_submodule][m_curr_id] = {"mesh":_mesh, "transform":_transfrom, "modifiers":_modifiers}
+    m_id_subcomposer_dict[m_curr_id] = _submodule
+    m_commands.push_back([COMMANDS_T.ADD_MESH, _mesh, _transfrom, _modifiers, m_curr_id])
+    var curr_id = m_curr_id
+    m_curr_id = m_curr_id + 1
+    return curr_id
+
+func _xxx_deprecated_subcomposer_remove_mesh(_submodule:String, _id:int):
+    # Submit a command to remove a command from the local dictionary and
+    # submit it to the database in a background thread.
+    # The ID will be the key to the dictionary and the ID in the database
+    # in order to avoid constantly searching for the command in the database
+    # when we need to update it we will use a dictionary to store the command
+    # and the ID in the database. This will allow us to update the command
+    #m_database.delete_rows(POS_TABLE, "id = %s" % str(_id))
+    if m_submodule_dict.has(_submodule):
+        if m_submodule_dict[_submodule].has(_id):
+            m_submodule_dict[_submodule].erase(_id)
+            m_id_subcomposer_dict.erase(_id)
+            # XXX Remove from the database
+            m_commands.push_back([COMMANDS_T.REMOVE, _id])
+
+
 
 func get_pos_dict_threaded():
     var d = ['r']
@@ -241,8 +440,56 @@ func get_pos_dict_in_region_xyz_threaded(start_xyz: Vector3i, end_xyz: Vector3i)
     var d = ['r', start_xyz, end_xyz]
     m_task_db_adapter_to_thread_queue.push(d)
 
+func get_used_rect_2d() -> Rect2i:
+    m_logger.debug("Get Used Rect 2D")
+    var pos_dict = get_pos_dict()
+    var res = Rect2i()
+    # Iterate through the dictionary and find the min and max x and y values
+    for k in pos_dict.keys():
+        var v = pos_dict[k]
+        if !res.has_area():
+            res.position = Vector2i(v["x"], v["z"])
+            res.size = Vector2i(1, 1)
+        else:
+            res = res.expand(Vector2i(v["x"], v["z"]))
+    return res
 
+func get_used_rect_3d() -> AABB:
+    m_logger.debug("Get Used Rect 3D")
+    var pos_dict = get_pos_dict()
+    var res = AABB()
+    # Iterate through the dictionary and find the min and max x and y values
+    for k in pos_dict.keys():
+        var v = pos_dict[k]
+        if !res.has_area():
+            res.position = v["pos"]
+            res.size = Vector3i(1, 1, 1)
+        else:
+            res = res.expand(v["pos"])
+    return res
 
+func get_commands() -> Array:
+    return m_commands
+
+func insert_mesh(_name: String, mesh: ArrayMesh):
+
+    var mesh_data = var_to_bytes_with_objects(mesh)
+    #var mesh_data = JSON.stringify(mesh)
+    var select_condition = "name = '{0}'".format({0: _name})
+    var rows = m_database.select_rows(MESH_TABLE, select_condition, ["name"])
+    if len(rows):
+        m_database.update_rows(MESH_TABLE, select_condition, {"mesh": mesh_data})
+    else:
+        var row = {"name": _name, "mesh": mesh_data}
+        m_database.insert_row(MESH_TABLE, row)
+    m_logger.debug("Inserted mesh: %s" % _name)
+    _update_mesh_references()
+
+func remove_mesh(_name: String):
+    var select_condition = "name = '{0}'".format({0: _name})
+    m_database.delete_rows(MESH_TABLE, select_condition)
+    m_logger.debug("Removed mesh: %s" % _name)
+    _update_mesh_references()
 
 # TODO: Implement this function
 func read_all_commands_from_database(_pos:Vector3, _load_all:bool = false):
@@ -253,39 +500,6 @@ func read_all_commands_from_database(_pos:Vector3, _load_all:bool = false):
     # XXX: We can isolate this to range dictated by the location we are at
     # (so we don't need to load everything)
 
-func subcomposer_add_mesh(_submodule:String, _mesh:Mesh, _transfrom:Transform3D, _modifiers:Dictionary={}) -> int:
-    # Submit a command to the local dictionary and submit it to the database
-    # in a background thread.
-    # Return a unique ID that can be used to reference the command
-    # The ID will be the key to the dictionary and the ID in the database
-    # in order to avoid constantly searching for the command in the database
-    # when we need to update it we will use a dictionary to store the command
-    # and the ID in the database. This will allow us to update the command
-    #m_database.insert_row(POS_TABLE, command)
-    if not m_map_dict.has(_submodule):
-        m_map_dict[_submodule] = {}
-    m_logger.debug("Add Mesh: %s, ID: %d" % [str(_mesh), m_curr_id])
-    m_map_dict[_submodule][m_curr_id] = {"mesh":_mesh, "transform":_transfrom, "modifiers":_modifiers}
-    m_id_subcomposer_dict[m_curr_id] = _submodule
-    m_commands.push_back([COMMANDS_T.ADD_MESH, _mesh, _transfrom, _modifiers, m_curr_id])
-    var curr_id = m_curr_id
-    m_curr_id = m_curr_id + 1
-    return curr_id
-
-func subcomposer_remove_mesh(_submodule:String, _id:int):
-    # Submit a command to remove a command from the local dictionary and
-    # submit it to the database in a background thread.
-    # The ID will be the key to the dictionary and the ID in the database
-    # in order to avoid constantly searching for the command in the database
-    # when we need to update it we will use a dictionary to store the command
-    # and the ID in the database. This will allow us to update the command
-    #m_database.delete_rows(POS_TABLE, "id = %s" % str(_id))
-    if m_map_dict.has(_submodule):
-        if m_map_dict[_submodule].has(_id):
-            m_map_dict[_submodule].erase(_id)
-            m_id_subcomposer_dict.erase(_id)
-            # XXX Remove from the database
-            m_commands.push_back([COMMANDS_T.REMOVE, _id])
 
 func composer_read_step_commands() -> Array:
     m_prev_commands = m_commands.duplicate(true)
@@ -303,20 +517,6 @@ func get_subcomposer_name(_id:int) -> String:
 ##############################################################################
 # Private Functions
 ##############################################################################
-# Called when the node enters the scene tree for the first time.
-func _ready():
-    m_logger.debug("_ready Entered")
-
-func _init():
-    m_tables[POS_TABLE] = POS_TABLE_SCHEME
-    m_task_db_adapter_to_thread_queue = ThreadSafeQueue.new()
-    m_task_db_adapter_from_thread_queue = ThreadSafeQueue.new()
-    m_task_db_adapter = TaskManager.create_task(_background_db_adapter, false, "Manage Database in the background")
-
-
-func _exit_tree():
-    var d = null
-    m_task_db_adapter_to_thread_queue.push(d)
 
 func _v3i_to_key(v:Vector3i) -> int:
     var vx = int(v.x + KEY_SHIFT_VAL)
@@ -329,6 +529,49 @@ func _key_to_v3i(k:int) -> Vector3i:
     var vy = int(((k >> KEY_Y_POS) & KEY_MASK) - KEY_SHIFT_VAL)
     var vz = int(((k >> KEY_Z_POS) & KEY_MASK) - KEY_SHIFT_VAL)
     return Vector3i(vx, vy, vz)
+
+func _rot_reflect_to_transform(rot_y_90_cw:int, x_reflect:int, y_reflect:int) -> Transform3D:
+    var transform = Transform3D()
+    transform.basis = Basis(Vector3(0, 0, 1), rot_y_90_cw * PI / 2.0)
+    transform.origin = Vector3(0, 0, 0)
+    if x_reflect:
+        transform.basis = transform.basis.scaled(Vector3(-1, 1, 1))
+    if y_reflect:
+        transform.basis = transform.basis.scaled(Vector3(1, -1, 1))
+    return transform
+
+func _transform_to_rot_reflect(t:Transform3D) -> Dictionary:
+    var rot_y_90_cw = 0
+    var x_reflect = 0
+    var y_reflect = 0
+    var basis = t.basis
+    if basis.get_axis(0).x < 0:
+        x_reflect = 1
+    if basis.get_axis(1).y < 0:
+        y_reflect = 1
+    if basis.get_axis(0).y < 0:
+        rot_y_90_cw = 1
+    elif basis.get_axis(1).x < 0:
+        rot_y_90_cw = 2
+    elif basis.get_axis(0).y > 0:
+        rot_y_90_cw = 3
+    return {"rot_y_90_cw":rot_y_90_cw, "x_reflect":x_reflect, "y_reflect":y_reflect}
+
+func _row_to_dict_entry(row:Dictionary) -> Dictionary:
+    var v = Vector3i(row["x"], row["y"], row["z"])
+    var d = {}
+    d["pos"]            = v
+    d["id"]             = row["id"]
+    d["subcomposer_id"] = row["subcomposer_id"]
+    d["module_name"]    = row["module_name"]
+    d["rot_x_90_cw"]    = row["rot_x_90_cw"]
+    d["rot_y_90_cw"]    = row["rot_y_90_cw"]
+    d["rot_z_90_cw"]    = row["rot_z_90_cw"]
+    d["x_reflect"]      = row["x_reflect"]
+    d["y_reflect"]      = row["y_reflect"]
+    d["scale"]          = row["scale"]
+    d["metadata"]       = bytes_to_var(row["metadata"])
+    return d
 
 func _background_db_adapter():
     var finished = false
@@ -343,7 +586,7 @@ func _background_db_adapter():
             break
         match data[0]:
             'w':
-                set_pos(data[1], data[2], data[3], data[4], data[5])
+                _insert_module(data[1])
             'r':
                 if len(data) == 1:
                     # Read Everything and return the entire dictionary
@@ -357,9 +600,100 @@ func _background_db_adapter():
                         var d = get_pos_dict_in_region_xyz(data[1], data[2])
                         m_task_db_adapter_from_thread_queue.push(d)
 
+func _insert_module(d:Dictionary):
+    var k = d["id"]
 
+    var select_condition = "id = {0}".format({0:k})
+    var rows = m_database.select_rows(POS_TABLE, select_condition, ["id"])
+    m_logger.debug("Rows: %s" % str(rows))
+    if len(rows):
+        m_logger.debug("Update Rows")
+        m_database.update_rows(POS_TABLE, select_condition, d)
+    else:
+        m_logger.debug("Insert Row")
+        m_database.insert_row(POS_TABLE, d)
+
+    if _is_dict_out_of_date():
+        m_logger.debug("Dictionary is out of date, update from database")
+        m_position_dict = get_pos_dict()
+    else:
+        m_logger.debug("Dictionary is up to date, just update the database")
+        d["metadata"] = bytes_to_var(d["metadata"])
+        m_position_dict[k] = d
+
+    # Generate the transform from the rotation and reflection and position
+    var transform = Transform3D()
+    transform.basis = Basis(Vector3(0, 0, 1), d["rot_y_90_cw"] * PI / 2.0)
+    transform.origin = Vector3(d["x"], d["y"], d["z"])
+    if d["x_reflect"]:
+        transform.basis = transform.basis.scaled(Vector3(-1, 1, 1))
+    if d["y_reflect"]:
+        transform.basis = transform.basis.scaled(Vector3(1, -1, 1))
+
+
+    # Add the command
+    m_commands.push_back([  COMMANDS_T.ADD_MESH,
+                            m_mesh_dict[d["module_name"]],
+                            transform,
+                            d["metadata"],
+                            k])
+    _update_both_dict_and_database_timestamp()
+
+
+func _update_mesh_references():
+    # Get all the rows of the MESH_TABLE
+    var select_condition = ""
+    var rows = m_database.select_rows(MESH_TABLE, select_condition, ["*"])
+    # Generate a dictionary where the key is the index of the mesh
+    m_mesh_dict = {}
+    for row in rows:
+        var _mesh: Mesh = bytes_to_var_with_objects(row["mesh"])
+        # var _mesh = ArrayMesh.from_json(row["mesh"])
+        #var _mesh:ArrayMesh = JSON.parse_string(row["mesh"])
+        m_mesh_dict[row["name"]] = _mesh
+
+func _update_database_timestamp(ts):
+    if m_database.query("SELECT data_group FROM \"" + CONFIG_TABLE + "\" WHERE data_group = 'timestamp'") and m_database.query_result.size() == 0:
+        m_logger.debug("Timestamp does not exist. Creating it now.")
+        m_database.insert_row(CONFIG_TABLE, {"name": "timestamp", "type": "int", "data_group": "timestamp", "int_value": m_database_timestamp})
+    m_database.update_rows(CONFIG_TABLE, "name = 'timestamp'", {"int_value": ts})
+
+func _update_dict_timestamp(ts):
+    m_dict_timestamp = ts
+
+func _update_both_dict_and_database_timestamp():
+    var ts = Time.get_ticks_msec()
+    _update_database_timestamp(ts)
+    _update_dict_timestamp(ts)
+
+func _is_dict_out_of_date():
+    return m_dict_timestamp < m_database_timestamp
+
+func _is_database_out_of_date():
+    return m_database_timestamp < m_dict_timestamp
+
+func _are_dict_and_database_same():
+    return m_dict_timestamp == m_database_timestamp
+
+##############################################################################
+# Signal Handlers
+##############################################################################
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+    m_logger.debug("_ready Entered")
 
 func _process(_delta):
     if !m_task_db_adapter_from_thread_queue.is_empty():
-        print ("Data in Read Thread")
+        m_logger.debug("Data in Read Thread")
         emit_signal("database_data_ready", m_task_db_adapter_from_thread_queue.pop())
+
+func _init():
+    m_tables[POS_TABLE] = POS_TABLE_SCHEME
+    m_task_db_adapter_to_thread_queue = ThreadSafeQueue.new()
+    m_task_db_adapter_from_thread_queue = ThreadSafeQueue.new()
+    m_task_db_adapter = TaskManager.create_task(_background_db_adapter, false, "Manage Database in the background")
+
+func _exit_tree():
+    var d = null
+    m_task_db_adapter_to_thread_queue.push(d)

@@ -28,6 +28,7 @@ var m_logger = LogStream.new(LOGGER_NAME, LogStream.LogLevel.INFO)
 var m_database : SQLite
 var m_sid_dict = {}
 var m_reflected_sid_dict = {}
+var m_mesh_dict = null
 
 ##############################################################################
 # Table Definitions
@@ -46,16 +47,20 @@ const CONFIG_TABLE_SCHEME = {
 
 const MODULE_TABLE = "modules"
 const MODULE_TABLE_SCHEME = {
-    "name": {"data_type":"text", "primary_key":true, "not_null":true, "auto_increment":false},
-    "md5" :  {"data_type":"text", "not_null":false},
-    "x_flip": {"data_type":"int", "not_null":false},
-    "y_flip": {"data_type":"int", "not_null":false},
-    "front"  : {"data_type":"int", "not_null":false},
-    "back"   : {"data_type":"int", "not_null":false},
-    "top"    : {"data_type":"int", "not_null":false},
-    "bottom" : {"data_type":"int", "not_null":false},
-    "right"  : {"data_type":"int", "not_null":false},
-    "left"   : {"data_type":"int", "not_null":false}
+    "id"         : {"data_type":"int",    "primary_key":true, "not_null":true, "auto_increment":true},
+    "name"       : {"data_type":"text",   "primary_key":false, "not_null":true},
+    "x_flip"     : {"data_type":"int",    "not_null":false},
+    "y_flip"     : {"data_type":"int",    "not_null":false},
+    "front"      : {"data_type":"int",    "not_null":false},
+    "back"       : {"data_type":"int",    "not_null":false},
+    "top"        : {"data_type":"int",    "not_null":false},
+    "bottom"     : {"data_type":"int",    "not_null":false},
+    "right"      : {"data_type":"int",    "not_null":false},
+    "left"       : {"data_type":"int",    "not_null":false},
+    "x_rotation" : {"data_type":"float",  "not_null":false},
+    "y_rotation" : {"data_type":"float",  "not_null":false},
+    "z_rotation" : {"data_type":"float",  "not_null":false},
+    "metadata"   : {"data_type":"blob",   "not_null":false} # Dictionary
 }
 
 const SID_TABLE = "sid"
@@ -124,7 +129,7 @@ func insert_reflected_sid(sid, reflected_sid):
     }
     m_database.insert_row(REFLECTED_SID_TABLE, d)
 
-func insert_expanded_module(_name, x_flip, y_flip, faces):
+func insert_expanded_module(_name, x_flip, y_flip, faces, metadata=null):
     m_logger.debug("Entered insert_expanded_module")
     var d = { "name":       _name,
               "x_flip":     x_flip,
@@ -135,7 +140,13 @@ func insert_expanded_module(_name, x_flip, y_flip, faces):
               "bottom":     faces[FACE_T.BOTTOM],
               "right":      faces[FACE_T.RIGHT],
               "left":       faces[FACE_T.LEFT],
+              "x_rotation": 0,
+              "y_rotation": 0,
+              "z_rotation": 0
+
     }
+    if metadata != null:
+        d["metadata"] = var_to_bytes(metadata)
     m_database.insert_row(MODULE_TABLE, d)
 
 func insert_sid_mapping(sid:int, asymmetric_flag:int, module_list: Array):
@@ -146,26 +157,36 @@ func insert_sid_mapping(sid:int, asymmetric_flag:int, module_list: Array):
     }
     m_database.insert_row(SID_TABLE, d)
 
+func set_mesh_dir_path(_path):
+    m_logger.debug("Entered set_mesh_dir_path")
+    var d = { "name": "mesh_dir_path",
+              "data_group": "config",
+              "type": "text",
+              "text_value": _path
+    }
+    m_database.insert_row(CONFIG_TABLE, d)
+
+func get_mesh_dir_path() -> String:
+    m_logger.debug("Entered get_mesh_dir_path")
+    var sel_string = "SELECT text_value FROM config WHERE name = 'mesh_dir_path'"
+    m_database.query(sel_string)
+    return m_database.query_result[0]["text_value"]
+
 func set_default_size_3d(_size:Vector3):
     m_logger.debug("Entered set_default_size_3d")
-    var d = { "name": "default_size_x",
-              "data_group": "config",
-              "type": "float",
-              "float_value": _size.x
-    }
-    m_database.insert_row(CONFIG_TABLE, d)
-    d = { "name": "default_size_y",
-              "data_group": "config",
-              "type": "float",
-              "float_value": _size.y
-    }
-    m_database.insert_row(CONFIG_TABLE, d)
-    d = { "name": "default_size_z",
-              "data_group": "config",
-              "type": "float",
-              "float_value": _size.z
-    }
-    m_database.insert_row(CONFIG_TABLE, d)
+    var sizes = {"default_size_x": _size.x, "default_size_y": _size.y, "default_size_z": _size.z}
+    for size_name in sizes.keys():
+        var sel_string = "SELECT name FROM config WHERE name = '{0}'".format({0: size_name})
+        m_database.query(sel_string)
+        var d = { "name": size_name,
+                  "data_group": "config",
+                  "type": "float",
+                  "float_value": sizes[size_name]
+        }
+        if len(m_database.query_result) == 0:
+            m_database.insert_row(CONFIG_TABLE, d)
+        else:
+            m_database.update_rows(CONFIG_TABLE, "name = '{0}'".format({0: size_name}), d)
 
 func get_default_size_3d() -> Vector3:
     m_logger.debug("Entered get_default_size_3d")
@@ -197,15 +218,39 @@ func get_module_dict() -> Dictionary:
     var module_dict = {}
     for row in m_database.query_result:
         var _name = row["name"]
-        var md5 = row["md5"]
         var x_flip = row["x_flip"]
         var y_flip = row["y_flip"]
         var faces = [row["front"], row["back"], row["top"], row["bottom"], row["right"], row["left"]]
-        module_dict[_name] = {"md5": md5,
-                             "x_flip": x_flip,
-                             "y_flip": y_flip,
-                             "faces": faces}
+        var metadata = null
+        if row["metadata"] != null:
+            metadata = bytes_to_var(row["metadata"])
+        module_dict[_name] = {  "id": row["id"],
+                                "x_flip": x_flip,
+                                "y_flip": y_flip,
+                                "faces": faces,
+                                "metadata": metadata}
     return module_dict
+
+func get_mesh_dict() -> Dictionary:
+    m_logger.debug("Entered get_mesh_dict")
+    if m_mesh_dict != null:
+        return m_mesh_dict
+    m_mesh_dict = {}
+    var base_mesh_dir = get_mesh_dir_path()
+
+    var sel_string = "SELECT * FROM modules"
+    m_database.query(sel_string)
+    for row in m_database.query_result:
+        var _name = row["name"]
+        # if the module has an x_flip or y_flip, then it is a duplicate of a mesh so we just continue
+        if row["x_flip"] == 1 or row["y_flip"] == 1:
+            continue
+        m_mesh_dict[_name] = {  "id": row["id"]}
+        # Open up the mesh and add it to the mesh_dict
+        var mesh_path = "{0}{1}.obj".format({0: base_mesh_dir, 1: _name})
+        var mesh = load(mesh_path)
+        m_mesh_dict[_name]["mesh"] = mesh
+    return m_mesh_dict
 
 func get_sid_dict() -> Dictionary:
     m_logger.debug("Entered get_sid_dict")
@@ -213,9 +258,9 @@ func get_sid_dict() -> Dictionary:
     m_database.query(sel_string)
     var sid_dict = {}
     for row in m_database.query_result:
-        var sid = row[0]
-        var asymmetric = row[1]
-        var module_list = bytes_to_var(row[2])
+        var sid = row["sid"]
+        var asymmetric = row["asymmetric"]
+        var module_list = bytes_to_var(row["module_list"])
         sid_dict[sid] = {"asymmetric": asymmetric,
                          "module_list": module_list}
     return sid_dict
@@ -256,4 +301,3 @@ func _face_name_from_index(sid, base_agnostic = false) -> String:
             FACE_T.LEFT:
                 return "left"
     return ""
-
