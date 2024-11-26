@@ -8,7 +8,7 @@ extends SubComposerBase
 ##############################################################################
 # Constants
 ##############################################################################
-const PROP_GENERATE_TERRAIN = "WFC_generator"
+const PROP_GENERATE_TERRAIN = "WFC Composer"
 
 enum STATES_T {
     RESET,
@@ -22,7 +22,7 @@ var m_state:STATES_T = STATES_T.RESET
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("WFC Generator", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("WFC Composer", LogStream.LogLevel.DEBUG)
 var m_area_polygon_map = {}
 var m_area_index = -1
 

@@ -18,7 +18,7 @@ var PROP_DRAW_SELECT:String
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("DemoComposer", LogStream.LogLevel.INFO)
+var m_logger = LogStream.new("DemoComposer", LogStream.LogLevel.DEBUG)
 var m_st:SurfaceTool
 
 
@@ -65,11 +65,12 @@ func step():
                 draw_terrain()
 
 func remove_all_meshes():
-    # Remove all previous meshes
-    if m_map_db_adapter.m_map_dict.has(name):
-        var m_dict = m_map_db_adapter.m_map_dict[name]
-        for k in m_dict.keys():
-            m_map_db_adapter.subcomposer_remove_mesh(name, k)
+    m_map_db_adapter.remove_all_subcomposer_modules(name)
+    ## Remove all previous meshes
+    #if m_map_db_adapter.m_map_dict.has(name):
+    #    var m_dict = m_map_db_adapter.m_map_dict[name]
+    #    for k in m_dict.keys():
+    #        m_map_db_adapter.subcomposer_remove_mesh(name, k)
 
 
 
@@ -132,7 +133,7 @@ func draw_terrain():
     m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
 
 func draw_box():
-    var t = Transform3D()
+    #var t = Transform3D()
     m_logger.debug("Demo Composer Enabled!")
 
     var sp = start_pos
@@ -234,7 +235,7 @@ func draw_box():
     #m_st.generate_tangents()
 
     # Commit to a mesh.
-    var mesh = m_st.commit()
+    var mesh:ArrayMesh = m_st.commit()
     var mat = ORMMaterial3D.new()
     mat.albedo_color = mesh_color
     mesh.surface_set_material(0, mat)
@@ -246,7 +247,9 @@ func draw_box():
     }
     #var outline_mesh = mesh.create_outline(0.05)
     #mesh.add_child(outline_mesh)
-    m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
+    #m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
+    var mo:Mesh = mesh
+    m_map_db_adapter.insert_module_with_mesh(name, "box", sp, 1.0, 0, 0, 0, 0, 0, modifiers, mo)
 
 
 func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):

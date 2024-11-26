@@ -1,5 +1,14 @@
-extends Node
+extends WFCMapper2D
 
+class_name WFCTileDatabaseMapper
+##############################################################################
+# Description
+##############################################################################
+## Mapper allows the algorithm to access a map node as something like a
+## 2D-array of numbers.
+##
+## We need to be able to convert the tiles and their rotation as a number
+## I think our database will already do this for us
 
 ##############################################################################
 # Signals
@@ -13,13 +22,17 @@ extends Node
 # Members
 ##############################################################################
 var m_logger = LogStream.new("Mappder 2D DB", LogStream.LogLevel.DEBUG)
-
+var m_attribute_dict:Dictionary = {}
+var m_id_to_attribute: Array = []
+var m_subcomposer_id = "WFC"
+var m_modifiers = {}
 ## Flags ##
 
 ##############################################################################
 # Scenes
 ##############################################################################
 var m_map_db_adapter = null
+var m_tile_db_adapter = null
 
 ##############################################################################
 # Exports
@@ -28,36 +41,77 @@ var m_map_db_adapter = null
 ##############################################################################
 # Public Functions
 ##############################################################################
+func set_subcomposer_id(id: String):
+    m_subcomposer_id = id
+
+func set_modifiers(modifiers: Dictionary):
+    m_modifiers = modifiers
+
 func set_map_db_adapter(adapter: Node):
     m_map_db_adapter = adapter
 
-## Learn tile types from given map node.
+func set_tile_db_adapter(adapter: Node):
+    m_tile_db_adapter = adapter
+
+### From Base Class ###
+
+## Populate the attribute dictionary
 func learn_from(_map: Node):
-    @warning_ignore("assert_always_false")
-    assert(false)
+    m_attribute_dict = {}
+    m_id_to_attribute = []
+    # Read the map and populate the attribute dictionary
+    # The attribute dictionary maps the tile ID and the rotation to a number
+
+    # Get the tile dictionary from m_tile_db_adapter
+    var module_dict = m_tile_db_adapter.get_module_dict()
+
+    # iterate through the tiles
+    for module in module_dict:
+        # Go through the tiles and rotate create an attribute for each rotation
+        # 0, 90, 180, 270
+        var attrs:Vector2i
+        attrs = Vector2i(module_dict[module]["id"], 0)
+        m_attribute_dict[attrs] = m_attribute_dict.size()
+        m_id_to_attribute.append(attrs)
+        attrs = Vector2i(module_dict[module]["id"], 90)
+        m_attribute_dict[attrs] = m_attribute_dict.size()
+        m_id_to_attribute.append(attrs)
+        attrs = Vector2i(module_dict[module]["id"], 180)
+        m_attribute_dict[attrs] = m_attribute_dict.size()
+        m_id_to_attribute.append(attrs)
+        attrs = Vector2i(module_dict[module]["id"], 270)
+        m_attribute_dict[attrs] = m_attribute_dict.size()
+        m_id_to_attribute.append(attrs)
 
 ## Returns rect of target map that contains all non-empty cells.
 func get_used_rect(_map: Node) -> Rect2i:
-    @warning_ignore("assert_always_false")
-    assert(false)
-    return Rect2i()
+    return m_map_db_adapter.get_used_rect_2d()
 
 ## Read cell from map and return a mapped code.
 ## [br]
 ## Returns a negative value if cell is empty or mapping for the cell is missing.
 func read_cell(_map: Node, _coords: Vector2i) -> int:
-    @warning_ignore("assert_always_false")
-    assert(false)
+    var module_dict = m_map_db_adapter.get_module_at_pos(Vector3i(_coords.x, 0, _coords.y))
+    if module_dict:
+        var attrs:Vector2i
+        attrs = Vector2i(module_dict["module_id"], module_dict["rot_y_90_cw"])
+        return m_attribute_dict[attrs]
     return -1
 
 ## Read metadata attribute values associated with given cell type.
 ## [br]
 ## May return array of multiple values if cell type consists of multiple objects having metadata.
 ## E.g. combinations of different tiles in multi-layer tilemap.
-func read_tile_meta(_tile: int, _meta_name: String) -> Array:
-    @warning_ignore("assert_always_false")
-    assert(false)
-    return []
+func read_tile_meta(_tile_id: int, _meta_name: String) -> Array:
+    var retval = []
+    var attr = m_id_to_attribute[_tile_id]
+    var _tile = attr.x
+    var module_list = m_map_db_adapter.get_modules_with_attribute(attr.x, attr.y)
+    for module in module_list:
+        var meta = module["metadata"]
+        if meta.has(_meta_name):
+            retval.append(meta[_meta_name])
+    return retval
 
 ## Reads meta of given tile (see [method read_tile_meta]) and converts it to a single boolean value.
 ## [br]
@@ -71,8 +125,6 @@ func read_tile_meta_boolean(tile: int, meta_name: String) -> bool:
 
 ## Name of a metadata attribute/custom data layer (as interpreted by [method read_tile_meta]) used
 ## to read tile probabilities.
-@export
-var probability_meta_key: String = "wfc_probability"
 
 ## Read probability value assigned to given tile type.
 ## [br]
@@ -81,7 +133,6 @@ var probability_meta_key: String = "wfc_probability"
 func read_tile_probability(tile: int) -> float:
     if tile < 0:
         return 0.0
-    assert(tile < size())
 
     var probability := 1.0
 
@@ -94,29 +145,31 @@ func read_tile_probability(tile: int) -> float:
 ## [br]
 ## [param _code] should be inside acceptable range for mapped codes.
 func write_cell(_map: Node, _coords: Vector2i, _code: int):
-    @warning_ignore("assert_always_false")
-    assert(false)
+    m_map_db_adapter.insert_module_xy(  m_subcomposer_id,
+                                        m_id_to_attribute[_code].x,
+                                        Vector2i(_coords.x, _coords.y),
+                                        m_id_to_attribute[_code].y,
+                                        0, 0, {})
 
 ## Returns number of cell types known by the mapper.
 func size() -> int:
-    @warning_ignore("assert_always_false")
-    assert(false)
-    return 0
+    #var s = m_map_db_adapter.get_pos_dict().size()
+    #return s
+    return m_attribute_dict.size()
 
 ## Check if this mapper is capable of working with given map node.
 func supports_map(_map: Node) -> bool:
-    @warning_ignore("assert_always_false")
-    assert(false)
-    return false
+    # We don't really use the _map variable, so just return true
+    return true
 
 ## Reset state (everything learned in [method learn_from] calls) of this mapper.
 func clear():
-    @warning_ignore("assert_always_false")
-    assert(false)
+    m_map_db_adapter.clear_pos_table()
 
 ## Return true if this mapper is ready to read/write a map.
 func is_ready() -> bool:
-    return size() > 0
+    # We're always ready
+    return true
 
 
 ##############################################################################
