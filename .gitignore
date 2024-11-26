@@ -2,6 +2,7 @@
 *.import
 *.tmp
 *.trunk
+*.swp
 
 library.cfg
 map.cfg

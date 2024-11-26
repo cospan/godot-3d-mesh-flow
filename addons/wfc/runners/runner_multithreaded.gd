@@ -199,7 +199,3 @@ func get_progress() -> float:
         unsolved += task.get_unsolved_cells()
 
     return 1.0 - (float(unsolved) / float(total))
-
-
-
-

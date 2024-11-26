@@ -166,6 +166,6 @@ ICON = ExtResource("14_wwsus")
 CUSTOM_CONFIG_KEYS = {
 "auto_load": true,
 "clear_db": false,
-"library_database": "",
+"map_database": "",
 "reset_db": false
 }

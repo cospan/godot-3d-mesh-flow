@@ -1,6 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://cc3s1jqv47qgl"]
-
-[ext_resource type="Script" path="res://map-creator/Library2TileConverter.gd" id="1_doahq"]
-
-[node name="Library2TileConverter" type="Node"]
-script = ExtResource("1_doahq")

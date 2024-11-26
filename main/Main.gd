@@ -180,7 +180,12 @@ func _update_project_list():
 
         #project_list.add_item(project_path)
         if not found:
-            m_logger.warn("Unknown project type: %s" % project_path)
+            m_logger.warn("Unknown project type: %s, removing from recent projects" % project_path)
+            # Remove this project from the list
+            recent_projects.erase(project_path)
+            # Update the config file
+            m_config.set_value("config", "project_path", recent_projects)
+            m_config.save(CONFIG_FILE_DIR)
             continue
 
         var index = project_list.add_item(project_dict["name"], icon, true)

@@ -24,7 +24,11 @@ class CreationParameters:
 	var target_node: Node
 
 	## A [WFC2DGenerator] that is creating this precondition.
-	var generator_node: WFC2DGenerator
+	#XXX: If we require a WFC2DGenerator then we can only use the Grid and Tilemap generators
+	# Because if I try and instantiate a WFC2DGenerator in the editor, it will throw an error
+	# saying that the class is already declared.
+	#var generator_node: WFC2DGenerator
+	var generator_node: Node
 
 ## Instantiates a precondition using settings from this object.
 func create_precondition(parameters: CreationParameters) -> WFC2DPrecondition:

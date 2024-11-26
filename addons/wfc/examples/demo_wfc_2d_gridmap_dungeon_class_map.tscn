@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://hdrh51fuavnr"]
+[gd_scene load_steps=11 format=3 uid="uid://hdrh51fuavnr"]
 
 [ext_resource type="MeshLibrary" uid="uid://310b3aggjq0d" path="res://addons/wfc/examples/assets/kenny-nature-kit/meshlib.meshlib" id="1_5g1ur"]
 [ext_resource type="Script" path="res://addons/wfc/nodes/generator_2d.gd" id="2_ygcwd"]
@@ -6,7 +6,6 @@
 [ext_resource type="Script" path="res://addons/wfc/problems/2d/rules_2d.gd" id="5_qumw0"]
 [ext_resource type="PackedScene" uid="uid://dheyfh3bip6t7" path="res://addons/wfc/examples/helpers/3d_controls.tscn" id="6_21eh3"]
 [ext_resource type="Script" path="res://addons/wfc/solver/solver_settings.gd" id="6_uls1f"]
-[ext_resource type="Script" path="res://addons/wfc/problems/2d/preconditions/precondition_2d_dungeon_settings.gd" id="7_gllx8"]
 [ext_resource type="PackedScene" uid="uid://dt2nffs32s7o1" path="res://addons/wfc/examples/helpers/progress_indicator.tscn" id="8_rvqav"]
 
 [sub_resource type="GDScript" id="GDScript_f3n0e"]
@@ -47,23 +46,6 @@ sparse_history_start = 10
 sparse_history_interval = 10
 force_ac3 = true
 
-[sub_resource type="Resource" id="Resource_7i8ha"]
-script = ExtResource("7_gllx8")
-wall_border_size = Vector2i(1, 2)
-free_gap = Vector2i(2, 2)
-room_half_size_base = Vector2i(2, 2)
-room_half_size_variation = Vector2i(2, 2)
-room_probability = 0.5
-road_len_base = 15
-road_len_variation = 5
-fork_probability = 0.5
-full_fork_probability = 0.5
-passable_area_ratio = 0.1
-iterations_limit = 1000
-road_class = "wfc_dungeon_road"
-wall_class = "wfc_dungeon_wall"
-classes_map = NodePath("../class_map")
-
 [node name="test_gm" type="Node3D"]
 script = SubResource("GDScript_f3n0e")
 
@@ -102,7 +84,6 @@ rect = Rect2i(-50, -50, 100, 100)
 rules = SubResource("Resource_3csuy")
 positive_sample = NodePath("../sample")
 solver_settings = SubResource("Resource_mtj5f")
-precondition = SubResource("Resource_7i8ha")
 render_intermediate_results = true
 
 [node name="controls" parent="." instance=ExtResource("6_21eh3")]

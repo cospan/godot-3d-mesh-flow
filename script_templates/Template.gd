@@ -1,4 +1,4 @@
-extends _BASE_
+extends Node
 
 ##############################################################################
 # Signals
@@ -35,9 +35,9 @@ var m_logger = LogStream.new("_BASE_", LogStream.LogLevel.DEBUG)
 # Signal Handlers
 ##############################################################################
 
-func _ready():
+func _ready() -> void:
     m_logger.debug("Ready Entered!")
 
-func _process(_delta):
+func _process(_delta: float) -> void:
     pass
 

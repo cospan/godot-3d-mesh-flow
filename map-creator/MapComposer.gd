@@ -107,7 +107,6 @@ func _ready():
     m_logger.debug("Ready Entered!")
     #m_material = ORMMaterial3D.new()
     m_state = STATE_TYPE.RESET
-    m_map_db_adapter = $MapDatabaseAdapter
     add_to_group("map-creator-properties")
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -264,7 +263,7 @@ func _remove_object(_id:int):
             m_map_view.remove_child(obj)
         m_map_object_dict.erase(_id)
     else:
-        m_logger.error("Object with ID: " + str(_id) + " not found!")
+        m_logger.warn("Object with ID: " + str(_id) + " not found!")
 
 func _on_property_changed(property_name, property_value):
     match property_name:

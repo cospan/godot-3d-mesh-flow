@@ -255,6 +255,7 @@ func _process(_delta):
                 m_logger.info("Finding Novel Modules")
                 var db_info_dict = m_db_adapter.get_file_info_dict()
                 var fs_info_dict = _get_mesh_file_info_from_dir(m_library_dir)
+                m_db_adapter.set_mesh_directory(m_library_dir)
                 m_mesh_dict = _get_mesh_dict_from_dir(m_library_dir)
                 var novel_modules = _find_novel_mesh_files(fs_info_dict, db_info_dict)
                 m_novel_modules = novel_modules.keys()
