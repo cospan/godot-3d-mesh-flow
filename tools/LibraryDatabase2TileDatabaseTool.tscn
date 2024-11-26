@@ -1,0 +1,17 @@
+[gd_scene load_steps=5 format=3 uid="uid://ry77a34t2mno"]
+
+[ext_resource type="Script" path="res://tools/LibraryDatabase2TileDatabaseTool.gd" id="1_4o5s6"]
+[ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="2_rc14c"]
+[ext_resource type="PackedScene" uid="uid://ckr0tepfuifuc" path="res://map-creator/TileDatabaseAdapter.tscn" id="3_n5mqu"]
+[ext_resource type="PackedScene" uid="uid://cc3s1jqv47qgl" path="res://utils/Library2TileConverter.tscn" id="4_fwvvy"]
+
+[node name="LibraryDatabase2TileDatabaseTool" type="Node"]
+script = ExtResource("1_4o5s6")
+LibraryDatabasePath = "res://demo/test1_pack/database.db"
+TileDatabasePath = "res://gut/data/database_tile.db"
+
+[node name="ModuleDatabaseAdapter" parent="." instance=ExtResource("2_rc14c")]
+
+[node name="TileDatabaseAdapter" parent="." instance=ExtResource("3_n5mqu")]
+
+[node name="Library2TileConverter" parent="." instance=ExtResource("4_fwvvy")]
