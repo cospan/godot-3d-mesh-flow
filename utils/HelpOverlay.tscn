@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://cmewg27jqbltd"]
+
+[ext_resource type="Script" path="res://utils/HelpOverlay.gd" id="1_i8sur"]
+
+[node name="HelpOverlay" type="CanvasLayer"]
+script = ExtResource("1_i8sur")
+
+[node name="Tree" type="Tree" parent="."]
+clip_contents = false
+custom_minimum_size = Vector2(200, 100)
+offset_right = 200.0
+offset_bottom = 100.0
+columns = 2
+column_titles_visible = true
+hide_folding = true
+hide_root = true

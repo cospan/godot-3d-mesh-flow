@@ -18,7 +18,7 @@ const MAX_Y_ANGLE = 1.4
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("CameraGimbal", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("CameraGimbal", LogStream.LogLevel.INFO)
 var m_camera_move_type:CAMERA_TYPES = CAMERA_TYPES.CAMERA_MOVE_IDLE
 var m_final_camera_pos:Vector3 = Vector3.ZERO
 

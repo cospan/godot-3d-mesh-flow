@@ -16,11 +16,12 @@ signal create_finished
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("ProjectUtils", LogStream.LogLevel.INFO)
+var m_logger = LogStream.new("ProjectUtils", LogStream.LogLevel.DEBUG)
 var m_created_project_path = null
 
 var m_folder_name = ""
 var m_config_file = ""
+var m_curr_dir = ""
 
 #var m_project_scene = null
 
@@ -112,15 +113,33 @@ func get_project_dict(_path:String):
 
 
 func delete(_path:String):
-    var base_path = _get_base_path(_path)
-    var d = DirAccess.open(base_path)
+    if !_recursive_delete(_path):
+        m_logger.error("Failed to remove project folder: %s" % _path)
+        return false
+    return true
+
+func _recursive_delete(_path:String):
+    var d = DirAccess.open(_path)
     if not d.dir_exists(_path):
         m_logger.error("Project folder does not exist: %s" % _path)
         return false
-    var err = d.remove(_path)
+    var err = d.list_dir_begin()
     if err != OK:
-        m_logger.error("Failed to remove project folder: %s" % _path)
+        m_logger.error("Failed to list directory: %s" % _path)
         return false
+    while true:
+        var file = d.get_next()
+        if file == "":
+            break
+        if file == "." or file == "..":
+            continue
+        var file_path = _path + "/" + file
+        if d.dir_exists(file_path):
+            _recursive_delete(file_path)
+        else:
+            d.remove(file_path)
+    d.list_dir_end()
+    d.remove(_path)
     return true
 
 func reset(_path:String):
@@ -167,21 +186,40 @@ func _ready():
     var new_folder_dialog = $FileDialogNewFolder
     new_folder_dialog.confirmed.connect(_on_file_dialog_new_folder_confirm)
     new_folder_dialog.canceled.connect(_on_file_dialog_new_folder_canceled)
+    new_folder_dialog.dir_selected.connect(_on_file_dialog_dir_selected)
 
 
 ##############################################################################
 # Signal Handlers
 ##############################################################################
+func _on_file_dialog_dir_selected(_path):
+    m_logger.debug("New project folder selected: %s" % _path)
+    m_curr_dir = _path
+
 func _on_file_dialog_new_folder_confirm():
     m_logger.debug("New project folder selected")
 
     var folder_dialog = $FileDialogNewFolder
-    var folder_path = folder_dialog.current_path
+    var file_name = folder_dialog.current_file
+
+    # if the user didn't specify a file name then we need to create a one, append a number to the project type, e.g. 'project-1' or 'project-2' depending on the number of projects
+    if file_name == "":
+        var i = 1
+        file_name = "%s-%d" % [PROJECT_TYPE, i]
+        while true:
+            var new_folder_path = m_curr_dir + "/" + file_name
+            if not DirAccess.dir_exists_absolute(new_folder_path):
+                break
+            file_name = "%s-%d" % [PROJECT_TYPE, i]
+            i += 1
+
+    #var folder_path = folder_dialog.current_dir
     # Check if there exists a folder called '.project' within the selected folder 'folder_path'
-    var proj_folder = folder_path + "/" + m_folder_name
-    m_logger.debug("Project folder: %s" % proj_folder)
-    var d = DirAccess.open(folder_path)
-    if d.dir_exists(proj_folder):
+    var folder_path = m_curr_dir + "/" + file_name
+    m_logger.debug("Folder Path: %s" % folder_path)
+    #var proj_folder = m_curr_dir + "/" + file_name + "/" + m_folder_name
+    #m_logger.debug("Project folder: %s" % proj_folder)
+    if DirAccess.dir_exists_absolute(folder_path):
         m_logger.info("Library folder already exists!")
         # Ask the user if they want to overwrite the existing project
         var dialog = $ConfirmDialogAsync
@@ -194,11 +232,11 @@ func _on_file_dialog_new_folder_confirm():
             return
     else:
         m_logger.debug("Creating project folder")
-        var err = d.make_dir(proj_folder)
+        var err = DirAccess.make_dir_recursive_absolute(folder_path)
         if err != OK:
-            m_logger.error("Failed to create project folder: %s" % proj_folder)
+            m_logger.error("Failed to create project folder: %s" % folder_path)
             return
-        m_logger.debug("Library folder created: %s" % proj_folder)
+        m_logger.debug("Library folder created: %s" % folder_path)
 
         # Create a configuration file for the project
 
@@ -208,7 +246,15 @@ func _on_file_dialog_new_folder_confirm():
 func _create(_folder_path):
 
     # Within this directory create a 'config' file that will contain the project information
-    var _path = _folder_path + m_folder_name
+    var _path = _folder_path + "/" + m_folder_name
+
+    var err = DirAccess.make_dir_recursive_absolute(_path)
+    if err != OK:
+        m_logger.error("Failed to create project folder: %s" % _path)
+        return
+    m_logger.debug("created: %s" % _path)
+
+
 
     # Get the name of the folder that was selected as the proposed name of the project
     var proj_info_file = _path + "/" + m_config_file

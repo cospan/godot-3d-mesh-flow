@@ -626,6 +626,18 @@ func set_version(version: float):
         m_database.insert_row(CONFIG_TABLE, {"name": "version", "type": "real", "data_group": "version", "float_value": version})
     m_database.update_rows(CONFIG_TABLE, "name = 'version'", {"float_value": version})
 
+func set_mesh_directory(mesh_directory: String):
+    m_logger.debug("Entered Set Mesh Directory")
+    if m_database.query("SELECT data_group FROM \"" + CONFIG_TABLE + "\" WHERE data_group = 'config'") and m_database.query_result.size() == 0:
+        m_logger.debug("Directory does not exist. Creating it now.")
+        m_database.insert_row(CONFIG_TABLE, {"name": "mesh_base_directory", "type": "text", "data_group": "config", "text_value": mesh_directory})
+    m_database.update_rows(CONFIG_TABLE, "name = 'mesh_base_directory'", {"text_value": mesh_directory})
+
+func get_mesh_directory() -> String:
+    m_logger.debug("Entered Get Mesh Directory")
+    m_database.query("SELECT text_value FROM \"" + CONFIG_TABLE + "\" WHERE name = 'mesh_base_directory'")
+    return m_database.query_result[0]["text_value"]
+
 func backup_to(destination:String) -> bool:
     m_logger.debug("Backing up database to %s" % destination)
     return m_database.backup_to(destination)
@@ -667,5 +679,3 @@ func set_file_info_dict(fs_dict:Dictionary):
             m_database.insert_row(MODULE_TABLE, d)
         else:
             m_database.update_rows(MODULE_TABLE, select_cond, d)
-
-
