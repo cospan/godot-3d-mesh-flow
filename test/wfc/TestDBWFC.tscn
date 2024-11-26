@@ -1,9 +1,20 @@
-[gd_scene load_steps=3 format=3 uid="uid://brfgrtm2fcn5p"]
+[gd_scene load_steps=6 format=3 uid="uid://brfgrtm2fcn5p"]
 
 [ext_resource type="Script" path="res://test/wfc/TestDBWFC.gd" id="1_omd6x"]
-[ext_resource type="PackedScene" uid="uid://bqfwgg02bwuqc" path="res://map-creator/sub-composers/WFCComposer.tscn" id="2_v2wmv"]
+[ext_resource type="Script" path="res://test/wfc/Node3DDisplay.gd" id="2_ojj8r"]
+[ext_resource type="PackedScene" uid="uid://2pm1gnt1y3c" path="res://map-creator/MapDatabaseAdapter.tscn" id="3_rpbtk"]
+[ext_resource type="PackedScene" uid="uid://ckr0tepfuifuc" path="res://map-creator/TileDatabaseAdapter.tscn" id="4_xewne"]
+[ext_resource type="Script" path="res://test/wfc/WFCGenerator.gd" id="5_7kk3m"]
 
 [node name="TestDBWFC" type="Node"]
 script = ExtResource("1_omd6x")
 
-[node name="WFCComposer" parent="." instance=ExtResource("2_v2wmv")]
+[node name="Node3DDisplay" type="Node3D" parent="."]
+script = ExtResource("2_ojj8r")
+
+[node name="MapDatabaseAdapter" parent="." instance=ExtResource("3_rpbtk")]
+
+[node name="TileDatabaseAdapter" parent="." instance=ExtResource("4_xewne")]
+
+[node name="WFCGenerator" type="Node" parent="."]
+script = ExtResource("5_7kk3m")

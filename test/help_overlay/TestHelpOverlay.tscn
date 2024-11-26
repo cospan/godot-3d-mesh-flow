@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://dkv2op81pgp83"]
+
+[ext_resource type="PackedScene" uid="uid://cmewg27jqbltd" path="res://utils/HelpOverlay.tscn" id="1_50mg0"]
+[ext_resource type="Script" path="res://test/help_overlay/TestHelpOverlay.gd" id="1_hhad6"]
+
+[node name="TestHelpOverlay" type="Node3D"]
+script = ExtResource("1_hhad6")
+
+[node name="HelpOverlay" parent="." instance=ExtResource("1_50mg0")]
+follow_viewport_enabled = true
