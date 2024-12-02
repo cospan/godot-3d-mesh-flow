@@ -34,6 +34,8 @@ var m_db_tile_adapter
 var m_flag_async_finished:bool = true
 var m_flag_process_database:bool = false
 
+var m_mesh_dict = {}
+var m_expanded_mesh_dict = {}
 var m_module_face_sid_dict = {}
 var m_expanded_module_face_sid_dict = {}
 var m_reflected_sid_dict = {}
@@ -117,6 +119,8 @@ func _start_generate_module_dict_from_database():
     var hash_dict = m_db_library_adapter.get_hash_dict()
     var hash_face_dict = m_db_library_adapter.get_hash_name_face_tuple_dict()
     var modules = m_db_library_adapter.get_module_names()
+    var mesh_base_path = m_db_library_adapter.get_mesh_directory()
+    m_mesh_dict = {}
 
     var total_size = len(modules) * 6
     call_deferred("emit_percent_update", _pname, percent)
@@ -126,6 +130,7 @@ func _start_generate_module_dict_from_database():
         m_module_face_sid_dict[m]["faces"] = {0:{}, 1:{}, 2:{}, 3:{}, 4:{}, 5:{}}
         m_module_face_sid_dict[m]["x_flip"] = false
         m_module_face_sid_dict[m]["y_flip"] = false
+        m_mesh_dict[m] = load(mesh_base_path + "/" + m + ".obj")
 
     var index = 0
     for _sid in sids_hash_dict.keys():
@@ -166,6 +171,7 @@ func _start_generate_expanded_module_dict():
     var percent = 0.0
     m_flag_async_finished = false
     var _pname = EXPAND_MODULE_DICT_NAME
+    m_expanded_mesh_dict = {}
 
     var total_size = len(m_module_face_sid_dict.keys())
     var sid_list_array = m_db_library_adapter.get_sids()
@@ -187,6 +193,8 @@ func _start_generate_expanded_module_dict():
     for m in m_module_face_sid_dict.keys():
         var module = m_module_face_sid_dict[m]
         # Generate a table of faces that are reflected
+        var transform = Transform3D()
+        var mesh = m_mesh_dict[m]
 
         var face_asymmetric_table = {0:false, 1:false, 2:false, 3:false, 4:false, 5:false}
         var face_reflect_table = {0:false, 1:false, 2:false, 3:false, 4:false, 5:false}
@@ -208,14 +216,23 @@ func _start_generate_expanded_module_dict():
         for f in module["faces"]:
             emodule["faces"][f] = module["faces"][f]["sid"]
         m_expanded_module_face_sid_dict[m] = emodule
+        m_expanded_mesh_dict[m] = {}
+        m_expanded_mesh_dict[m]["mesh"] = mesh
+        m_expanded_mesh_dict[m]["transform"] = transform
+
+
 
         # Check if the front:0 and back:1 are reflected, if so generate a new module
         # Where we flip along the x axis, this means the front and back faces are now
         # unreflected but the left and right faces are still reflected and the left is now the right
         # and the right is now the left
         if face_asymmetric_table[0] or face_asymmetric_table[1]:
+            # Create a transform to apply onto a mesh
+            var t:Transform3D = Transform3D()
             var new_module = emodule.duplicate(true)
             new_module["x_flip"] = true
+            # Flib the transform along the x axis
+            t.basis = t.basis.scaled(Vector3(-1, 1, 1))
             new_module["y_flip"] = false
             if not module["faces"][0]["symmetric"]:
                 new_module["faces"][0] = m_reflected_sid_dict[emodule["faces"][0]]
@@ -225,6 +242,13 @@ func _start_generate_expanded_module_dict():
             new_module["faces"][5] = emodule["faces"][4]
             var nm_name = m + "_rx"
             m_expanded_module_face_sid_dict[nm_name] = new_module
+            # Create a copy of the mesh and apply the transform
+            transform = Basis().scaled(Vector3(-1, 1, 1))
+            m_expanded_mesh_dict[nm_name] = {}
+            m_expanded_mesh_dict[nm_name]["mesh"] = mesh
+            m_expanded_mesh_dict[nm_name]["transform"] = transform
+
+
 
         # Check if the right:4 and left:5 are reflected, if so generate a new module
         # Where we flip along the y axis, this means the right and left faces are now
@@ -242,6 +266,13 @@ func _start_generate_expanded_module_dict():
             new_module["faces"][1] = emodule["faces"][0]
             var nm_name = m + "_ry"
             m_expanded_module_face_sid_dict[nm_name] = new_module
+            transform = Basis().scaled(Vector3(1, -1, 1))
+            m_expanded_mesh_dict[nm_name] = {}
+            m_expanded_mesh_dict[nm_name]["mesh"] = mesh
+            m_expanded_mesh_dict[nm_name]["transform"] = transform
+
+
+
 
         # Check if a face in the front or back and a face in the left or right are reflected
         # if so generate a new module where we flip along the x and y axis
@@ -266,6 +297,10 @@ func _start_generate_expanded_module_dict():
             new_module["faces"][5] = emodule["faces"][4]
             var nm_name = m + "_rxry"
             m_expanded_module_face_sid_dict[nm_name] = new_module
+            transform = Basis().scaled(Vector3(-1, -1, 1))
+            m_expanded_mesh_dict[nm_name] = {}
+            m_expanded_mesh_dict[nm_name]["mesh"] = mesh
+            m_expanded_mesh_dict[nm_name]["transform"] = transform
 
 
 
@@ -316,7 +351,7 @@ func _start_insert_database():
     index = 0
     for module in m_expanded_module_face_sid_dict.keys():
         var d = m_expanded_module_face_sid_dict[module]
-        m_db_tile_adapter.insert_expanded_module(module, d["x_flip"], d["y_flip"], d["faces"])
+        m_db_tile_adapter.insert_expanded_module(module, d["x_flip"], d["y_flip"], d["faces"], m_expanded_mesh_dict[module]["mesh"], m_expanded_mesh_dict[module]["transform"])
         for f in d["faces"].keys():
             var fsid = d["faces"][f]
             if not sid_dict.has(fsid):

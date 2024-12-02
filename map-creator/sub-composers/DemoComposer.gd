@@ -82,8 +82,7 @@ func draw_terrain():
 
     var TERRAIN_X_OFFSET = -floori(TERRAIN_WIDTH / 2.0)
     var TERRAIN_Z_OFFSET = -floori(TERRAIN_WIDTH / 2.0)
-
-    var t = Transform3D()
+    var sp:Vector2 = Vector2(TERRAIN_X_OFFSET, TERRAIN_Z_OFFSET)
 
     m_st.clear()
     m_st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -130,7 +129,10 @@ func draw_terrain():
         "mask":mesh_mask
         #"priority":mesh_priority
     }
-    m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
+    #m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
+    var mo:Mesh = mesh
+    m_map_db_adapter.insert_module(false, name, null, sp, 1.0, 0, 0, 0, 0, 0, modifiers, mo)
+
 
 func draw_box():
     #var t = Transform3D()
@@ -249,7 +251,7 @@ func draw_box():
     #mesh.add_child(outline_mesh)
     #m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
     var mo:Mesh = mesh
-    m_map_db_adapter.insert_module_with_mesh(name, "box", sp, 1.0, 0, 0, 0, 0, 0, modifiers, mo)
+    m_map_db_adapter.insert_module(false, name, null, sp, 1.0, 0, 0, 0, 0, 0, modifiers, mo)
 
 
 func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
@@ -262,42 +264,23 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
 # Called when the node enters the scene tree for the first time.
 func _ready():
     m_logger.debug("Ready Entered!: Name: %s" % name)
+    super()
 
-    PROP_LABEL = name + "_label"
-    PROP_ENABLE = name + "_demo_composer_enable"
     PROP_DRAW_SELECT = name + "_demo_composer_draw_select"
 
-    m_properties = {
-        PROP_LABEL:
-        {
-          "type": "Label",
-          "name": "",
-          "value": name,
-        },
-        PROP_ENABLE:
-        {
-          "type": "CheckBox",
-          "name" : "Enable",
-          "value": enabled,
-          "callback": _on_property_changed,
-          "tooltip": name + ": Enable Demo Composer"
-        },
-        PROP_DRAW_SELECT:
-        {
-          "type": "ItemList",
-          "name" : "Draw Select",
-          "items":["box", "terrain"],
-          "callback": _on_property_changed,
-          "tooltip": name + ": Select the type of draw to use",
-          "size": Vector2(100, 100)
-        }
+    m_properties[PROP_DRAW_SELECT] = {
+        "type": "ItemList",
+        "name" : "Draw Select",
+        "items":["box", "terrain"],
+        "callback": _on_property_changed,
+        "tooltip": name + ": Select the type of draw to use",
+        "size": Vector2(100, 100)
     }
 
 
-
     m_logger.debug("Ready Entered!")
-    add_to_group("subcomposer")
-    add_to_group("map-creator-properties")
+    #add_to_group("subcomposer")
+    #add_to_group("map-creator-properties")
     m_st = SurfaceTool.new()
     if enabled:
         m_flag_go = true

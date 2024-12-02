@@ -11,7 +11,7 @@ extends Control
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("MC", LogStream.LogLevel.INFO)
+var m_logger = LogStream.new("MC", LogStream.LogLevel.DEBUG)
 var m_project_path:String = ""
 var m_config_file:String = ""
 var m_config = null
@@ -52,7 +52,8 @@ var m_view = null
 ##############################################################################
 # Exports
 ##############################################################################
-var DATABASE_NAME = "map.db"
+var DATABASE_NAME:String = "map.db"
+var RESET_DATABASE:bool = false
 
 ##############################################################################
 # Public Functions
@@ -117,11 +118,13 @@ func _ready():
         m_config.save(m_config_file)
 
     # Open the map database
-    m_map_database_adapter.open_database(map_database)
+    m_map_database_adapter.open_database(map_database, RESET_DATABASE, RESET_DATABASE)
 
     # Setup the map composer to control the view
     m_map_composer.set_map_view(m_view)
     m_map_composer.set_map_database_adapter(m_map_database_adapter)
+    m_map_composer.add_subcomposer.connect(_map_composer_subcomposer_loaded)
+    m_map_composer.remove_subcomposer.connect(_map_composer_subcomposer_removed)
 
 
     #if not m_config.has_section_key("config", "database_path"):
@@ -192,3 +195,11 @@ func _property_changed(prop_name:String, value):
 
 func _loading_finished():
     m_flag_load_finished = true
+
+func _map_composer_subcomposer_loaded(_name):
+    m_logger.info("Map Composer Subcomposer Loaded: %s" % _name)
+    m_properties.interrogate_tree("map-creator-properties")
+
+func _map_composer_subcomposer_removed(_name):
+    m_logger.info("Map Composer Subcomposer Removed: %s" % _name)
+    m_properties.remove_node_by_name(_name)

@@ -2,13 +2,15 @@
 
 [ext_resource type="Script" path="res://utils/DictProperty.gd" id="1_vhbr2"]
 
-[node name="DictProperty" type="GridContainer"]
+[node name="DictProperty" type="ScrollContainer"]
+custom_minimum_size = Vector2(200, 0)
+size_flags_horizontal = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+script = ExtResource("1_vhbr2")
+
+[node name="DictView" type="GridContainer" parent="."]
 custom_minimum_size = Vector2(400, 0)
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 size_flags_vertical = 3
 columns = 2
-script = ExtResource("1_vhbr2")

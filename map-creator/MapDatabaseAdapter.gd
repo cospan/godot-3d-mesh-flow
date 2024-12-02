@@ -119,11 +119,7 @@ const MESH_TABLE_SCHEME = {
     "id"        : {"data_type":"int", "primary_key":true, "not_null":true, "auto_increment":true},
     "name"      : {"data_type":"text", "not_null":true},
     "mesh"      : {"data_type":"blob", "not_null":true},
-    "vertices"  : {"data_type":"blob", "not_null":true},
-    "indicies"  : {"data_type":"blob", "not_null":true},
-    "normals"   : {"data_type":"blob", "not_null":true},
-    "uvs"       : {"data_type":"blob", "not_null":true},
-    "colors"    : {"data_type":"blob", "not_null":true}
+    "transform" : {"data_type":"blob", "not_null":true}
 }
 
 var m_tables = {
@@ -208,67 +204,10 @@ func get_modules_with_attribute(_id:int, _rot:int) -> Array:
             res.append(v)
     return res
 
-
-
-func insert_module_xy(  subcomposer_id:String,
-                        module_name:String,
-                        pos:Vector2i,
-                        rot_y_90_cw:int,
-                        x_reflect:int,
-                        y_reflect:int,
-                        metadata:Dictionary = {}):
-    var d:Dictionary = {}
-    # Convert rot_y_90_cw, x_reflect, y_reflect into a transform
-    #var t = _rot_reflect_to_transform(rot_y_90_cw, x_reflect, y_reflect)
-    var k = _v3i_to_key(Vector3i(pos.x, 0, pos.y))
-    d["subcomposer_id"] = subcomposer_id
-    d["module_name"] = module_name
-    d["x"] = pos.x
-    d["y"] = 0
-    d["z"] = pos.y
-    d["x_reflect"] = x_reflect
-    d["y_reflect"] = y_reflect
-    d["rot_x_90_cw"] = 0
-    d["rot_y_90_cw"] = rot_y_90_cw
-    d["rot_z_90_cw"] = 0
-    d["scale"] = 1.0
-    d["metadata"] = var_to_bytes(metadata)
-    #d["transform"] = var_to_bytes(t)
-    d["id"] = k
-    _insert_module(d)
-
-func insert_module( subcomposer_id:String,
-                    module_name: String,
-                    pos:Vector3i,
-                    scale:float,
-                    rot_x_90_cw:int,
-                    rot_y_90_cw:int,
-                    rot_z_90_cw:int,
-                    x_reflect:int,
-                    y_reflect:int,
-                    metadata:Dictionary):
-    var d:Dictionary = {}
-    var k = _v3i_to_key(pos)
-    d["subcomposer_id"] = subcomposer_id
-    d["module_name"] = module_name
-    d["x"] = pos.x
-    d["y"] = pos.y
-    d["z"] = pos.z
-    d["x_reflect"] = x_reflect
-    d["y_reflect"] = y_reflect
-    d["rot_x_90_cw"] = rot_x_90_cw
-    d["rot_y_90_cw"] = rot_y_90_cw
-    d["rot_z_90_cw"] = rot_z_90_cw
-    d["scale"] = scale
-    d["metadata"] = var_to_bytes(metadata)
-    d["id"] = k
-    _insert_module(d)
-
-
-func insert_module_with_mesh(
+func insert_module( threaded: bool,
                     subcomposer_id:String,
-                    module_name: String,
-                    pos:Vector3i,
+                    module_name,
+                    pos,
                     scale:float,
                     rot_x_90_cw:int,
                     rot_y_90_cw:int,
@@ -276,14 +215,25 @@ func insert_module_with_mesh(
                     x_reflect:int,
                     y_reflect:int,
                     metadata:Dictionary,
-                    mesh:Mesh):
+                    _mesh = null,
+                    _transform = null):
     var d:Dictionary = {}
     var k = _v3i_to_key(pos)
+    if module_name == null or len(module_name) == 0:
+        #get a string version of the 'k' and append to the module
+        module_name = subcomposer_id + str(k)
     d["subcomposer_id"] = subcomposer_id
     d["module_name"] = module_name
-    d["x"] = pos.x
-    d["y"] = pos.y
-    d["z"] = pos.z
+    if pos is Vector3i or pos is Vector3:
+        d["x"] = pos.x
+        d["y"] = pos.y
+        d["z"] = pos.z
+    elif pos is Vector2i or pos is Vector2:
+        d["x"] = pos.x
+        d["y"] = 0
+        d["z"] = pos.z
+    else:
+        assert(false, "Invalid Position Type")
     d["x_reflect"] = x_reflect
     d["y_reflect"] = y_reflect
     d["rot_x_90_cw"] = rot_x_90_cw
@@ -292,8 +242,15 @@ func insert_module_with_mesh(
     d["scale"] = scale
     d["metadata"] = var_to_bytes(metadata)
     d["id"] = k
-    insert_mesh(module_name, mesh)
-    _insert_module(d)
+    if threaded:
+        var mesh_d = {}
+        mesh_d["mesh"] = _mesh
+        mesh_d["transform"] = _transform
+        m_task_db_adapter_to_thread_queue.push(['w', d, mesh_d])
+    else:
+        if _mesh != null:
+            insert_mesh(module_name, _mesh, _transform)
+        _insert_module(d)
 
 func get_pos_dict_in_region_xyz(start_xyz:Vector3i, end_xyz:Vector3i):
     var x_min:int = start_xyz.x
@@ -324,60 +281,6 @@ func get_pos_dict_in_region_xz(start_xz: Vector2i, end_xz: Vector2i):
         d[k] = _row_to_dict_entry(row)
     return d
 
-func insert_module_xy_threaded( subcomposer_id:String,
-                                module_name:String,
-                                pos:Vector3i,
-                                rot_y_90_cw:int,
-                                x_reflect:int,
-                                y_reflect:int,
-                                metadata:Dictionary = {}):
-    var d:Dictionary = {}
-    #Convert rot_y_90_cw, x_reflect, y_reflect into a transform
-    #var t = _rot_reflect_to_transform(rot_y_90_cw, x_reflect, y_reflect)
-    var k = _v3i_to_key(pos)
-    d["subcomposer_id"] = subcomposer_id
-    d["module_name"] = module_name
-    d["x"] = pos.x
-    d["y"] = pos.y
-    d["z"] = pos.z
-    d["x_reflect"] = x_reflect
-    d["y_reflect"] = y_reflect
-    d["rot_x_90_cw"] = 0
-    d["rot_y_90_cw"] = rot_y_90_cw
-    d["rot_z_90_cw"] = 0
-    d["scale"] = 1.0
-    d["metadata"] = var_to_bytes(metadata)
-    #d["transform"] = var_to_bytes(t)
-    d["id"] = k
-    m_task_db_adapter_to_thread_queue.push(['w', d])
-
-func insert_module_threaded( subcomposer_id:String,
-                             module_name:String,
-                             pos:Vector3i,
-                             scale:float,
-                             rot_x_90_cw:int,
-                             rot_y_90_cw:int,
-                             rot_z_90_cw:int,
-                             x_reflect:int,
-                             y_reflect:int,
-                             metadata:Dictionary):
-    var d:Dictionary = {}
-    var k = _v3i_to_key(pos)
-    d["subcomposer_id"] = subcomposer_id
-    d["module_name"] = module_name
-    d["x"] = pos.x
-    d["y"] = pos.y
-    d["z"] = pos.z
-    d["x_reflect"] = x_reflect
-    d["y_reflect"] = y_reflect
-    d["rot_x_90_cw"] = rot_x_90_cw
-    d["rot_y_90_cw"] = rot_y_90_cw
-    d["rot_z_90_cw"] = rot_z_90_cw
-    d["scale"] = scale
-    d["metadata"] = var_to_bytes(metadata)
-    d["id"] = k
-    m_task_db_adapter_to_thread_queue.push(['w', d])
-
 func remove_all_subcomposer_modules(_submodule:String):
     if m_database == null:
         return
@@ -392,41 +295,17 @@ func remove_all_subcomposer_modules(_submodule:String):
         m_position_dict.erase(k)
         m_commands.push_back([COMMANDS_T.REMOVE, k])
 
-func _xxx_deprecated_subcomposer_add_mesh(_submodule:String, _mesh:Mesh, _transfrom:Transform3D, _modifiers:Dictionary={}) -> int:
-    # Submit a command to the local dictionary and submit it to the database
-    # in a background thread.
-    # Return a unique ID that can be used to reference the command
-    # The ID will be the key to the dictionary and the ID in the database
-    # in order to avoid constantly searching for the command in the database
-    # when we need to update it we will use a dictionary to store the command
-    # and the ID in the database. This will allow us to update the command
-    #m_database.insert_row(POS_TABLE, command)
-    if not m_submodule_dict.has(_submodule):
-        m_submodule_dict[_submodule] = {}
-    m_logger.debug("Add Mesh: %s, ID: %d" % [str(_mesh), m_curr_id])
-    m_submodule_dict[_submodule][m_curr_id] = {"mesh":_mesh, "transform":_transfrom, "modifiers":_modifiers}
-    m_id_subcomposer_dict[m_curr_id] = _submodule
-    m_commands.push_back([COMMANDS_T.ADD_MESH, _mesh, _transfrom, _modifiers, m_curr_id])
-    var curr_id = m_curr_id
-    m_curr_id = m_curr_id + 1
-    return curr_id
+func remove_module_by_id(_id:int):
+    if m_database == null:
+        return
 
-func _xxx_deprecated_subcomposer_remove_mesh(_submodule:String, _id:int):
-    # Submit a command to remove a command from the local dictionary and
-    # submit it to the database in a background thread.
-    # The ID will be the key to the dictionary and the ID in the database
-    # in order to avoid constantly searching for the command in the database
-    # when we need to update it we will use a dictionary to store the command
-    # and the ID in the database. This will allow us to update the command
-    #m_database.delete_rows(POS_TABLE, "id = %s" % str(_id))
-    if m_submodule_dict.has(_submodule):
-        if m_submodule_dict[_submodule].has(_id):
-            m_submodule_dict[_submodule].erase(_id)
-            m_id_subcomposer_dict.erase(_id)
-            # XXX Remove from the database
-            m_commands.push_back([COMMANDS_T.REMOVE, _id])
-
-
+    var select_condition = "id = {0}".format({0:_id})
+    m_database.delete_rows(POS_TABLE, select_condition)
+    m_position_dict.erase(_id)
+    # Remove all the keys from the local dictionary
+    if m_position_dict.has(_id):
+        m_position_dict.erase(_id)
+    m_commands.push_back([COMMANDS_T.REMOVE, _id])
 
 func get_pos_dict_threaded():
     var d = ['r']
@@ -471,16 +350,17 @@ func get_used_rect_3d() -> AABB:
 func get_commands() -> Array:
     return m_commands
 
-func insert_mesh(_name: String, mesh: ArrayMesh):
-
-    var mesh_data = var_to_bytes_with_objects(mesh)
-    #var mesh_data = JSON.stringify(mesh)
+func insert_mesh(_name: String, _mesh: ArrayMesh, _transform = null):
+    var mesh_data = var_to_bytes_with_objects(_mesh)
+    if _transform == null:
+        _transform = Transform3D()
+    var transform_data = var_to_bytes_with_objects(_transform)
     var select_condition = "name = '{0}'".format({0: _name})
     var rows = m_database.select_rows(MESH_TABLE, select_condition, ["name"])
     if len(rows):
-        m_database.update_rows(MESH_TABLE, select_condition, {"mesh": mesh_data})
+        m_database.update_rows(MESH_TABLE, select_condition, {"mesh": mesh_data, "transform": transform_data})
     else:
-        var row = {"name": _name, "mesh": mesh_data}
+        var row = {"name": _name, "mesh": mesh_data, "transform": transform_data}
         m_database.insert_row(MESH_TABLE, row)
     m_logger.debug("Inserted mesh: %s" % _name)
     _update_mesh_references()
@@ -586,6 +466,8 @@ func _background_db_adapter():
             break
         match data[0]:
             'w':
+                if data[1]["mesh"] != null:
+                    insert_mesh(data[1]["module_name"], data[2]["mesh"], data[2]["transform"])
                 _insert_module(data[1])
             'r':
                 if len(data) == 1:

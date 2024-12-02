@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3 uid="uid://dxy2gpemojfnr"]
+[gd_scene load_steps=5 format=3 uid="uid://dxy2gpemojfnr"]
 
 [ext_resource type="Script" path="res://map-creator/MapComposer.gd" id="1_8h1xv"]
+[ext_resource type="PackedScene" uid="uid://cwrgrkmmomtfn" path="res://map-creator/sub-composers/DemoComposer.tscn" id="2_5iu3p"]
+[ext_resource type="PackedScene" uid="uid://6ev6pvupvogi" path="res://map-creator/sub-composers/NoiseTerrainComposer.tscn" id="3_phdc1"]
+[ext_resource type="PackedScene" uid="uid://bqfwgg02bwuqc" path="res://map-creator/sub-composers/WFCComposer.tscn" id="4_tamyj"]
 
 [node name="MapDrawer" type="Node"]
 script = ExtResource("1_8h1xv")
+SUBCOMPOSERS = [ExtResource("2_5iu3p"), ExtResource("3_phdc1"), ExtResource("4_tamyj")]

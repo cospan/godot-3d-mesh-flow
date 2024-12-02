@@ -60,7 +60,9 @@ const MODULE_TABLE_SCHEME = {
     "x_rotation" : {"data_type":"float",  "not_null":false},
     "y_rotation" : {"data_type":"float",  "not_null":false},
     "z_rotation" : {"data_type":"float",  "not_null":false},
-    "metadata"   : {"data_type":"blob",   "not_null":false} # Dictionary
+    "mesh"       : {"data_type":"blob",   "not_null":false}, # Mesh
+    "transform"  : {"data_type":"blob",   "not_null":false}, # Transform
+    "metadata"   : {"data_type":"blob",   "not_null":false}  # Dictionary
 }
 
 const SID_TABLE = "sid"
@@ -129,7 +131,7 @@ func insert_reflected_sid(sid, reflected_sid):
     }
     m_database.insert_row(REFLECTED_SID_TABLE, d)
 
-func insert_expanded_module(_name, x_flip, y_flip, faces, metadata=null):
+func insert_expanded_module(_name, x_flip, y_flip, faces, _mesh, _transform, metadata=null):
     m_logger.debug("Entered insert_expanded_module")
     var d = { "name":       _name,
               "x_flip":     x_flip,
@@ -140,6 +142,8 @@ func insert_expanded_module(_name, x_flip, y_flip, faces, metadata=null):
               "bottom":     faces[FACE_T.BOTTOM],
               "right":      faces[FACE_T.RIGHT],
               "left":       faces[FACE_T.LEFT],
+              "mesh":       var_to_bytes_with_objects(_mesh),
+              "transform":  var_to_bytes_with_objects(_transform),
               "x_rotation": 0,
               "y_rotation": 0,
               "z_rotation": 0
@@ -148,6 +152,8 @@ func insert_expanded_module(_name, x_flip, y_flip, faces, metadata=null):
     if metadata != null:
         d["metadata"] = var_to_bytes(metadata)
     m_database.insert_row(MODULE_TABLE, d)
+
+
 
 func insert_sid_mapping(sid:int, asymmetric_flag:int, module_list: Array):
     m_logger.debug("Entered insert_sid_mapping")
@@ -228,6 +234,8 @@ func get_module_dict() -> Dictionary:
                                 "x_flip": x_flip,
                                 "y_flip": y_flip,
                                 "faces": faces,
+                                "mesh" : bytes_to_var_with_objects(row["mesh"]),
+                                "transform": bytes_to_var_with_objects(row["transform"]),
                                 "metadata": metadata}
     return module_dict
 

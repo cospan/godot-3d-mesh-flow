@@ -106,8 +106,9 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
 
 
 
-        var local_id = local_mesh.get_meta("id")
-        m_map_db_adapter.subcomposer_remove_mesh(name, local_id)
+        #var local_id = local_mesh.get_meta("id")
+        #m_map_db_adapter.subcomposer_remove_mesh(name, local_id)
+        m_map_db_adapter.remove_module_by_id(local_mesh.get_meta("id"))
 
         #m_st.clear()
         #m_st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -150,7 +151,10 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
                 #"priority":mesh_priority
             }
 
-            m_map_db_adapter.subcomposer_add_mesh(name, m, Transform3D(), mdf)
+            var mo:Mesh = m
+            var maabb = m.get_aabb()
+            var sp = Vector3(maabb.position.x, 0, maabb.position.z)
+            m_map_db_adapter.insert_module(false, name, null, sp, 1.0, 0, 0, 0, 0, 0, mdf, mo)
             ti = ti + 1
 
         m_st.clear()
@@ -187,8 +191,11 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
                 "mask":mesh_mask
                 #"priority":mesh_priority
             }
+            var maabb = m.get_aabb()
+            var sp = Vector3(maabb.position.x, 0, maabb.position.z)
+            var mo:Mesh = m
+            m_map_db_adapter.insert_module(false, name, null, sp, 1.0, 0, 0, 0, 0, 0, mdf, mo)
 
-            m_map_db_adapter.subcomposer_add_mesh(name, m, Transform3D(), mdf)
     elif len(clipped) == 1:
         # Clip len == 1, we just need
         if len(clipped[0]) == len(lpoints):
@@ -200,8 +207,9 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
                 m_logger.debug("Local Polygon is right on the edge of other polygon, do nothing")
                 return
 
-        var local_id = local_mesh.get_meta("id")
-        m_map_db_adapter.subcomposer_remove_mesh(name, local_id)
+        #var local_id = local_mesh.get_meta("id")
+        #m_map_db_adapter.subcomposer_remove_mesh(name, local_id)
+        m_map_db_adapter.remove_module_by_id(local_mesh.get_meta("id"))
 
 
         var triangulated_polygon = Geometry2D.triangulate_polygon(clipped[0])
@@ -253,7 +261,7 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
 
 func _generate_chunk():
 
-    var t = Transform3D()
+    #var t = Transform3D()
 
     m_st.clear()
     m_st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -271,7 +279,11 @@ func _generate_chunk():
         "mask":mesh_mask
         #"priority":mesh_priority
     }
-    m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
+    #m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
+    var mo:Mesh = mesh
+    var maabb = mesh.get_aabb()
+    var sp = Vector3(maabb.position.x, 0, maabb.position.z)
+    m_map_db_adapter.insert_module(false, name, null, sp, 1.0, 0, 0, 0, 0, 0, modifiers, mo)
 
 
 # Need a function that we give it a cooridinates and size of the terrain and it returns the terrain.
@@ -521,34 +533,17 @@ func _get_chunk_rect_from_position(pos:Vector3) -> Rect2:
 ##############################################################################
 
 func _ready():
-    PROP_LABEL = name + "_label"
-    PROP_ENABLE = name + "_enable"
+    super()
 
-    m_properties = {
-        PROP_LABEL:
-        {
-          "type": "Label",
-          "name": "",
-          "value": name,
-        },
-        PROP_ENABLE:
-        {
-          "type": "CheckBox",
-          "name" : "Enable",
-          "value": enabled,
-          "callback": _on_property_changed,
-          "tooltip": name + ": Enable Composer"
-        },
-        PROP_GENERATE_TERRAIN:
-        {
-          "type": "Button",
-          "name" : "Generate Terrain",
-          "callback": _on_property_changed,
-          "tooltip": name + ": Generate Terrain"
-        }
+    m_properties[PROP_GENERATE_TERRAIN] = {
+      "type": "Button",
+      "name" : "Generate Terrain",
+      "callback": _on_property_changed,
+      "tooltip": name + ": Generate Terrain"
     }
-    add_to_group("subcomposer")
-    add_to_group("map-creator-properties")
+
+    #add_to_group("subcomposer")
+    #add_to_group("map-creator-properties")
     m_st = SurfaceTool.new()
     m_flag_generate_terrain = true
 

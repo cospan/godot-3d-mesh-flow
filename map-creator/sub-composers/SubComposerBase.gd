@@ -5,6 +5,7 @@ class_name SubComposerBase
 ##############################################################################
 # Signals
 ##############################################################################
+signal remove_subcomposer(String)
 
 ##############################################################################
 # Constants
@@ -19,6 +20,7 @@ var PROP_ENABLE:String
 
 var m_map_db_adapter = null
 var m_properties = null
+var m_popup_menu = null
 
 ## Flags ##
 
@@ -29,6 +31,7 @@ var m_properties = null
 ##############################################################################
 # Exports
 ##############################################################################
+@export var subcomposer_name:String = ""
 @export var enabled = true
 @export var mesh_layer = 1
 #@export var mesh_priority = 1
@@ -65,10 +68,11 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
 ##############################################################################
 func _remove_all_meshes():
     # Remove all previous meshes
-    if m_map_db_adapter.m_map_dict.has(name):
-        var m_dict = m_map_db_adapter.m_map_dict[name]
-        for k in m_dict.keys():
-            m_map_db_adapter.subcomposer_remove_mesh(name, k)
+    m_map_db_adapter.remove_all_subcomposer_modules(name)
+    #if m_map_db_adapter.m_map_dict.has(name):
+    #    var m_dict = m_map_db_adapter.m_map_dict[name]
+    #    for k in m_dict.keys():
+    #        m_map_db_adapter.subcomposer_remove_mesh(name, k)
 
 ##############################################################################
 # Signal Handlers
@@ -84,6 +88,7 @@ func _ready():
           "type": "Label",
           "name": "",
           "value": name,
+          "right_click_menu": _on_property_right_click
         },
         PROP_ENABLE:
         {
@@ -91,7 +96,7 @@ func _ready():
           "name" : "Enable",
           "value": enabled,
           "callback": _on_property_changed,
-          "tooltip": name + ": Enable Composer"
+          "tooltip": "Enable " + name
         }
     }
     add_to_group("subcomposer")
@@ -106,3 +111,27 @@ func _on_property_changed(property_name, property_value):
             if not enabled:
                 if m_map_db_adapter != null:
                     _remove_all_meshes()
+
+
+func _on_property_right_click():
+    # Create a popup menu
+    if m_popup_menu == null:
+        m_popup_menu = PopupMenu.new()
+        m_popup_menu.add_item("Remove SubComposer", 1)
+        m_popup_menu.id_pressed.connect(_on_popup_menu_selected)
+        m_popup_menu.set_position(get_global_mouse_position())
+        m_popup_menu.mouse_exited.connect(_on_popup_leave_focus)
+        add_child(m_popup_menu)
+    m_popup_menu.popup()
+
+func _on_popup_leave_focus():
+    m_popup_menu.hide()
+
+func _on_popup_menu_selected(id):
+    match id:
+        1:
+            if m_map_db_adapter != null:
+                _remove_all_meshes()
+            emit_signal("remove_subcomposer", name)
+        _:
+            pass

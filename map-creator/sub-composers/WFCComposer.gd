@@ -96,32 +96,15 @@ func step():
 ##############################################################################
 
 func _ready():
-    PROP_LABEL = name + "_label"
-    PROP_ENABLE = name + "_enable"
 
+    super()
     m_logger.debug("Ready Entered!")
     m_library_db_adapter = $ModuleDatabaseAdapter
     m_library_2_tile_converter = $Library2TileConverter
     m_tile_db_adapter = $TileDatabaseAdapter
 
-    m_properties = {
-        PROP_LABEL:
-        {
-          "type": "Label",
-          "name": "",
-          "value": name,
-        },
-        PROP_ENABLE:
-        {
-          "type": "CheckBox",
-          "name" : "Enable",
-          "value": enabled,
-          "callback": _on_property_changed,
-          "tooltip": name + ": Enable Composer"
-        }
-    }
-    add_to_group("subcomposer")
-    add_to_group("map-creator-properties")
+    #add_to_group("subcomposer")
+    #add_to_group("map-creator-properties")
 
     # Connect Signals
     m_library_2_tile_converter.finished_loading.connect(_loading_finished)

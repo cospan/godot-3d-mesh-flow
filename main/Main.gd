@@ -302,7 +302,7 @@ func _project_item_menu_pressed(_index):
     match text.to_lower():
         "open":
             m_logger.debug("Open project: %s" % project_dict["path"])
-            _open_project(project_dict["path"])
+            _open_project(project_dict)
         "delete":
             m_logger.debug("Delete project: %s" % project_dict["path"])
             project.delete(project_dict["path"])
@@ -358,6 +358,7 @@ func _project_item_menu_clicked(_index, _pos, mouse_button_index):
         m_project_selected = _index
         #var project_list = $VBoxMain/TabControl/HBoxLandingPage/VBoxProject/ProjectList
         var project_item_menu = $PopupMenuItemActivate
+        project_item_menu.position = get_global_mouse_position()
         #var project_dict = project_list.get_item_metadata(_index)
         project_item_menu.show()
 

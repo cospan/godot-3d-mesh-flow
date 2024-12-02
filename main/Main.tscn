@@ -143,7 +143,6 @@ size_flags_vertical = 3
 
 [node name="PopupMenuItemActivate" type="PopupMenu" parent="."]
 title = "Project Menu"
-initial_position = 2
 item_count = 3
 item_0/text = "Open"
 item_1/text = "Reset"

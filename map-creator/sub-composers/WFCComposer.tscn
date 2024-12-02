@@ -7,6 +7,7 @@
 
 [node name="WFCComposer" type="Node2D"]
 script = ExtResource("1_p3m0b")
+subcomposer_name = "Wave Function Collapse"
 
 [node name="ModuleDatabaseAdapter" parent="." instance=ExtResource("2_jvqp4")]
 

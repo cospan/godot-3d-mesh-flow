@@ -4,6 +4,8 @@ extends Node
 ##############################################################################
 # Signals
 ##############################################################################
+signal add_subcomposer
+signal remove_subcomposer
 
 ##############################################################################
 # Constants
@@ -13,18 +15,20 @@ const PROP_LABEL:String = "Map Composer"
 const PROP_COLLISIONS:String = "Collisions"
 const PROP_EDIT_MODE:String = "Building Mode"
 const PROP_DRAW_REFERENCE:String = "Draw Reference"
+const PROP_SUBCOMPOSERS:String = "Subcomposers"
 
 
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("MapDrawer", LogStream.LogLevel.INFO)
+var m_logger = LogStream.new("MapDrawer", LogStream.LogLevel.DEBUG)
 
 var m_vector_size:Vector2 = Vector2(0, 0)
 var m_map_view = null
 var m_map_db_adapter = null
 var m_map_object_dict:Dictionary = {}
 var m_seleted_mesh_instance = null
+var m_subcomposer_objects:Dictionary = {}
 @onready var m_outline_shader = load(OUTLINE_SHADER_PATH)
 #var m_material:ORMMaterial3D
 
@@ -51,6 +55,7 @@ var m_draw_reference = false
 # Exports
 ##############################################################################
 @export var OUTLINE_SHADER_PATH:String = "res://shaders/outline.gdshader"
+@export var SUBCOMPOSERS:Array
 
 ##############################################################################
 # Public Functions
@@ -94,6 +99,14 @@ func get_properties():
             "value": m_draw_reference,
             "callback": _on_property_changed,
             "tooltip": "Draw the reference grid"
+        },
+        PROP_SUBCOMPOSERS: {
+            "type": "itemlist",
+            "name": "Subcomposers",
+            "value": m_subcomposer_objects.keys(),
+            "callback": _on_property_changed,
+            "tooltip": "Subcomposers to add to the map",
+            "size": Vector2i(200, 200)
         }
     }
     return m_properties
@@ -106,6 +119,10 @@ func get_properties():
 func _ready():
     m_logger.debug("Ready Entered!")
     #m_material = ORMMaterial3D.new()
+    m_subcomposer_objects = {}
+    for c in SUBCOMPOSERS:
+        var sname = c.instantiate().subcomposer_name
+        m_subcomposer_objects[sname] = c
     m_state = STATE_TYPE.RESET
     add_to_group("map-creator-properties")
 
@@ -122,6 +139,7 @@ func _process(_delta):
                     m_subcomposers[c.get_name()] = c
                     m_logger.debug("Added Subcomposer: " + c.get_name())
                     c.setup(m_map_db_adapter)
+                    c.remove_subcomposer.connect(_remove_subcomposer)
                 m_state = STATE_TYPE.WORK
         STATE_TYPE.WORK:
             # All of the subcomposers will update the map data
@@ -197,7 +215,6 @@ func _process_map_data():
             m_map_db_adapter.COMMANDS_T.REMOVE:
                 m_logger.debug("Remove Object with ID: " + str(c[1]))
                 _remove_object(c[1])
-
 
 func _process_mesh(_mesh:Mesh, _transform: Transform3D, _modifiers:Dictionary, _id:int):
     var mi = MeshInstance3D.new()
@@ -283,7 +300,26 @@ func _on_property_changed(property_name, property_value):
                     m_map_view.remove_child(m_ref_sphere)
                     m_ref_sphere = null
             m_logger.debug("Draw Reference: " + str(m_draw_reference))
-
+        PROP_SUBCOMPOSERS:
+            m_logger.debug("Subcomposer Selected: " + str(property_value))
+            var subcomposer = m_subcomposer_objects[property_value].instantiate()
+            var subcomposer_name = property_value + str(0)
+            if m_subcomposers.has(subcomposer_name):
+                #Append a number to the name
+                var i = 0
+                while m_subcomposers.has(subcomposer_name):
+                    i += 1
+                    subcomposer_name = property_value + str(i)
+            subcomposer.name = subcomposer_name
+            if subcomposer != null:
+                add_child(subcomposer)
+                m_subcomposers[subcomposer.name] = subcomposer
+                subcomposer.setup(m_map_db_adapter)
+                m_logger.debug("Added Subcomposer: " + str(subcomposer.name))
+                emit_signal("add_subcomposer", subcomposer.name)
+                subcomposer.remove_subcomposer.connect(_remove_subcomposer)
+            else:
+                m_logger.warn("Subcomposer Not Found: " + str(property_value))
 
 func _on_area_shape_entered(local_mesh_instance, other_mesh_instance):
     #m_logger.debug("Area Shape Entered: " + str(local_mesh_instance) + " " + str(other_mesh_instance))
@@ -317,3 +353,13 @@ func _unhandled_input(event: InputEvent) -> void:
     m_seleted_mesh_instance.translate(translation)
     #m_map_view.force_update_transform()
     #m_map_view.get_world_3d().space.update()
+
+func _remove_subcomposer(_name):
+    if m_subcomposers.has(_name):
+        m_logger.debug("Removing Subcomposer: " + str(_name))
+        var subcomposer = m_subcomposers[_name]
+        remove_child(subcomposer)
+        m_subcomposers.erase(_name)
+        emit_signal("remove_subcomposer", _name)
+    else:
+        m_logger.warn("Subcomposer Not Found: " + str(_name))
