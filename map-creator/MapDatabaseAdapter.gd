@@ -175,30 +175,32 @@ func clear_pos_table():
     m_database_timestamp = 0
     m_database.delete_rows(POS_TABLE, "*")
 
-func get_pos_dict() -> Dictionary:
-    var rows = m_database.select_rows(POS_TABLE, "", ["*"])
-    var pos_dict = {}
-    for row in rows:
-        var k = row["id"]
-        pos_dict[k] = _row_to_dict_entry(row)
-    _update_both_dict_and_database_timestamp()
-    return pos_dict
+#func get_pos_dict() -> Dictionary:
+#    var rows = m_database.select_rows(POS_TABLE, "", ["*"])
+#    var pos_dict = {}
+#    for row in rows:
+#        var k = row["id"]
+#        pos_dict[k] = _row_to_dict_entry(row)
+#    _update_both_dict_and_database_timestamp()
+#    return pos_dict
 
 func get_module_at_pos(pos:Vector3i) -> Dictionary:
-    var k = _v3i_to_key(pos)
-    var pos_dict = get_pos_dict()
-    if pos_dict.has(k):
-        return pos_dict[k]
+    # Create a query string to get the row with the given position
+    var s = "x = {0} and y = {1} and z = {2}".format({0:pos.x, 1:pos.y, 2:pos.z})
+    var rows = m_database.select_rows(POS_TABLE, s, ["*"])
+    if len(rows):
+        return _row_to_dict_entry(rows[0])
     return {}
 
-func get_modules_with_attribute(_id:int, _rot:int) -> Array:
-    var res = []
-    var pos_dict = get_pos_dict()
-    for k in pos_dict.keys():
-        var v = pos_dict[k]
-        if v["module_name"] == _id and v["rot_y_90_cw"] == _rot:
-            res.append(v)
-    return res
+#func get_modules_with_attribute(_id:int, _rot:int) -> Array:
+#
+#    var res = []
+#    var pos_dict = get_pos_dict()
+#    for k in pos_dict.keys():
+#        var v = pos_dict[k]
+#        if v["module_name"] == _id and v["rot_y_90_cw"] == _rot:
+#            res.append(v)
+#    return res
 
 func insert_module( threaded: bool,
                     subcomposer_id:String,
@@ -306,28 +308,56 @@ func get_pos_dict_in_region_xyz_threaded(start_xyz: Vector3i, end_xyz: Vector3i)
 
 func get_used_rect_2d() -> Rect2i:
     m_logger.debug("Get Used Rect 2D")
-    var pos_dict = get_pos_dict()
+    # Get the positions of the modules from the database
+    # create a string to request all rows and just get the x and z values
+    var select_condition = ""
+    m_database.query("SELECT x, z FROM \"" + POS_TABLE + "\" WHERE " + select_condition)
+    var rows = m_database.query_result
     var res = Rect2i()
-    for k in pos_dict.keys():
-        var v = pos_dict[k]
+
+    for row in rows:
+        m_logger.debug("Row: %s" % str(row))
         if !res.has_area():
-            res.position = Vector2i(v["x"], v["z"])
+            res.position = Vector2i(row["x"], row["z"])
             res.size = Vector2i(1, 1)
         else:
-            res = res.expand(Vector2i(v["x"], v["z"]))
+            res = res.expand(Vector2i(row["x"], row["z"]))
+    #var pos_dict = get_pos_dict()
+    #var res = Rect2i()
+    #for k in pos_dict.keys():
+    #    var v = pos_dict[k]
+    #    if !res.has_area():
+    #        res.position = Vector2i(v["x"], v["z"])
+    #        res.size = Vector2i(1, 1)
+    #    else:
+    #        res = res.expand(Vector2i(v["x"], v["z"]))
     return res
 
 func get_used_rect_3d() -> AABB:
     m_logger.debug("Get Used Rect 3D")
-    var pos_dict = get_pos_dict()
+    # Get the positions of the modules from the database
+    # create a string to request all rows and just get the x, y and z values
+    var select_condition = ""
+    m_database.query("SELECT x, y, z FROM \"" + POS_TABLE + "\" WHERE " + select_condition)
+    var rows = m_database.query_result
     var res = AABB()
-    for k in pos_dict.keys():
-        var v = pos_dict[k]
+    for row in rows:
+        m_logger.debug("Row: %s" % str(row))
         if !res.has_area():
-            res.position = v["pos"]
+            res.position = Vector3i(row["x"], row["y"], row["z"])
             res.size = Vector3i(1, 1, 1)
         else:
-            res = res.expand(v["pos"])
+            res = res.expand(Vector3i(row["x"], row["y"], row["z"]))
+
+    #var pos_dict = get_pos_dict()
+    #var res = AABB()
+    #for k in pos_dict.keys():
+    #    var v = pos_dict[k]
+    #    if !res.has_area():
+    #        res.position = v["pos"]
+    #        res.size = Vector3i(1, 1, 1)
+    #    else:
+    #        res = res.expand(v["pos"])
     return res
 
 func get_commands() -> Array:
@@ -381,17 +411,17 @@ func get_subcomposer_name(_id:int) -> String:
 # Private Functions
 ##############################################################################
 
-func _v3i_to_key(v:Vector3i) -> int:
-    var vx = int(v.x + KEY_SHIFT_VAL)
-    var vy = int(v.y + KEY_SHIFT_VAL)
-    var vz = int(v.z + KEY_SHIFT_VAL)
-    return int((vx << KEY_X_POS) + (vy << KEY_Y_POS) + (vz << KEY_Z_POS))
-
-func _key_to_v3i(k:int) -> Vector3i:
-    var vx = int(((k >> KEY_X_POS) & KEY_MASK) - KEY_SHIFT_VAL)
-    var vy = int(((k >> KEY_Y_POS) & KEY_MASK) - KEY_SHIFT_VAL)
-    var vz = int(((k >> KEY_Z_POS) & KEY_MASK) - KEY_SHIFT_VAL)
-    return Vector3i(vx, vy, vz)
+#func _v3i_to_key(v:Vector3i) -> int:
+#    var vx = int(v.x + KEY_SHIFT_VAL)
+#    var vy = int(v.y + KEY_SHIFT_VAL)
+#    var vz = int(v.z + KEY_SHIFT_VAL)
+#    return int((vx << KEY_X_POS) + (vy << KEY_Y_POS) + (vz << KEY_Z_POS))
+#
+#func _key_to_v3i(k:int) -> Vector3i:
+#    var vx = int(((k >> KEY_X_POS) & KEY_MASK) - KEY_SHIFT_VAL)
+#    var vy = int(((k >> KEY_Y_POS) & KEY_MASK) - KEY_SHIFT_VAL)
+#    var vz = int(((k >> KEY_Z_POS) & KEY_MASK) - KEY_SHIFT_VAL)
+#    return Vector3i(vx, vy, vz)
 
 func _rot_reflect_to_transform(rot_y_90_cw:int, x_reflect:int, y_reflect:int) -> Transform3D:
     var transform = Transform3D()
@@ -448,7 +478,14 @@ func _background_db_adapter():
                 _insert_module(data[1])
             'r':
                 if len(data) == 1:
-                    var d = get_pos_dict()
+                    #var d = get_pos_dict()
+                    # Create a dictionary of the rows in POS_TABLE
+                    var d = {}
+                    var select_condition = ""
+                    var rows = m_database.select_rows(POS_TABLE, select_condition, ["*"])
+                    for row in rows:
+                        var k = row["id"]
+                        d[k] = _row_to_dict_entry(row)
                     m_task_db_adapter_from_thread_queue.push(d)
                 elif len(data) == 3:
                     if data[1] is Vector2i and data[2] is Vector2i:
