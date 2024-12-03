@@ -44,7 +44,6 @@ var m_logger = LogStream.new("Map Database Adapter", LogStream.LogLevel.INFO)
 var m_database : SQLite
 var m_submodule_dict:Dictionary = {}
 var m_mesh_dict:Dictionary = {}
-var m_position_dict:Dictionary = {}
 var m_id_subcomposer_dict:Dictionary = {}
 var m_curr_id:int = 0
 var m_commands:Array = []
@@ -134,7 +133,6 @@ var m_tables = {
 func open_database(database_path: String, clear_rows: bool = false, force_new_tables:bool = false):
     m_logger.debug("Entered Open Database")
     m_database = SQLite.new()
-    #m_database.path = folder_path + DATABASE_NAME
     m_database.path = database_path
     m_database.open_db()
 
@@ -145,13 +143,15 @@ func open_database(database_path: String, clear_rows: bool = false, force_new_ta
             m_database.query(sel_string)
             if len(m_database.query_result) != 0:
                 m_logger.debug("Dropping Table: {0}".format({0:table}))
-                #for table in m_tables.keys():
                 m_database.drop_table(table)
 
     elif clear_rows:
         m_logger.info("Clear all rows")
         for table in m_tables.keys():
             m_database.delete_rows(table, "*")
+
+    if force_new_tables or clear_rows:
+        m_curr_id = 0
 
     ##########################################################################
     # Create the tables if they don't exist
@@ -171,23 +171,20 @@ func clear_tables():
 
 func clear_pos_table():
     m_logger.info("Clear all rows in pos table")
-    m_position_dict = {}
     m_dict_timestamp = 0
     m_database_timestamp = 0
     m_database.delete_rows(POS_TABLE, "*")
 
 func get_pos_dict() -> Dictionary:
-    if _is_dict_out_of_date():
-        var rows = m_database.select_rows(POS_TABLE, "", ["*"])
-        m_position_dict = {}
-        for row in rows:
-            var k = row["id"]
-            m_position_dict[k] = _row_to_dict_entry(row)
-        _update_both_dict_and_database_timestamp()
-    return m_position_dict
+    var rows = m_database.select_rows(POS_TABLE, "", ["*"])
+    var pos_dict = {}
+    for row in rows:
+        var k = row["id"]
+        pos_dict[k] = _row_to_dict_entry(row)
+    _update_both_dict_and_database_timestamp()
+    return pos_dict
 
 func get_module_at_pos(pos:Vector3i) -> Dictionary:
-    # It feels like a long time needed to interface with the database
     var k = _v3i_to_key(pos)
     var pos_dict = get_pos_dict()
     if pos_dict.has(k):
@@ -195,7 +192,6 @@ func get_module_at_pos(pos:Vector3i) -> Dictionary:
     return {}
 
 func get_modules_with_attribute(_id:int, _rot:int) -> Array:
-    # Would it be faster to query the database?
     var res = []
     var pos_dict = get_pos_dict()
     for k in pos_dict.keys():
@@ -218,10 +214,8 @@ func insert_module( threaded: bool,
                     _mesh = null,
                     _transform = null):
     var d:Dictionary = {}
-    var k = _v3i_to_key(pos)
     if module_name == null or len(module_name) == 0:
-        #get a string version of the 'k' and append to the module
-        module_name = subcomposer_id + str(k)
+        module_name = subcomposer_id + str(m_curr_id)
     d["subcomposer_id"] = subcomposer_id
     d["module_name"] = module_name
     if pos is Vector3i or pos is Vector3:
@@ -240,8 +234,9 @@ func insert_module( threaded: bool,
     d["rot_y_90_cw"] = rot_y_90_cw
     d["rot_z_90_cw"] = rot_z_90_cw
     d["scale"] = scale
-    d["metadata"] = var_to_bytes(metadata)
-    d["id"] = k
+    d["metadata"] = metadata
+    d["id"] = m_curr_id
+    m_curr_id += 1
     if threaded:
         var mesh_d = {}
         mesh_d["mesh"] = _mesh
@@ -274,7 +269,6 @@ func get_pos_dict_in_region_xz(start_xz: Vector2i, end_xz: Vector2i):
     var z_max = end_xz.y
     var d = {}
     var select_condition = "x > {0} and x < {1} and z > {2} and z < {3}".format({0:x_min, 1:x_max, 2:z_min, 3:z_max})
-    #var rows = m_database.select_rows(POS_TABLE, select_condition, ["id", "name", "x", "y", "z", "transform"])
     var rows = m_database.select_rows(POS_TABLE, select_condition, ["*"])
     for row in rows:
         var k = row["id"]
@@ -284,27 +278,18 @@ func get_pos_dict_in_region_xz(start_xz: Vector2i, end_xz: Vector2i):
 func remove_all_subcomposer_modules(_submodule:String):
     if m_database == null:
         return
-    # Get a reference to all the keys by finding them in the database
     var select_condition = "subcomposer_id = '{0}'".format({0:_submodule})
     var rows = m_database.select_rows(POS_TABLE, select_condition, ["id"])
-    # Remove all the keys from the database
     m_database.delete_rows(POS_TABLE, select_condition)
-    # Remove all the keys from the local dictionary
     for row in rows:
         var k = row["id"]
-        m_position_dict.erase(k)
         m_commands.push_back([COMMANDS_T.REMOVE, k])
 
 func remove_module_by_id(_id:int):
     if m_database == null:
         return
-
     var select_condition = "id = {0}".format({0:_id})
     m_database.delete_rows(POS_TABLE, select_condition)
-    m_position_dict.erase(_id)
-    # Remove all the keys from the local dictionary
-    if m_position_dict.has(_id):
-        m_position_dict.erase(_id)
     m_commands.push_back([COMMANDS_T.REMOVE, _id])
 
 func get_pos_dict_threaded():
@@ -323,7 +308,6 @@ func get_used_rect_2d() -> Rect2i:
     m_logger.debug("Get Used Rect 2D")
     var pos_dict = get_pos_dict()
     var res = Rect2i()
-    # Iterate through the dictionary and find the min and max x and y values
     for k in pos_dict.keys():
         var v = pos_dict[k]
         if !res.has_area():
@@ -337,7 +321,6 @@ func get_used_rect_3d() -> AABB:
     m_logger.debug("Get Used Rect 3D")
     var pos_dict = get_pos_dict()
     var res = AABB()
-    # Iterate through the dictionary and find the min and max x and y values
     for k in pos_dict.keys():
         var v = pos_dict[k]
         if !res.has_area():
@@ -438,20 +421,14 @@ func _transform_to_rot_reflect(t:Transform3D) -> Dictionary:
     return {"rot_y_90_cw":rot_y_90_cw, "x_reflect":x_reflect, "y_reflect":y_reflect}
 
 func _row_to_dict_entry(row:Dictionary) -> Dictionary:
-    var v = Vector3i(row["x"], row["y"], row["z"])
-    var d = {}
-    d["pos"]            = v
-    d["id"]             = row["id"]
-    d["subcomposer_id"] = row["subcomposer_id"]
-    d["module_name"]    = row["module_name"]
-    d["rot_x_90_cw"]    = row["rot_x_90_cw"]
-    d["rot_y_90_cw"]    = row["rot_y_90_cw"]
-    d["rot_z_90_cw"]    = row["rot_z_90_cw"]
-    d["x_reflect"]      = row["x_reflect"]
-    d["y_reflect"]      = row["y_reflect"]
-    d["scale"]          = row["scale"]
-    d["metadata"]       = bytes_to_var(row["metadata"])
+    var d = row.duplicate(true)
+    d["metadata"] = bytes_to_var(row["metadata"])
     return d
+
+func _dict_entry_to_row(d:Dictionary) -> Dictionary:
+    var row = d.duplicate(true)
+    row["metadata"] = var_to_bytes(d["metadata"])
+    return row
 
 func _background_db_adapter():
     var finished = false
@@ -471,7 +448,6 @@ func _background_db_adapter():
                 _insert_module(data[1])
             'r':
                 if len(data) == 1:
-                    # Read Everything and return the entire dictionary
                     var d = get_pos_dict()
                     m_task_db_adapter_from_thread_queue.push(d)
                 elif len(data) == 3:
@@ -488,22 +464,14 @@ func _insert_module(d:Dictionary):
     var select_condition = "id = {0}".format({0:k})
     var rows = m_database.select_rows(POS_TABLE, select_condition, ["id"])
     m_logger.debug("Rows: %s" % str(rows))
+    var row = _dict_entry_to_row(d)
     if len(rows):
         m_logger.debug("Update Rows")
-        m_database.update_rows(POS_TABLE, select_condition, d)
+        m_database.update_rows(POS_TABLE, select_condition, row)
     else:
         m_logger.debug("Insert Row")
-        m_database.insert_row(POS_TABLE, d)
+        m_database.insert_row(POS_TABLE, row)
 
-    if _is_dict_out_of_date():
-        m_logger.debug("Dictionary is out of date, update from database")
-        m_position_dict = get_pos_dict()
-    else:
-        m_logger.debug("Dictionary is up to date, just update the database")
-        d["metadata"] = bytes_to_var(d["metadata"])
-        m_position_dict[k] = d
-
-    # Generate the transform from the rotation and reflection and position
     var transform = Transform3D()
     transform.basis = Basis(Vector3(0, 0, 1), d["rot_y_90_cw"] * PI / 2.0)
     transform.origin = Vector3(d["x"], d["y"], d["z"])
@@ -513,7 +481,6 @@ func _insert_module(d:Dictionary):
         transform.basis = transform.basis.scaled(Vector3(1, -1, 1))
 
 
-    # Add the command
     m_commands.push_back([  COMMANDS_T.ADD_MESH,
                             m_mesh_dict[d["module_name"]],
                             transform,
@@ -523,15 +490,11 @@ func _insert_module(d:Dictionary):
 
 
 func _update_mesh_references():
-    # Get all the rows of the MESH_TABLE
     var select_condition = ""
     var rows = m_database.select_rows(MESH_TABLE, select_condition, ["*"])
-    # Generate a dictionary where the key is the index of the mesh
     m_mesh_dict = {}
     for row in rows:
         var _mesh: Mesh = bytes_to_var_with_objects(row["mesh"])
-        # var _mesh = ArrayMesh.from_json(row["mesh"])
-        #var _mesh:ArrayMesh = JSON.parse_string(row["mesh"])
         m_mesh_dict[row["name"]] = _mesh
 
 func _update_database_timestamp(ts):
