@@ -6,7 +6,8 @@ signal property_changed(property_name, property_value)
 
 var m_node_dict = {}
 var m_widget_dict = {}
-var m_dict_view
+@onready var m_dict_view = $DictView
+#var m_dict_view
 
 @export var LABEL_MIN_X_SIZE:int = 200
 
@@ -31,7 +32,7 @@ func add_property(_name:String, property_dict:Dictionary):
     label.custom_minimum_size = Vector2i(LABEL_MIN_X_SIZE, 0)
     match property_dict["type"].to_lower():
         "button":
-            #print ("Button")
+            #print ("button")
             label.text = ""
             prop = Button.new()
             prop.text = property_dict["name"]
@@ -188,9 +189,8 @@ func remove_property(_name:String):
         m_widget_dict.erase(_name)
 
 # Called when the node enters the scene tree for the first time.
-func _ready():
-    m_dict_view = $DictView
-    m_dict_view.columns = 2
+#func _ready():
+#    m_dict_view = $DictView
 
 func interrogate_tree(group_name):
     var nodes = get_tree().get_nodes_in_group(group_name)
@@ -222,7 +222,7 @@ func set_prop_visible(n, enable:bool):
         return
 
     m_widget_dict[n]["label"].visible = enable
-    if m_widget_dict[n]["type"] == "SpinBox":
+    if m_widget_dict[n]["type"] == "spinbox":
         if len(m_widget_dict[n]["widget"].get_children()) == 2:
             set_spinbox_vector2_visible(n, enable)
         elif len(m_widget_dict[n]["widget"].get_children()) == 3:
@@ -243,16 +243,16 @@ func set_prop_readonly(n, enable:bool):
         print ("No such property: %s" % n)
         return
 
-    if m_widget_dict[n]["type"] == "SpinBox":
+    if m_widget_dict[n]["type"] == "spinbox":
         var prop = m_widget_dict[n]["widget"]
         if prop.get_parent() is ScrollContainer:
             prop = prop.get_parent()
         prop.editable = !enable
-    elif m_widget_dict[n]["type"] == "LineEdit":
+    elif m_widget_dict[n]["type"] == "lineedit":
         m_widget_dict[n]["widget"].editable = !enable
-    elif m_widget_dict[n]["type"] == "CheckBox":
+    elif m_widget_dict[n]["type"] == "checkbox":
         m_widget_dict[n]["widget"].disabled = enable
-    elif m_widget_dict[n]["type"] == "Button":
+    elif m_widget_dict[n]["type"] == "button":
         m_widget_dict[n]["widget"].disabled = enable
 
 func set_value(n, value):
@@ -261,9 +261,9 @@ func set_value(n, value):
         return
 
     match(m_widget_dict[n]["type"]):
-        "CheckBox":
+        "checkbox":
             m_widget_dict[n]["widget"].button_pressed = value
-        "SpinBox":
+        "spinbox":
             if value is Vector2 or value is Vector2i:
                 set_spinbox_vector2_value(n, value)
                 return
@@ -278,19 +278,19 @@ func set_value(n, value):
                 if value > v.max_value:
                     v.max_value = value
                 v.value = value
-        "LineEdit":
+        "lineedit":
             m_widget_dict[n]["widget"].text = value
-        "ProgressBar":
+        "progressbar":
             m_widget_dict[n]["widget"].value = value
-        "HSlider":
+        "hslider":
             m_widget_dict[n]["widget"].value = value
-        "Button":
+        "button":
             m_widget_dict[n]["widget"].text = value
-        "OptionButton":
+        "optionbutton":
             m_widget_dict[n]["widget"].selected = value
-        "Label":
+        "label":
             m_widget_dict[n]["widget"].text = value
-        "ItemList":
+        "itemlist":
             m_widget_dict[n]["widget"].clear()
             for item in value:
                 if item is Array:
@@ -315,23 +315,23 @@ func set_value(n, value):
 
 func get_value(n):
     match(m_widget_dict[n]["type"]):
-        "CheckBox":
+        "checkbox":
             return m_widget_dict[n]["widget"].button_pressed
-        "SpinBox":
+        "spinbox":
             return get_spinbox_value(n)
-        "LineEdit":
+        "lineedit":
             return m_widget_dict[n]["widget"].text
-        "ProgressBar":
+        "progressbar":
             return m_widget_dict[n]["widget"].value
-        "HSlider":
+        "hslider":
             return m_widget_dict[n]["widget"].value
-        "Button":
+        "button":
             return m_widget_dict[n]["widget"].text
-        "OptionButton":
+        "optionbutton":
             return m_widget_dict[n]["widget"].selected
-        "ItemList":
+        "itemlist":
             return m_widget_dict[n]["widget"].get_selected_items()
-        "Label":
+        "label":
             return m_widget_dict[n]["widget"].text
 
 func _property_update(property_name, property_value):
