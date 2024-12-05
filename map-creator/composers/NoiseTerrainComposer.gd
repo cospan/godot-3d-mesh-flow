@@ -1,4 +1,4 @@
-extends SubComposerBase
+extends ComposerBase
 
 ##############################################################################
 # Signals
@@ -107,7 +107,7 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
 
 
         #var local_id = local_mesh.get_meta("id")
-        #m_map_db_adapter.subcomposer_remove_mesh(name, local_id)
+        #m_map_db_adapter.composer_remove_mesh(name, local_id)
         m_map_db_adapter.remove_module_by_id(local_mesh.get_meta("id"))
 
         #m_st.clear()
@@ -208,7 +208,7 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
                 return
 
         #var local_id = local_mesh.get_meta("id")
-        #m_map_db_adapter.subcomposer_remove_mesh(name, local_id)
+        #m_map_db_adapter.composer_remove_mesh(name, local_id)
         m_map_db_adapter.remove_module_by_id(local_mesh.get_meta("id"))
 
 
@@ -246,7 +246,7 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
                 #"priority":mesh_priority
             }
 
-            m_map_db_adapter.subcomposer_add_mesh(name, m, Transform3D(), mdf)
+            m_map_db_adapter.composer_add_mesh(name, m, Transform3D(), mdf)
             ti = ti + 1
 
 
@@ -279,7 +279,7 @@ func _generate_chunk():
         "mask":mesh_mask
         #"priority":mesh_priority
     }
-    #m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
+    #m_map_db_adapter.composer_add_mesh(name, mesh, t, modifiers)
     var mo:Mesh = mesh
     var maabb = mesh.get_aabb()
     var sp = Vector3(maabb.position.x, 0, maabb.position.z)
@@ -542,7 +542,7 @@ func _ready():
       "tooltip": name + ": Generate Terrain"
     }
 
-    #add_to_group("subcomposer")
+    #add_to_group("composer")
     #add_to_group("map-creator-properties")
     m_st = SurfaceTool.new()
     m_flag_generate_terrain = true

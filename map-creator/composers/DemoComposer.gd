@@ -1,4 +1,4 @@
-extends SubComposerBase
+extends ComposerBase
 
 ##############################################################################
 # Signals
@@ -65,12 +65,12 @@ func step():
                 draw_terrain()
 
 func remove_all_meshes():
-    m_map_db_adapter.remove_all_subcomposer_modules(name)
+    m_map_db_adapter.remove_all_composer_modules(name)
     ## Remove all previous meshes
     #if m_map_db_adapter.m_map_dict.has(name):
     #    var m_dict = m_map_db_adapter.m_map_dict[name]
     #    for k in m_dict.keys():
-    #        m_map_db_adapter.subcomposer_remove_mesh(name, k)
+    #        m_map_db_adapter.composer_remove_mesh(name, k)
 
 
 
@@ -129,7 +129,7 @@ func draw_terrain():
         "mask":mesh_mask
         #"priority":mesh_priority
     }
-    #m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
+    #m_map_db_adapter.composer_add_mesh(name, mesh, t, modifiers)
     var mo:Mesh = mesh
     m_map_db_adapter.insert_module(false, name, null, sp, 1.0, 0, 0, 0, 0, 0, modifiers, mo)
 
@@ -249,7 +249,7 @@ func draw_box():
     }
     #var outline_mesh = mesh.create_outline(0.05)
     #mesh.add_child(outline_mesh)
-    #m_map_db_adapter.subcomposer_add_mesh(name, mesh, t, modifiers)
+    #m_map_db_adapter.composer_add_mesh(name, mesh, t, modifiers)
     var mo:Mesh = mesh
     m_map_db_adapter.insert_module(false, name, null, sp, 1.0, 0, 0, 0, 0, 0, modifiers, mo)
 
@@ -279,7 +279,7 @@ func _ready():
 
 
     m_logger.debug("Ready Entered!")
-    #add_to_group("subcomposer")
+    #add_to_group("composer")
     #add_to_group("map-creator-properties")
     m_st = SurfaceTool.new()
     if enabled:

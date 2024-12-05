@@ -4,8 +4,8 @@ extends Node
 ##############################################################################
 # Signals
 ##############################################################################
-signal add_subcomposer
-signal remove_subcomposer
+signal add_composer
+signal remove_composer
 
 ##############################################################################
 # Constants
@@ -15,20 +15,21 @@ const PROP_LABEL:String = "Map Composer"
 const PROP_COLLISIONS:String = "Collisions"
 const PROP_EDIT_MODE:String = "Building Mode"
 const PROP_DRAW_REFERENCE:String = "Draw Reference"
-const PROP_SUBCOMPOSERS:String = "Subcomposers"
+const PROP_COMPOSER_OBJECTS:String = "Composer Objects"
+const PROP_COMPOSERS:String = "Composers"
 
 
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("MapDrawer", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("Map Composer", LogStream.LogLevel.DEBUG)
 
 var m_vector_size:Vector2 = Vector2(0, 0)
 var m_map_view = null
 var m_map_db_adapter = null
 var m_map_object_dict:Dictionary = {}
 var m_seleted_mesh_instance = null
-var m_subcomposer_objects:Dictionary = {}
+var m_composer_objects:Dictionary = {}
 @onready var m_outline_shader = load(OUTLINE_SHADER_PATH)
 #var m_material:ORMMaterial3D
 
@@ -38,7 +39,7 @@ enum STATE_TYPE {
   PROCESS_TILES,
 }
 var m_state:STATE_TYPE = STATE_TYPE.RESET
-var m_subcomposers:Dictionary = {}
+var m_composers:Dictionary = {}
 var m_properties:Dictionary = {}
 var m_ref_sphere = null
 
@@ -50,27 +51,34 @@ var m_draw_reference = false
 ##############################################################################
 # Scenes
 ##############################################################################
+var m_toolbar = null
+var m_dict_prop = null
 
 ##############################################################################
 # Exports
 ##############################################################################
 @export var OUTLINE_SHADER_PATH:String = "res://shaders/outline.gdshader"
-@export var SUBCOMPOSERS:Array
+@export var COMPOSERS:Array
 
 ##############################################################################
 # Public Functions
 ##############################################################################
 
-func set_map_view(map_view):
+func set_view(map_view):
     if m_map_view == null:
         map_view.null_selected.connect(_deselect_target)
     m_map_view = map_view
 
-func set_map_database_adapter(map_database_adapter):
+func set_database_adapter(map_database_adapter):
     m_map_db_adapter = map_database_adapter
 
 func set_tile_size(tile_size:Vector2):
     m_vector_size = tile_size
+
+func set_toolbar(toolbar):
+    m_toolbar = toolbar
+    for c in m_composers.values():
+        c.set_toolbar(toolbar)
 
 func get_properties():
     m_properties = {
@@ -100,16 +108,27 @@ func get_properties():
             "callback": _on_property_changed,
             "tooltip": "Draw the reference grid"
         },
-        PROP_SUBCOMPOSERS: {
+        PROP_COMPOSER_OBJECTS: {
             "type": "itemlist",
-            "name": "Subcomposers",
-            "value": m_subcomposer_objects.keys(),
+            "name": "Composers Types",
+            "value": m_composer_objects.keys(),
             "callback": _on_property_changed,
-            "tooltip": "Subcomposers to add to the map",
+            "tooltip": "Composers to add to the map",
+            "size": Vector2i(200, 200)
+        },
+        PROP_COMPOSERS: {
+            "type": "itemlist",
+            "name": "Composers",
+            "value": m_composers.keys(),
+            "callback": _on_property_changed,
+            "tooltip": "Composers to add to the map",
             "size": Vector2i(200, 200)
         }
     }
     return m_properties
+
+func set_dict_prop_view(dict_prop):
+    m_dict_prop = dict_prop
 
 ##############################################################################
 # Private Functions
@@ -119,10 +138,11 @@ func get_properties():
 func _ready():
     m_logger.debug("Ready Entered!")
     #m_material = ORMMaterial3D.new()
-    m_subcomposer_objects = {}
-    for c in SUBCOMPOSERS:
-        var sname = c.instantiate().subcomposer_name
-        m_subcomposer_objects[sname] = c
+    m_composer_objects = {}
+    for c in COMPOSERS:
+        var sname = c.instantiate().composer_name
+        m_logger.debug("Adding Composer Type: " + sname)
+        m_composer_objects[sname] = c
     m_state = STATE_TYPE.RESET
     add_to_group("map-creator-properties")
 
@@ -134,21 +154,20 @@ func _process(_delta):
                 m_logger.debug("Map Database is ready")
                 # On the initial load we need to get all the data inserted into the map previously
 
-                var subcomposers = get_tree().get_nodes_in_group("subcomposer")
-                for c in subcomposers:
-                    m_subcomposers[c.get_name()] = c
-                    m_logger.debug("Added Subcomposer: " + c.get_name())
-                    c.setup(m_map_db_adapter)
-                    c.remove_subcomposer.connect(_remove_subcomposer)
+                var composers = get_tree().get_nodes_in_group("composer")
+                for c in composers:
+                    _add_composer(c)
+                m_dict_prop.set_value(PROP_COMPOSERS, m_composers.keys())
                 m_state = STATE_TYPE.WORK
         STATE_TYPE.WORK:
-            # All of the subcomposers will update the map data
-            for c in m_subcomposers.values():
+            # All of the composers will update the map data
+            for c in m_composers.values():
                 c.step()
-            # The subcomposers have inserted commands to process
+            # The composers have inserted commands to process
             _process_map_data()
         STATE_TYPE.PROCESS_TILES:
             pass
+
 
 func _process_map_data():
     var commands = m_map_db_adapter.composer_read_step_commands()
@@ -300,42 +319,60 @@ func _on_property_changed(property_name, property_value):
                     m_map_view.remove_child(m_ref_sphere)
                     m_ref_sphere = null
             m_logger.debug("Draw Reference: " + str(m_draw_reference))
-        PROP_SUBCOMPOSERS:
-            m_logger.debug("Subcomposer Selected: " + str(property_value))
-            var subcomposer = m_subcomposer_objects[property_value].instantiate()
-            var subcomposer_name = property_value + str(0)
-            if m_subcomposers.has(subcomposer_name):
+        PROP_COMPOSER_OBJECTS:
+            m_logger.debug("Composer Selected: " + str(property_value))
+            var composer = m_composer_objects[property_value].instantiate()
+            var composer_name = property_value + str(0)
+            if m_composers.has(composer_name):
                 #Append a number to the name
                 var i = 0
-                while m_subcomposers.has(subcomposer_name):
+                while m_composers.has(composer_name):
                     i += 1
-                    subcomposer_name = property_value + str(i)
-            subcomposer.name = subcomposer_name
-            if subcomposer != null:
-                add_child(subcomposer)
-                m_subcomposers[subcomposer.name] = subcomposer
-                subcomposer.setup(m_map_db_adapter)
-                m_logger.debug("Added Subcomposer: " + str(subcomposer.name))
-                emit_signal("add_subcomposer", subcomposer.name)
-                subcomposer.remove_subcomposer.connect(_remove_subcomposer)
+                    composer_name = property_value + str(i)
+            composer.name = composer_name
+            if composer != null:
+                _add_composer(composer)
             else:
-                m_logger.warn("Subcomposer Not Found: " + str(property_value))
+                m_logger.warn("Composer Not Found: " + str(property_value))
+            m_dict_prop.set_value(PROP_COMPOSERS, m_composers.keys())
+        PROP_COMPOSERS:
+            m_logger.debug("Composer Selected: " + str(property_value))
+            #if m_composers.has(property_value):
+            #    var composer = m_composers[property_value]
+
+            #else:
+            #    m_logger.warn("Composer Not Found: " + str(property_value))
+
+func _add_composer(_composer):
+    var _name = _composer.name
+    if m_composers.has(_name):
+        m_logger.warn("Composer Already Exists: " + str(_name))
+        return
+    # Check if a composer has a parent
+    if _composer.get_parent() == null:
+        add_child(_composer)
+    m_composers[_name] = _composer
+    _composer.setup(m_map_db_adapter)
+    _composer.set_toolbar(m_toolbar)
+    m_logger.debug("Added Composer: " + str(_name))
+    emit_signal("add_composer", _name)
+    _composer.remove_composer.connect(_remove_composer)
 
 func _on_area_shape_entered(local_mesh_instance, other_mesh_instance):
     #m_logger.debug("Area Shape Entered: " + str(local_mesh_instance) + " " + str(other_mesh_instance))
     #m_logger.debug("  Mesh IDs: " + str(local_mesh_instance.get_meta("id")) + " " + str(other_mesh_instance.get_meta("id")))
     var local_id = local_mesh_instance.get_meta("id")
     #var other_id = other_mesh_instance.get_meta("id")
-    var local_subcomposer_name = m_map_db_adapter.get_subcomposer_name(local_id)
-    if len(local_subcomposer_name) == 0:
-        m_logger.warn("No Subcomposer Name Found for ID: " + str(local_id))
+    var local_composer_name = m_map_db_adapter.get_composer_name(local_id)
+    if len(local_composer_name) == 0:
+        m_logger.warn("No Composer Name Found for ID: " + str(local_id))
         assert(false)
         return
-    #var other_subcomposer_name = m_map_db_adapter.get_subcomposer_name(other_id)
-    #m_logger.debug("  Subcomposer Names: " + local_subcomposer_name + " " + other_subcomposer_name)
-    var local_subcomposer = m_subcomposers[local_subcomposer_name]
-    #var other_subcomposer = m_subcomposers[other_subcomposer_name]
-    local_subcomposer.test_collision(local_mesh_instance, other_mesh_instance)
+    #var other_composer_name = m_map_db_adapter.get_composer_name(other_id)
+    #m_logger.debug("  Composer Names: " + local_composer_name + " " + other_composer_name)
+    var local_composer = m_composers[local_composer_name]
+    #var other_composer = m_composers[other_composer_name]
+    local_composer.test_collision(local_mesh_instance, other_mesh_instance)
 
 func _unhandled_input(event: InputEvent) -> void:
     if m_seleted_mesh_instance == null:
@@ -354,12 +391,12 @@ func _unhandled_input(event: InputEvent) -> void:
     #m_map_view.force_update_transform()
     #m_map_view.get_world_3d().space.update()
 
-func _remove_subcomposer(_name):
-    if m_subcomposers.has(_name):
-        m_logger.debug("Removing Subcomposer: " + str(_name))
-        var subcomposer = m_subcomposers[_name]
-        remove_child(subcomposer)
-        m_subcomposers.erase(_name)
-        emit_signal("remove_subcomposer", _name)
+func _remove_composer(_name):
+    if m_composers.has(_name):
+        m_logger.debug("Removing Composer: " + str(_name))
+        var composer = m_composers[_name]
+        remove_child(composer)
+        m_composers.erase(_name)
+        emit_signal("remove_composer", _name)
     else:
-        m_logger.warn("Subcomposer Not Found: " + str(_name))
+        m_logger.warn("Composer Not Found: " + str(_name))

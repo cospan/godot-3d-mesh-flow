@@ -18,7 +18,7 @@ var m_config = null
 var m_props = {}
 var m_mesh_lib_dict = {}
 var m_wfc_dict = {}
-@onready var m_wfc_composer_scene = preload("res://map-creator/sub-composers/WFCComposer.tscn")
+@onready var m_wfc_composer_scene = preload("res://map-creator/composers/WFCComposer.tscn")
 
 #######################################
 # Flags
@@ -48,6 +48,7 @@ var m_properties = null
 var m_map_composer = null
 var m_map_database_adapter = null
 var m_view = null
+var m_toolbar = null
 
 ##############################################################################
 # Exports
@@ -107,6 +108,7 @@ func _ready():
     m_map_composer = $MapComposer
     m_map_database_adapter = $MapDatabaseAdapter
     m_view = $HBMain/VBMain/SVPContainer/SVP/MapView
+    m_toolbar = $HBMain/VBMain/HBoxToolbar
 
     # Check the configuration file for the map database
     var map_database = m_config.get_value("config", "map_database")
@@ -121,10 +123,12 @@ func _ready():
     m_map_database_adapter.open_database(map_database, RESET_DATABASE, RESET_DATABASE)
 
     # Setup the map composer to control the view
-    m_map_composer.set_map_view(m_view)
-    m_map_composer.set_map_database_adapter(m_map_database_adapter)
-    m_map_composer.add_subcomposer.connect(_map_composer_subcomposer_loaded)
-    m_map_composer.remove_subcomposer.connect(_map_composer_subcomposer_removed)
+    m_map_composer.set_view(m_view)
+    m_map_composer.set_database_adapter(m_map_database_adapter)
+    m_map_composer.set_toolbar(m_toolbar)
+    m_map_composer.set_dict_prop_view(m_properties)
+    m_map_composer.add_composer.connect(_map_composer_composer_loaded)
+    m_map_composer.remove_composer.connect(_map_composer_composer_removed)
 
 
     #if not m_config.has_section_key("config", "database_path"):
@@ -196,10 +200,10 @@ func _property_changed(prop_name:String, value):
 func _loading_finished():
     m_flag_load_finished = true
 
-func _map_composer_subcomposer_loaded(_name):
-    m_logger.info("Map Composer Subcomposer Loaded: %s" % _name)
+func _map_composer_composer_loaded(_name):
+    m_logger.info("Map Composer composer Loaded: %s" % _name)
     m_properties.interrogate_tree("map-creator-properties")
 
-func _map_composer_subcomposer_removed(_name):
-    m_logger.info("Map Composer Subcomposer Removed: %s" % _name)
+func _map_composer_composer_removed(_name):
+    m_logger.info("Map Composer composer Removed: %s" % _name)
     m_properties.remove_node_by_name(_name)

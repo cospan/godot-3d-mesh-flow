@@ -1,9 +1,9 @@
 [gd_scene load_steps=2 format=3 uid="uid://cwrgrkmmomtfn"]
 
-[ext_resource type="Script" path="res://map-creator/sub-composers/DemoComposer.gd" id="1_s5v6a"]
+[ext_resource type="Script" path="res://map-creator/composers/DemoComposer.gd" id="1_s5v6a"]
 
 [node name="DemoComposer" type="Node2D"]
 script = ExtResource("1_s5v6a")
-subcomposer_name = "Demo"
+composer_name = "Demo Composer"
 mesh_layer = 2
 mesh_mask = 0

@@ -1,4 +1,4 @@
-extends SubComposerBase
+extends ComposerBase
 
 
 ##############################################################################
@@ -103,7 +103,7 @@ func _ready():
     m_library_2_tile_converter = $Library2TileConverter
     m_tile_db_adapter = $TileDatabaseAdapter
 
-    #add_to_group("subcomposer")
+    #add_to_group("composer")
     #add_to_group("map-creator-properties")
 
     # Connect Signals

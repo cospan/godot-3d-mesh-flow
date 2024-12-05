@@ -1,11 +1,13 @@
 extends Node2D
 
-class_name SubComposerBase
+class_name ComposerBase
 
 ##############################################################################
 # Signals
 ##############################################################################
-signal remove_subcomposer(String)
+signal remove_composer(String)
+signal populate_toolbar
+signal unpopulate_toolbar
 
 ##############################################################################
 # Constants
@@ -16,7 +18,7 @@ var PROP_ENABLE:String
 ##############################################################################
 # Members
 ##############################################################################
-#var m_logger = LogStream.new("SubComposerBase", LogStream.LogLevel.DEBUG)
+#var m_logger = LogStream.new("ComposerBase", LogStream.LogLevel.DEBUG)
 
 var m_map_db_adapter = null
 var m_properties = null
@@ -27,11 +29,12 @@ var m_popup_menu = null
 ##############################################################################
 # Scenes
 ##############################################################################
+var m_toolbar = null
 
 ##############################################################################
 # Exports
 ##############################################################################
-@export var subcomposer_name:String = ""
+@export var composer_name:String = ""
 @export var enabled = true
 @export var mesh_layer = 1
 #@export var mesh_priority = 1
@@ -46,9 +49,11 @@ func setup(map_db_adapter):
 func get_properties():
     return m_properties
 
+func set_toolbar(toolbar):
+    m_toolbar = toolbar
 
 func step():
-    print ("SubComposer Step Function: (OVERRIDE THIS FUNCTION!)")
+    print ("composer Step Function: (OVERRIDE THIS FUNCTION!)")
 
 func test_collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
     for c in local_mesh.get_children():
@@ -68,11 +73,11 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
 ##############################################################################
 func _remove_all_meshes():
     # Remove all previous meshes
-    m_map_db_adapter.remove_all_subcomposer_modules(name)
+    m_map_db_adapter.remove_all_composer_modules(name)
     #if m_map_db_adapter.m_map_dict.has(name):
     #    var m_dict = m_map_db_adapter.m_map_dict[name]
     #    for k in m_dict.keys():
-    #        m_map_db_adapter.subcomposer_remove_mesh(name, k)
+    #        m_map_db_adapter.composer_remove_mesh(name, k)
 
 ##############################################################################
 # Signal Handlers
@@ -99,7 +104,7 @@ func _ready():
           "tooltip": "Enable " + name
         }
     }
-    add_to_group("subcomposer")
+    add_to_group("composer")
     add_to_group("map-creator-properties")
 
 
@@ -117,7 +122,7 @@ func _on_property_right_click():
     # Create a popup menu
     if m_popup_menu == null:
         m_popup_menu = PopupMenu.new()
-        m_popup_menu.add_item("Remove SubComposer", 1)
+        m_popup_menu.add_item("Remove composer", 1)
         m_popup_menu.id_pressed.connect(_on_popup_menu_selected)
         m_popup_menu.set_position(get_global_mouse_position())
         m_popup_menu.mouse_exited.connect(_on_popup_leave_focus)
@@ -132,6 +137,6 @@ func _on_popup_menu_selected(id):
         1:
             if m_map_db_adapter != null:
                 _remove_all_meshes()
-            emit_signal("remove_subcomposer", name)
+            emit_signal("remove_composer", name)
         _:
             pass

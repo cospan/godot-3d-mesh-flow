@@ -44,7 +44,7 @@ var m_logger = LogStream.new("Map Database Adapter", LogStream.LogLevel.INFO)
 var m_database : SQLite
 var m_submodule_dict:Dictionary = {}
 var m_mesh_dict:Dictionary = {}
-var m_id_subcomposer_dict:Dictionary = {}
+var m_id_composer_dict:Dictionary = {}
 var m_curr_id:int = 0
 var m_commands:Array = []
 var m_prev_commands:Array = []
@@ -97,7 +97,7 @@ const CONFIG_TABLE_SCHEME = {
 const POS_TABLE = "pos"
 const POS_TABLE_SCHEME = {
     "id"            : {"data_type":"int",   "primary_key":true, "not_null":true, "auto_increment":false},
-    "subcomposer_id": {"data_type":"text",  "not_null":false},
+    "composer_id": {"data_type":"text",  "not_null":false},
     "module_name"   : {"data_type":"text",  "not_null":true},
     "x"             : {"data_type":"int",   "not_null":false},
     "y"             : {"data_type":"int",   "not_null":false},
@@ -203,7 +203,7 @@ func get_module_at_pos(pos:Vector3i) -> Dictionary:
 #    return res
 
 func insert_module( threaded: bool,
-                    subcomposer_id:String,
+                    composer_id:String,
                     module_name,
                     pos,
                     scale:float,
@@ -217,8 +217,8 @@ func insert_module( threaded: bool,
                     _transform = null):
     var d:Dictionary = {}
     if module_name == null or len(module_name) == 0:
-        module_name = subcomposer_id + str(m_curr_id)
-    d["subcomposer_id"] = subcomposer_id
+        module_name = composer_id + str(m_curr_id)
+    d["composer_id"] = composer_id
     d["module_name"] = module_name
     if pos is Vector3i or pos is Vector3:
         d["x"] = pos.x
@@ -277,10 +277,10 @@ func get_pos_dict_in_region_xz(start_xz: Vector2i, end_xz: Vector2i):
         d[k] = _row_to_dict_entry(row)
     return d
 
-func remove_all_subcomposer_modules(_submodule:String):
+func remove_all_composer_modules(_submodule:String):
     if m_database == null:
         return
-    var select_condition = "subcomposer_id = '{0}'".format({0:_submodule})
+    var select_condition = "composer_id = '{0}'".format({0:_submodule})
     var rows = m_database.select_rows(POS_TABLE, select_condition, ["id"])
     m_database.delete_rows(POS_TABLE, select_condition)
     for row in rows:
@@ -399,12 +399,12 @@ func composer_read_step_commands() -> Array:
     m_commands.clear()
     return m_prev_commands
 
-func subcomposer_read_previous_commands() -> Array:
+func composer_read_previous_commands() -> Array:
     return m_prev_commands
 
-func get_subcomposer_name(_id:int) -> String:
-    if m_id_subcomposer_dict.has(_id):
-        return m_id_subcomposer_dict[_id]
+func get_composer_name(_id:int) -> String:
+    if m_id_composer_dict.has(_id):
+        return m_id_composer_dict[_id]
     return ""
 
 ##############################################################################
