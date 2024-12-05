@@ -30,7 +30,6 @@ var m_logger = LogStream.new("SID Manager", LogStream.LogLevel.DEBUG)
 
 var m_sids_dict = {}
 var m_sids = {}
-var m_props = {}
 
 ##############
 # Flags
@@ -45,7 +44,6 @@ var m_flag_finished_loading = false
 ##############################################################################
 
 var m_mlp = null
-var m_properties = null
 var m_hbsids = null
 
 
@@ -75,7 +73,6 @@ func update():
 # Called when the node enters the scene tree for the first time.
 func _ready():
     m_logger.debug("Ready Entered!")
-    m_properties = $DebugDictProperty
     m_hbsids = $SC/HBSIDS
     m_flag_ready = false
     m_flag_update = false
@@ -83,12 +80,9 @@ func _ready():
     m_flag_finished_loading = false
     m_state = STATE_TYPES.STATE_TYPE_RESET
 
-
-    m_props["back"] = {"type": "Button", "name": "Back", "value": "Return", "tooltip": "Return to the previous screen"}
-    m_properties.set_properties_dict(m_props)
-
+    var back_button = $VBox/BackButton
     # Connect Signals
-    m_properties.property_changed.connect(_property_changed)
+    back_button.pressed.connect(_back_pressed)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
@@ -191,15 +185,10 @@ func _on_face_draw():
 func emit_percent_update(_pname, _percent):
     emit_signal("progress_percent_update", _pname, _percent)
 
-func _property_changed(prop_name:String, _prop_value):
-    m_logger.debug("Property Changed: %s" % prop_name)
-    match prop_name:
-        "back":
-            m_logger.debug("Back Button Pressed!")
-            m_flag_reset = true
-            emit_signal("back_button_pressed")
-        _:
-            pass
+func _back_pressed():
+    m_logger.debug("Back Button Pressed!")
+    m_flag_reset = true
+    emit_signal("back_button_pressed")
 
 func _on_add_remove_faces(module_name, _face_index):
     m_logger.debug("Add/Remove Faces: %s, %d" % [module_name, _face_index])

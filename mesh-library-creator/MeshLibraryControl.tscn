@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://csmu5jjho2trs"]
+[gd_scene load_steps=11 format=3 uid="uid://csmu5jjho2trs"]
 
 [ext_resource type="Script" path="res://mesh-library-creator/MeshLibraryControl.gd" id="1_h4j2m"]
 [ext_resource type="PackedScene" uid="uid://bjn216f0xxwjc" path="res://utils/DictProperty.tscn" id="2_6vhsl"]
@@ -10,7 +10,6 @@
 [ext_resource type="Script" path="res://mesh-library-creator/MeshLibraryProcessor.gd" id="5_pvckx"]
 [ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="6_72k6q"]
 [ext_resource type="Script" path="res://mesh-library-creator/sid-modifier/SIDModifier.gd" id="8_wlbek"]
-[ext_resource type="Script" path="res://utils/DictProperty.gd" id="9_vpxhp"]
 
 [node name="MeshLibraryControl" type="Control"]
 layout_mode = 3
@@ -36,6 +35,7 @@ size_flags_vertical = 3
 metadata/_edit_use_anchors_ = true
 
 [node name="DictProperty" parent="HBMain" instance=ExtResource("2_6vhsl")]
+custom_minimum_size = Vector2(100, 0)
 layout_mode = 2
 size_flags_vertical = 1
 
@@ -86,6 +86,7 @@ size_flags_horizontal = 3
 layout_mode = 2
 
 [node name="SubViewportContainer" type="SubViewportContainer" parent="HBMain/VBFaceView"]
+visible = false
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("4_tepjt")
@@ -93,20 +94,23 @@ script = ExtResource("4_tepjt")
 [node name="SubViewport" type="SubViewport" parent="HBMain/VBFaceView/SubViewportContainer"]
 handle_input_locally = false
 physics_object_picking = true
-render_target_update_mode = 4
+render_target_update_mode = 0
 
 [node name="MeshViewer" parent="HBMain/VBFaceView/SubViewportContainer/SubViewport" instance=ExtResource("4_dsc3r")]
 
 [node name="SIDModifier" type="HBoxContainer" parent="HBMain/VBFaceView"]
-visible = false
 layout_mode = 2
 size_flags_vertical = 3
 script = ExtResource("8_wlbek")
 
-[node name="DebugDictProperty" type="GridContainer" parent="HBMain/VBFaceView/SIDModifier"]
-custom_minimum_size = Vector2(0, 300)
+[node name="VBox" type="VBoxContainer" parent="HBMain/VBFaceView/SIDModifier"]
 layout_mode = 2
-script = ExtResource("9_vpxhp")
+
+[node name="BackButton" type="Button" parent="HBMain/VBFaceView/SIDModifier/VBox"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+text = "Back"
 
 [node name="SC" type="ScrollContainer" parent="HBMain/VBFaceView/SIDModifier"]
 layout_mode = 2
@@ -127,3 +131,11 @@ size_flags_horizontal = 3
 script = ExtResource("5_pvckx")
 
 [node name="ModuleDatabaseAdapter" parent="MeshLibraryProcessor" instance=ExtResource("6_72k6q")]
+
+[node name="LoadMeshFolderDialog" type="FileDialog" parent="."]
+title = "Open a Directory"
+initial_position = 4
+size = Vector2i(500, 400)
+ok_button_text = "Select Current Folder"
+file_mode = 2
+access = 2

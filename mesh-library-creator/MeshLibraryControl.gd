@@ -19,6 +19,7 @@ var m_props = {}
 var m_user_selected_module = null
 var m_user_selected_face = null
 var m_previous_state = null
+var m_mesh_folder_path:String = ""
 
 # Flags
 var m_flag_load_library = false
@@ -39,6 +40,7 @@ var m_face_viewer = null
 var m_properties = null
 var m_face_index_modifier = null
 var m_sid_modifier = null
+var m_mesh_folder_dialog = null
 
 ##############################################################################
 # State Machine
@@ -120,8 +122,11 @@ func _ready():
     m_face_viewer = $HBMain/VBFaceView/FaceView
     m_face_index_modifier = $HBMain/VBFaceView/HBFaceIndexModifier
     m_sid_modifier = $HBMain/VBFaceView/SIDModifier
+    m_mesh_folder_dialog = $LoadMeshFolderDialog
+    m_mesh_folder_dialog.current_dir = m_config.get_value("config", "base_path")
 
     m_props["progress"] = {"type": "ProgressBar", "name": "Progress", "value": 0, "min": 0, "max": 100, "tooltip": "Display Progress of Loading"}
+    m_props["open_mesh_folder"] = {"type": "Button", "name": "Open Mesh Folder", "value": "Open Mesh Folder", "tooltip": "Open Mesh Folder"}
     m_props["auto_load"] = {"type": "CheckBox", "name": "Auto Load", "value": m_config.get_value("config", "auto_load"), "tooltip": "Auto Load Library on Start"}
     m_props["load_library"] = {"type": "Button", "name": "Load Library", "value": "Load Library", "tooltip": "Load Library", "visible": not m_config.get_value("config", "auto_load"), }
     m_props["reset_library"] = {"type": "Button", "name": "Reset Library", "value": "Reset Library", "tooltip": "Reset Library and initialize it again"}
@@ -142,6 +147,9 @@ func _ready():
     m_face_index_modifier.back_button_pressed.connect(_on_face_index_modifier_back)
     m_sid_modifier.back_button_pressed.connect(_on_sid_modifier_back)
     m_sid_modifier.add_remove_faces.connect(_on_sid_modifier_add_remove_faces)
+
+    m_mesh_folder_dialog.dir_selected.connect(_on_folder_selected)
+    m_mesh_folder_dialog.confirmed.connect(_on_folder_dialog_confirmed)
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
@@ -340,33 +348,36 @@ func _view_module(_module_name):
 func _property_changed(prop_name:String, prop_value):
     m_logger.debug("Property Changed: %s" % prop_name)
     match prop_name:
-      "module_list":
-          m_logger.debug("Module Selected: %s" % prop_value)
-          m_user_selected_module = prop_value
-          m_flag_user_selected_module = true
-      "view_all_modules":
-          m_logger.debug("View All Modules")
-          m_flag_view_all_modules = true
-      "load_library":
-          m_logger.debug("Load Library")
-          m_flag_load_library = true
-      "auto_load":
-          m_logger.debug("Auto Load: %s" % prop_value)
-          m_config.set_value("config", "auto_load", prop_value)
-          m_config.save(m_config_file)
-          m_props["load_library"]["visible"] = not prop_value
-          m_properties.set_prop_visible("load_library", not prop_value)
-      "reset_library":
-          m_logger.debug("Reset Library")
-          m_flag_reset_library = true
-          m_flag_load_library = true
-      "module_xy_size":
-          m_logger.debug("Module Size Changed: %s" % str(prop_value))
-      "sid_modifier":
-          m_logger.debug("SID Modifier")
-          m_flag_sid_modifier_enable = true
-      _:
-          m_logger.debug("Unknown Property: %s" % str(prop_name))
+        "open_mesh_folder":
+            m_logger.debug("Open Mesh Folder")
+            m_mesh_folder_dialog.visible = true
+        "module_list":
+            m_logger.debug("Module Selected: %s" % prop_value)
+            m_user_selected_module = prop_value
+            m_flag_user_selected_module = true
+        "view_all_modules":
+            m_logger.debug("View All Modules")
+            m_flag_view_all_modules = true
+        "load_library":
+            m_logger.debug("Load Library")
+            m_flag_load_library = true
+        "auto_load":
+            m_logger.debug("Auto Load: %s" % prop_value)
+            m_config.set_value("config", "auto_load", prop_value)
+            m_config.save(m_config_file)
+            m_props["load_library"]["visible"] = not prop_value
+            m_properties.set_prop_visible("load_library", not prop_value)
+        "reset_library":
+            m_logger.debug("Reset Library")
+            m_flag_reset_library = true
+            m_flag_load_library = true
+        "module_xy_size":
+            m_logger.debug("Module Size Changed: %s" % str(prop_value))
+        "sid_modifier":
+            m_logger.debug("SID Modifier")
+            m_flag_sid_modifier_enable = true
+        _:
+            m_logger.debug("Unknown Property: %s" % str(prop_name))
 
 
 func _mlp_progress_percent_updated(_name:String, _percent:float):
@@ -403,3 +414,14 @@ func _on_sid_modifier_add_remove_faces(_module_name, _face_name:int):
     m_user_selected_module = _module_name
     m_flag_user_selected_face = true
     m_previous_state = STATE_TYPE.STATE_SID_MODIFIER
+
+func _on_folder_selected(_folder_path):
+    m_logger.debug("Folder Selected: %s" % _folder_path)
+    m_mesh_folder_path = _folder_path
+
+func _on_folder_dialog_confirmed():
+    m_logger.debug("Folder Dialog Confirmed: %s" % m_mesh_folder_path)
+    if len(m_mesh_folder_path) > 0:
+        m_config.set_value("config", "base_path", m_mesh_folder_path)
+        m_config.save(m_config_file)
+        #m_flag_load_library = true
