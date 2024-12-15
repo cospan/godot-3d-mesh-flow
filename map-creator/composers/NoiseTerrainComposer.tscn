@@ -9,3 +9,7 @@ noise_type = 3
 script = ExtResource("1_wcgfj")
 noise = SubResource("FastNoiseLite_ydw5x")
 composer_name = "Noise Terrain Composer"
+
+[node name="HBoxToolbar" type="HBoxContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0

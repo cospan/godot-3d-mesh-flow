@@ -176,7 +176,7 @@ func get_menu_items_dict():
 # Called when the node enters the scene tree for the first time.
 func _ready():
     m_logger.debug("Ready Entered!")
-    m_folder_name = "." + PROJECT_TYPE
+    #m_folder_name = "." + PROJECT_TYPE
     m_config_file = PROJECT_TYPE + ".cfg"
 
     #m_logger.debug("Loading Project Scene: %s" % PROJECT_SCENE)
@@ -284,7 +284,7 @@ func _create(_folder_path):
     config.set_value("config", "base_path", base_path)
     config.set_value("config", "path", _path)
     for key in CUSTOM_CONFIG_KEYS.keys():
-            config.set_value("config", key, CUSTOM_CONFIG_KEYS[key])
+        config.set_value("config", key, CUSTOM_CONFIG_KEYS[key])
     config.save(proj_info_file)
 
     m_created_project_path = _path

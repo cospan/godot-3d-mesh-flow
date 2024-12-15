@@ -6,8 +6,6 @@ class_name ComposerBase
 # Signals
 ##############################################################################
 signal remove_composer(String)
-signal populate_toolbar
-signal unpopulate_toolbar
 
 ##############################################################################
 # Constants
@@ -20,6 +18,7 @@ var PROP_ENABLE:String
 ##############################################################################
 #var m_logger = LogStream.new("ComposerBase", LogStream.LogLevel.DEBUG)
 
+var m_config = null
 var m_map_db_adapter = null
 var m_properties = null
 var m_popup_menu = null
@@ -29,7 +28,7 @@ var m_popup_menu = null
 ##############################################################################
 # Scenes
 ##############################################################################
-var m_toolbar = null
+var m_remove_button = null
 
 ##############################################################################
 # Exports
@@ -43,14 +42,12 @@ var m_toolbar = null
 ##############################################################################
 # Public Functions
 ##############################################################################
-func setup(map_db_adapter):
-    m_map_db_adapter = map_db_adapter
+func setup(_map_db_adapter, _config):
+    m_map_db_adapter = _map_db_adapter
+    m_config = _config
 
 func get_properties():
     return m_properties
-
-func set_toolbar(toolbar):
-    m_toolbar = toolbar
 
 func step():
     print ("composer Step Function: (OVERRIDE THIS FUNCTION!)")
@@ -68,16 +65,27 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
     print ("%s: COLLISION: %s -> %s" % [name, local_mesh.name, other_mesh.name])
     print ("OVERRIDE THIS FUNCTION!")
 
+
+func get_toolbar():
+    #m_logger.debug("Get Toolbar Entered!")
+    return null
+
+func get_remove_button():
+    return m_remove_button
+
 ##############################################################################
 # Private Functions
 ##############################################################################
 func _remove_all_meshes():
-    # Remove all previous meshes
     m_map_db_adapter.remove_all_composer_modules(name)
-    #if m_map_db_adapter.m_map_dict.has(name):
-    #    var m_dict = m_map_db_adapter.m_map_dict[name]
-    #    for k in m_dict.keys():
-    #        m_map_db_adapter.composer_remove_mesh(name, k)
+
+func _remove_composer():
+    if m_map_db_adapter != null:
+        _remove_all_meshes()
+    if m_config != null:
+        if m_config.has_section(name):
+            m_config.remove_section(name)
+    emit_signal("remove_composer", name)
 
 ##############################################################################
 # Signal Handlers
@@ -86,6 +94,14 @@ func _remove_all_meshes():
 func _ready():
     PROP_LABEL = name + "_label"
     PROP_ENABLE = name + "_enable"
+    m_remove_button = Button.new()
+    m_remove_button.text = "Remove"
+    var stylebox_theme: StyleBoxFlat = StyleBoxFlat.new()
+    stylebox_theme.bg_color = Color(0.501961, 0, 0, 1)
+    m_remove_button.add_theme_stylebox_override("normal", stylebox_theme)
+    m_remove_button.add_theme_stylebox_override("hover", stylebox_theme)
+    m_remove_button.add_theme_stylebox_override("pressed", stylebox_theme)
+    m_remove_button.pressed.connect(_remove_composer)
 
     m_properties = {
         PROP_LABEL:
@@ -135,8 +151,6 @@ func _on_popup_leave_focus():
 func _on_popup_menu_selected(id):
     match id:
         1:
-            if m_map_db_adapter != null:
-                _remove_all_meshes()
-            emit_signal("remove_composer", name)
+            _remove_composer()
         _:
             pass

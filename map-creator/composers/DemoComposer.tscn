@@ -7,3 +7,14 @@ script = ExtResource("1_s5v6a")
 composer_name = "Demo Composer"
 mesh_layer = 2
 mesh_mask = 0
+
+[node name="HBoxToolbar" type="HBoxContainer" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 31.0
+grow_horizontal = 2
+size_flags_horizontal = 2
+
+[node name="Button" type="Button" parent="HBoxToolbar"]
+layout_mode = 2
+text = "Test"

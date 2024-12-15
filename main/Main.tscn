@@ -119,8 +119,6 @@ text = "Projects"
 [node name="ProjectList" type="ItemList" parent="VBoxMain/TabControl/HBoxLandingPage/VBoxProject"]
 layout_mode = 2
 size_flags_vertical = 3
-item_count = 1
-item_0/text = "Test Project Item"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxMain/TabControl/HBoxLandingPage"]
 layout_mode = 2
@@ -165,6 +163,7 @@ ICON = ExtResource("14_wwsus")
 CUSTOM_CONFIG_KEYS = {
 "auto_load": true,
 "clear_db": false,
+"composers": {},
 "map_database": "",
 "reset_db": false
 }

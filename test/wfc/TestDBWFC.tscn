@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://test/wfc/Node3DDisplay.gd" id="2_ojj8r"]
 [ext_resource type="PackedScene" uid="uid://2pm1gnt1y3c" path="res://map-creator/MapDatabaseAdapter.tscn" id="3_rpbtk"]
 [ext_resource type="PackedScene" uid="uid://ckr0tepfuifuc" path="res://map-creator/TileDatabaseAdapter.tscn" id="4_xewne"]
-[ext_resource type="Script" path="res://test/wfc/WFCGenerator.gd" id="5_7kk3m"]
+[ext_resource type="Script" path="res://map-creator/composers/WFC/WFCGenerator.gd" id="5_7kk3m"]
 
 [node name="TestDBWFC" type="Node"]
 script = ExtResource("1_omd6x")

@@ -20,6 +20,7 @@ var PROP_DRAW_SELECT:String
 ##############################################################################
 var m_logger = LogStream.new("DemoComposer", LogStream.LogLevel.DEBUG)
 var m_st:SurfaceTool
+var m_toolbar = null
 
 
 ## Flags ##
@@ -46,10 +47,6 @@ var m_flag_go = false
 ##############################################################################
 # Public Functions
 ##############################################################################
-
-func setup(map_db_adapter):
-    m_logger.debug("Setup Entered!")
-    m_map_db_adapter = map_db_adapter
 
 func get_properties():
     return m_properties
@@ -257,6 +254,12 @@ func draw_box():
 func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
     m_logger.debug ("%s: COLLISION: %s -> %s" % [name, local_mesh.name, other_mesh.name])
 
+func get_toolbar():
+    m_logger.debug("Get Toolbar Entered!")
+    return m_toolbar
+
+
+
 ##############################################################################
 # Private Functions
 ##############################################################################
@@ -282,6 +285,13 @@ func _ready():
     #add_to_group("composer")
     #add_to_group("map-creator-properties")
     m_st = SurfaceTool.new()
+
+    #Set up toolbar
+    m_toolbar = $HBoxToolbar
+    m_toolbar.add_child(get_remove_button())
+    m_toolbar.move_child(get_remove_button(), 0)
+
+    remove_child(m_toolbar)
     if enabled:
         m_flag_go = true
 

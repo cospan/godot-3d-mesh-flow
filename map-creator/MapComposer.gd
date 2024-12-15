@@ -17,6 +17,7 @@ const PROP_EDIT_MODE:String = "Building Mode"
 const PROP_DRAW_REFERENCE:String = "Draw Reference"
 const PROP_COMPOSER_OBJECTS:String = "Composer Objects"
 const PROP_COMPOSERS:String = "Composers"
+const PROP_CLEAR_SELECTION:String = "Clear Selection"
 
 
 ##############################################################################
@@ -40,19 +41,23 @@ enum STATE_TYPE {
 }
 var m_state:STATE_TYPE = STATE_TYPE.RESET
 var m_composers:Dictionary = {}
+var m_curr_composer = null
+var m_curr_composer_toolbar = null
 var m_properties:Dictionary = {}
 var m_ref_sphere = null
 
 ## Flags ##
 var m_flag_collisions_enabled = true
 var m_flag_edit_mode = true
-var m_draw_reference = false
+var m_flag_draw_reference = false
+var m_flag_process_config_file = false
 
 ##############################################################################
 # Scenes
 ##############################################################################
 var m_toolbar = null
 var m_dict_prop = null
+var m_config = null
 
 ##############################################################################
 # Exports
@@ -77,8 +82,6 @@ func set_tile_size(tile_size:Vector2):
 
 func set_toolbar(toolbar):
     m_toolbar = toolbar
-    for c in m_composers.values():
-        c.set_toolbar(toolbar)
 
 func get_properties():
     m_properties = {
@@ -104,7 +107,7 @@ func get_properties():
         PROP_DRAW_REFERENCE: {
             "type": "CheckBox",
             "name": "Draw Reference",
-            "value": m_draw_reference,
+            "value": m_flag_draw_reference,
             "callback": _on_property_changed,
             "tooltip": "Draw the reference grid"
         },
@@ -123,12 +126,22 @@ func get_properties():
             "callback": _on_property_changed,
             "tooltip": "Composers to add to the map",
             "size": Vector2i(200, 200)
+        },
+        PROP_CLEAR_SELECTION: {
+            "type": "Button",
+            "name": "Clear Selection",
+            "callback": _on_property_changed,
+            "tooltip": "Clear the selected object"
         }
     }
     return m_properties
 
 func set_dict_prop_view(dict_prop):
     m_dict_prop = dict_prop
+
+func set_config(_config_file):
+    m_config = _config_file
+    m_flag_process_config_file = true
 
 ##############################################################################
 # Private Functions
@@ -154,10 +167,10 @@ func _process(_delta):
                 m_logger.debug("Map Database is ready")
                 # On the initial load we need to get all the data inserted into the map previously
 
-                var composers = get_tree().get_nodes_in_group("composer")
-                for c in composers:
-                    _add_composer(c)
-                m_dict_prop.set_value(PROP_COMPOSERS, m_composers.keys())
+                #var composers = get_tree().get_nodes_in_group("composer")
+                #for c in composers:
+                #    _add_composer(c)
+                #m_dict_prop.set_value(PROP_COMPOSERS, m_composers.keys())
                 m_state = STATE_TYPE.WORK
         STATE_TYPE.WORK:
             # All of the composers will update the map data
@@ -168,6 +181,16 @@ func _process(_delta):
         STATE_TYPE.PROCESS_TILES:
             pass
 
+    if m_flag_process_config_file:
+        m_flag_process_config_file = false
+        if m_config != null:
+            m_logger.debug("Loading Config File: " + str(m_config))
+            var composer_dict = m_config.get_value("config", "composers")
+            for c in composer_dict.keys():
+                var composer_type = composer_dict[c]
+                var composer = m_composer_objects[composer_type].instantiate()
+                composer.name = c
+                _add_composer(composer, composer_type, true)
 
 func _process_map_data():
     var commands = m_map_db_adapter.composer_read_step_commands()
@@ -307,8 +330,8 @@ func _on_property_changed(property_name, property_value):
             m_flag_collisions_enabled = property_value
             m_logger.debug("Collisions Enabled: " + str(m_flag_collisions_enabled))
         PROP_DRAW_REFERENCE:
-            m_draw_reference = property_value
-            if m_draw_reference:
+            m_flag_draw_reference = property_value
+            if m_flag_draw_reference:
                 if m_ref_sphere == null:
                     var ref_sphere = SphereMesh.new()
                     m_ref_sphere = MeshInstance3D.new()
@@ -318,7 +341,7 @@ func _on_property_changed(property_name, property_value):
                 if m_ref_sphere != null:
                     m_map_view.remove_child(m_ref_sphere)
                     m_ref_sphere = null
-            m_logger.debug("Draw Reference: " + str(m_draw_reference))
+            m_logger.debug("Draw Reference: " + str(m_flag_draw_reference))
         PROP_COMPOSER_OBJECTS:
             m_logger.debug("Composer Selected: " + str(property_value))
             var composer = m_composer_objects[property_value].instantiate()
@@ -331,32 +354,52 @@ func _on_property_changed(property_name, property_value):
                     composer_name = property_value + str(i)
             composer.name = composer_name
             if composer != null:
-                _add_composer(composer)
+                _add_composer(composer, property_value)
             else:
                 m_logger.warn("Composer Not Found: " + str(property_value))
-            m_dict_prop.set_value(PROP_COMPOSERS, m_composers.keys())
         PROP_COMPOSERS:
             m_logger.debug("Composer Selected: " + str(property_value))
-            #if m_composers.has(property_value):
-            #    var composer = m_composers[property_value]
+            if m_composers.has(property_value):
+                if m_curr_composer == null or m_curr_composer.name != property_value:
+                    m_curr_composer = m_composers[property_value]
+                    m_curr_composer_toolbar = m_curr_composer.get_toolbar()
+                    _update_toolbar()
+            else:
+                m_curr_composer = null
+                m_curr_composer_toolbar = null
+                _update_toolbar()
+        PROP_CLEAR_SELECTION:
+            m_curr_composer = null
+            m_curr_composer_toolbar = null
+            _update_toolbar()
 
-            #else:
-            #    m_logger.warn("Composer Not Found: " + str(property_value))
+func _update_toolbar():
+    if m_toolbar != null:
+        for child in m_toolbar.get_children():
+            m_toolbar.remove_child(child)
+        if m_curr_composer_toolbar != null:
+            m_toolbar.add_child(m_curr_composer_toolbar)
 
-func _add_composer(_composer):
+func _add_composer(_composer, _composer_type, config_file_load=false):
     var _name = _composer.name
     if m_composers.has(_name):
         m_logger.warn("Composer Already Exists: " + str(_name))
         return
+    _composer.setup(m_map_db_adapter, m_config)
     # Check if a composer has a parent
     if _composer.get_parent() == null:
         add_child(_composer)
     m_composers[_name] = _composer
-    _composer.setup(m_map_db_adapter)
-    _composer.set_toolbar(m_toolbar)
     m_logger.debug("Added Composer: " + str(_name))
+    if not config_file_load:
+        var composer_dict = m_config.get_value("config", "composers")
+        composer_dict[_composer.name] = _composer_type
+        m_config.set_value("config", "composers", composer_dict)
+        var config_path = m_config.get_value("config", "config_path")
+        m_config.save(config_path)
     emit_signal("add_composer", _name)
     _composer.remove_composer.connect(_remove_composer)
+    m_dict_prop.set_value(PROP_COMPOSERS, m_composers.keys())
 
 func _on_area_shape_entered(local_mesh_instance, other_mesh_instance):
     #m_logger.debug("Area Shape Entered: " + str(local_mesh_instance) + " " + str(other_mesh_instance))
@@ -392,11 +435,23 @@ func _unhandled_input(event: InputEvent) -> void:
     #m_map_view.get_world_3d().space.update()
 
 func _remove_composer(_name):
+    if m_curr_composer != null and m_curr_composer.name == _name:
+        m_curr_composer = null
+        m_curr_composer_toolbar = null
+        _update_toolbar()
     if m_composers.has(_name):
         m_logger.debug("Removing Composer: " + str(_name))
         var composer = m_composers[_name]
         remove_child(composer)
         m_composers.erase(_name)
         emit_signal("remove_composer", _name)
+        var composer_dict = m_config.get_value("config", "composers")
+        composer_dict.erase(_name)
+        m_config.set_value("config", "composers", composer_dict)
+        var config_path = m_config.get_value("config", "config_path")
+        m_config.save(config_path)
+
     else:
         m_logger.warn("Composer Not Found: " + str(_name))
+
+    m_dict_prop.set_value(PROP_COMPOSERS, m_composers.keys())

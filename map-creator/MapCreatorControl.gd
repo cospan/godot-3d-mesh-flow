@@ -66,6 +66,8 @@ func init(_dir:String):
     m_project_path = _dir
     m_config_file = "%s/%s" % [_dir, "map.cfg"]
     m_config.load(m_config_file)
+    m_config.set_value("config", "config_path", m_config_file)
+    m_config.save(m_config_file)
 
 func get_project_path():
     return m_project_path
@@ -127,7 +129,8 @@ func _ready():
     m_map_composer.set_database_adapter(m_map_database_adapter)
     m_map_composer.set_toolbar(m_toolbar)
     m_map_composer.set_dict_prop_view(m_properties)
-    m_map_composer.add_composer.connect(_map_composer_composer_loaded)
+    m_map_composer.set_config(m_config)
+    m_map_composer.add_composer.connect(_map_composer_composer_added)
     m_map_composer.remove_composer.connect(_map_composer_composer_removed)
 
 
@@ -200,7 +203,7 @@ func _property_changed(prop_name:String, value):
 func _loading_finished():
     m_flag_load_finished = true
 
-func _map_composer_composer_loaded(_name):
+func _map_composer_composer_added(_name):
     m_logger.info("Map Composer composer Loaded: %s" % _name)
     m_properties.interrogate_tree("map-creator-properties")
 

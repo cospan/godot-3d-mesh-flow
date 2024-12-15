@@ -24,6 +24,7 @@ var m_logger = LogStream.new("Main", LogStream.LogLevel.INFO)
 var m_config = null
 var m_tab_container = null
 var m_landing_page
+var m_config_file_dir:String = ""
 
 var m_library_project_configs = []
 var m_project_selected:int = -1
@@ -40,6 +41,7 @@ var m_state = STATE_T.IDLE
 # Exports
 ##############################################################################
 @export_dir var CONFIG_FILE_DIR:String = "user://godot-3d-mesh-flow.cfg"
+@export_dir var DEBUG_CONFIG_FILE_DIR:String = "res://godot-3d-mesh-flow.cfg"
 @export var CLEAR_CONFIG:bool = false
 @export var DEBUG:bool = true
 @export var MAX_RECENT_PROJECTS:int = 10
@@ -55,6 +57,9 @@ var m_state = STATE_T.IDLE
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+    m_config_file_dir = CONFIG_FILE_DIR
+    if DEBUG:
+        m_config_file_dir = DEBUG_CONFIG_FILE_DIR
 
     m_tab_container = $VBoxMain/TabControl
 
@@ -115,14 +120,16 @@ func _process(_delta):
             m_state = STATE_T.LOADING_CONFIG
             m_logger.debug("RESET -> LOADING_CONFIG")
         STATE_T.LOADING_CONFIG:
-            var err = m_config.load(CONFIG_FILE_DIR)
+            var err = m_config.load(m_config_file_dir)
             if err != OK:
                 _initialize_config_file()
-                m_logger.debug("Failed to load config file: %s" % CONFIG_FILE_DIR)
-                m_logger.warn("LOADING_CONFIG -> ERROR_STATE")
-                m_state = STATE_T.ERROR_STATE
+                m_config.set_value("config", "config_path", m_config_file_dir)
+                m_config.save(m_config_file_dir)
+                m_logger.warn("Failed to load config file: %s" % m_config_file_dir)
+                m_logger.info("Creating new config file: %s" % m_config_file_dir)
+                m_state = STATE_T.IDLE
             else:
-                m_logger.debug("Config file loaded: %s" % CONFIG_FILE_DIR)
+                m_logger.info("Config file loaded: %s" % m_config_file_dir)
                 m_logger.debug("LOADING_CONFIG -> IDLE")
                 m_state = STATE_T.IDLE
                 _update_project_list()
@@ -135,9 +142,9 @@ func _process(_delta):
             pass
 
 func _initialize_config_file():
-    m_logger.debug("Initializing config file: %s" % CONFIG_FILE_DIR)
+    m_logger.debug("Initializing config file: %s" % m_config_file_dir)
     m_config.set_value("config", "project_path", [])
-    m_config.save(CONFIG_FILE_DIR)
+    m_config.save(m_config_file_dir)
 
 func _insert_recent_project(project_path):
     var recent_projects = m_config.get_value("config", "project_path")
@@ -148,7 +155,7 @@ func _insert_recent_project(project_path):
     recent_projects.insert(0, project_path)
     m_logger.debug("Recent projects (After Insert): %s" % str(recent_projects))
     m_config.set_value("config", "project_path", recent_projects)
-    m_config.save(CONFIG_FILE_DIR)
+    m_config.save(m_config_file_dir)
     _update_project_list()
 
 func _update_project_list():
@@ -185,7 +192,7 @@ func _update_project_list():
             recent_projects.erase(project_path)
             # Update the config file
             m_config.set_value("config", "project_path", recent_projects)
-            m_config.save(CONFIG_FILE_DIR)
+            m_config.save(m_config_file_dir)
             continue
 
         var index = project_list.add_item(project_dict["name"], icon, true)

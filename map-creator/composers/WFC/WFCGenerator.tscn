@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bvk63jq0k153k"]
+
+[ext_resource type="Script" path="res://map-creator/composers/WFC/WFCGenerator.gd" id="1_cphho"]
+
+[node name="WFCGenerator" type="Node"]
+script = ExtResource("1_cphho")

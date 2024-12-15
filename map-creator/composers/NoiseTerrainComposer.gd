@@ -25,6 +25,7 @@ var m_flag_generate_terrain = false
 ##############################################################################
 # Scenes
 ##############################################################################
+var m_toolbar = null
 
 ##############################################################################
 # Exports
@@ -249,15 +250,13 @@ func collision(local_mesh:MeshInstance3D, other_mesh:MeshInstance3D):
             m_map_db_adapter.composer_add_mesh(name, m, Transform3D(), mdf)
             ti = ti + 1
 
-
-
-
-
+func get_toolbar():
+    m_logger.debug("Get Toolbar Entered!")
+    return m_toolbar
 
 ##############################################################################
 # Private Functions
 ##############################################################################
-
 
 func _generate_chunk():
 
@@ -546,6 +545,14 @@ func _ready():
     #add_to_group("map-creator-properties")
     m_st = SurfaceTool.new()
     m_flag_generate_terrain = true
+
+    #Set up toolbar
+    m_toolbar = $HBoxToolbar
+    m_toolbar.add_child(get_remove_button())
+    m_toolbar.move_child(get_remove_button(), 0)
+    remove_child(m_toolbar)
+
+
 
 
 func _on_property_changed(property_name, property_value):

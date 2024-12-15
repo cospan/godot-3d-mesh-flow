@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://bqfwgg02bwuqc"]
+[gd_scene load_steps=6 format=3 uid="uid://bqfwgg02bwuqc"]
 
 [ext_resource type="Script" path="res://map-creator/composers/WFCComposer.gd" id="1_p3m0b"]
 [ext_resource type="PackedScene" uid="uid://b876tdeecktcr" path="res://utils/ModuleDatabaseRWAdapter.tscn" id="2_jvqp4"]
 [ext_resource type="PackedScene" uid="uid://cc3s1jqv47qgl" path="res://utils/Library2TileConverter.tscn" id="3_3oue4"]
 [ext_resource type="PackedScene" uid="uid://ckr0tepfuifuc" path="res://map-creator/TileDatabaseAdapter.tscn" id="4_12p4s"]
+[ext_resource type="PackedScene" uid="uid://bvk63jq0k153k" path="res://map-creator/composers/WFC/WFCGenerator.tscn" id="5_n2usy"]
 
 [node name="WFCComposer" type="Node2D"]
 script = ExtResource("1_p3m0b")
@@ -14,3 +15,92 @@ composer_name = "WFC Composer"
 [node name="Library2TileConverter" parent="." instance=ExtResource("3_3oue4")]
 
 [node name="TileDatabaseAdapter" parent="." instance=ExtResource("4_12p4s")]
+
+[node name="HBoxToolbar" type="HBoxContainer" parent="."]
+offset_right = 40.0
+offset_bottom = 40.0
+size_flags_horizontal = 3
+
+[node name="Control" type="Control" parent="HBoxToolbar"]
+custom_minimum_size = Vector2(50, 0)
+layout_mode = 2
+
+[node name="ButtonStart" type="Button" parent="HBoxToolbar"]
+layout_mode = 2
+text = "Start"
+
+[node name="VBoxMeshLib" type="VBoxContainer" parent="HBoxToolbar"]
+layout_mode = 2
+
+[node name="ButtonSetMeshLibrary" type="Button" parent="HBoxToolbar/VBoxMeshLib"]
+layout_mode = 2
+text = "Set Mesh Library
+"
+
+[node name="MeshLibraryPath" type="LineEdit" parent="HBoxToolbar/VBoxMeshLib"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_vertical = 0
+placeholder_text = "<Mesh Library Database Path>"
+
+[node name="VBoxPos" type="VBoxContainer" parent="HBoxToolbar"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBoxToolbar/VBoxPos"]
+layout_mode = 2
+text = "Position"
+horizontal_alignment = 1
+
+[node name="HBoxPos" type="HBoxContainer" parent="HBoxToolbar/VBoxPos"]
+custom_minimum_size = Vector2(200, 30)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TextEditXPos" type="LineEdit" parent="HBoxToolbar/VBoxPos/HBoxPos"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+placeholder_text = "X Pos"
+
+[node name="TextEditYPos" type="LineEdit" parent="HBoxToolbar/VBoxPos/HBoxPos"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+placeholder_text = "Y Pos
+"
+
+[node name="VBoxSize" type="VBoxContainer" parent="HBoxToolbar"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBoxToolbar/VBoxSize"]
+layout_mode = 2
+text = "Size"
+horizontal_alignment = 1
+
+[node name="HBoxSize" type="HBoxContainer" parent="HBoxToolbar/VBoxSize"]
+custom_minimum_size = Vector2(200, 30)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TextEditXSize" type="LineEdit" parent="HBoxToolbar/VBoxSize/HBoxSize"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+placeholder_text = "X Size"
+
+[node name="TextEditYSize" type="LineEdit" parent="HBoxToolbar/VBoxSize/HBoxSize"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+placeholder_text = "Y Size"
+
+[node name="MeshLibraryPathDialog" type="FileDialog" parent="."]
+title = "Open a File"
+initial_position = 2
+size = Vector2i(352, 400)
+ok_button_text = "Open"
+file_mode = 0
+access = 2
+filters = PackedStringArray("*.db")
+
+[node name="WFCGenerator" parent="." instance=ExtResource("5_n2usy")]

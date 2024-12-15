@@ -1,6 +1,7 @@
 #class_name WFC2DGenerator
 ## Generates content of a map (Database) using WFC algorithm.
 extends Node
+class_name WFCGenerator
 
 ##############################################################################
 # Signals
@@ -18,7 +19,7 @@ signal done
 ##############################################################################
 # Members
 ##############################################################################
-var m_logger = LogStream.new("_BASE_", LogStream.LogLevel.DEBUG)
+var m_logger = LogStream.new("WFC Generator", LogStream.LogLevel.DEBUG)
 var m_runner: WFCSolverRunner = null
 var m_mapper: WFCMapper2D = null
 var m_modifiers = {}
@@ -137,10 +138,12 @@ var print_rules: bool = false
 ## Should not be called manually when [member start_on_ready] is [code]true[/code].
 func start():
 
+    m_logger.debug("Starting WFC generation")
     assert(m_runner == null)
     assert(rect.has_area())
 
     if not m_rules.is_ready():
+        m_logger.debug("Rules are not ready, learning from scratch")
 
         assert(m_map_db_adapter != null, "Map Database Adapter is null")
         assert(m_tile_db_adapter != null, "Tile Database Adapter is null")
@@ -185,6 +188,7 @@ func start():
 
             print_debug('Influence range: ', m_rules.get_influence_range())
 
+    m_logger.debug("Creating problem and precondition")
     var problem_settings: WFC2DProblem.WFC2DProblemSettings = WFC2DProblem.WFC2DProblemSettings.new()
 
     problem_settings.rules = m_rules
@@ -199,8 +203,10 @@ func start():
 
     var problem: WFC2DProblem = _create_problem(problem_settings, m_target_node, precondition)
 
+    m_logger.debug("Starting solver")
     m_runner = _create_runner()
 
+    m_logger.debug("Starting problem")
     m_runner.start(problem)
 
     m_runner.all_solved.connect(func(): done.emit())
@@ -234,6 +240,22 @@ func reset():
         if m_runner.is_running():
             m_runner.interrupt()
         m_runner = null
+
+func validate_inputs() -> bool:
+    if m_map_db_adapter == null:
+        m_logger.error("Map Database Adapter is null")
+        return false
+    if m_tile_db_adapter == null:
+        m_logger.error("Tile Database Adapter is null")
+        return false
+    if rect == null:
+        m_logger.error("Rect is null")
+        return false
+    if not rect.has_area():
+        m_logger.error("Rect has no area")
+        return false
+    m_logger.debug("All inputs are valid")
+    return true
 
 ##############################################################################
 # Private Functions

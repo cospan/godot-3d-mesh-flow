@@ -88,10 +88,15 @@ func init(_dir:String):
     m_project_path = _dir
     m_config_file = "%s/%s" % [_dir, "library.cfg"]
     m_config.load(m_config_file)
+    if not m_config.has_section_key("config", "config_path"):
+        m_config.set_value("config", "config_path", m_config_file)
     if not m_config.has_section_key("config", "database_path") or FORCE_NEW_DB:
         var base_dir = m_config.get_value("config", "base_path")
         m_config.set_value("config", "database_path", "%s/%s" % [base_dir, DATABASE_NAME])
         m_config.save(m_config_file)
+    var config_path = m_config.get_value("config", "config_path")
+    m_config.save(config_path)
+
 
 
 func get_project_path():
