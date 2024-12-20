@@ -1,0 +1,50 @@
+[gd_scene load_steps=2 format=3 uid="uid://bdb0b1u2dx3fm"]
+
+[ext_resource type="Script" path="res://utils/WindowTableView.gd" id="1_dpoyt"]
+
+[node name="WindowTableView" type="Window"]
+title = "Table View"
+position = Vector2i(0, 36)
+size = Vector2i(500, 500)
+script = ExtResource("1_dpoyt")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HBoxMenu" type="HBoxContainer" parent="VBox"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 2
+
+[node name="ButtonRefresh" type="Button" parent="VBox/HBoxMenu"]
+layout_mode = 2
+text = "Refresh"
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBox"]
+custom_minimum_size = Vector2(400, 400)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GridContainer" type="GridContainer" parent="VBox/ScrollContainer"]
+custom_minimum_size = Vector2(400, 400)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HBoxStatus" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 8
+
+[node name="Label" type="Label" parent="VBox/HBoxStatus"]
+layout_mode = 2
+text = "Status"
+
+[node name="LineEditStatusField" type="LineEdit" parent="VBox/HBoxStatus"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "<Status>"

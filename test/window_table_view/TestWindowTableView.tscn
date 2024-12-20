@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://2qso7pe5y688"]
+
+[ext_resource type="Script" path="res://test/window_table_view/TestWindowTableView.gd" id="1_6wsms"]
+[ext_resource type="PackedScene" uid="uid://bdb0b1u2dx3fm" path="res://utils/WindowTableView.tscn" id="2_3dpvd"]
+
+[node name="TestWindowTableView" type="Node"]
+script = ExtResource("1_6wsms")
+
+[node name="WindowTableView" parent="." instance=ExtResource("2_3dpvd")]
+visible = false
