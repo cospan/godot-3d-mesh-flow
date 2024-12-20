@@ -26,6 +26,8 @@ var m_modifiers = {}
 var m_map_db_adapter = null
 var m_tile_db_adapter = null
 var m_target_node = null
+var m_subcomposer_id = "WFC"
+var m_wfc_step_enabled = false
 
 ## Flags ##
 
@@ -131,6 +133,18 @@ var print_rules: bool = false
 # Public Functions
 ##############################################################################
 
+func set_subcomposer_id(_id: String):
+    m_subcomposer_id = _id
+
+func set_layer_and_mask(_layer: int, _mask: int):
+    MESH_LAYER = _layer
+    MESH_MASK = _mask
+    if m_mapper != null:
+        m_mapper.set_mesh_layer_and_mask(MESH_LAYER, MESH_MASK)
+
+func set_step_enable(_enable: bool):
+    m_wfc_step_enabled = _enable
+
 ## Starts generation.
 ## [br]
 ## Should be called at most once.
@@ -164,7 +178,8 @@ func start():
         if m_rules.mapper == null:
             #m_rules.mapper = _create_mapper(target_node)
             m_mapper = WFCTileDatabaseMapper.new()
-            m_mapper.set_subcomposer_id(name)
+            m_mapper.set_subcomposer_id(m_subcomposer_id)
+            m_mapper.set_mesh_layer_and_mask(MESH_LAYER, MESH_MASK)
             m_mapper.set_modifiers(m_modifiers)
             m_mapper.set_map_db_adapter(m_map_db_adapter)
             m_mapper.set_tile_db_adapter(m_tile_db_adapter)
@@ -335,5 +350,9 @@ func _ready():
     pass
 
 func _process(_delta):
+    if not m_wfc_step_enabled:
+        step()
+
+func step():
     if m_runner != null and m_runner.is_running():
         m_runner.update()

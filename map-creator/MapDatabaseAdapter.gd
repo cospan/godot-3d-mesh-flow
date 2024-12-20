@@ -184,9 +184,11 @@ func clear_pos_table():
 #    _update_both_dict_and_database_timestamp()
 #    return pos_dict
 
-func get_module_at_pos(pos:Vector3i) -> Dictionary:
+func get_module_at_pos(pos) -> Dictionary:
     # Create a query string to get the row with the given position
-    var s = "x = {0} and y = {1} and z = {2}".format({0:pos.x, 1:pos.y, 2:pos.z})
+    var s = "x = {0} and z = {1}".format({0:pos.x, 1:pos.y})
+    if pos is Vector3i or pos is Vector3:
+        s = "x = {0} and y = {1} and z = {2}".format({0:pos.x, 1:pos.y, 2:pos.z})
     var rows = m_database.select_rows(POS_TABLE, s, ["*"])
     if len(rows):
         return _row_to_dict_entry(rows[0])
@@ -227,7 +229,7 @@ func insert_module( threaded: bool,
     elif pos is Vector2i or pos is Vector2:
         d["x"] = pos.x
         d["y"] = 0
-        d["z"] = pos.z
+        d["z"] = pos.y
     else:
         assert(false, "Invalid Position Type")
     d["x_reflect"] = x_reflect

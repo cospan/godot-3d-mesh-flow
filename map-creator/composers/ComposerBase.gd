@@ -84,7 +84,7 @@ func _remove_composer():
         _remove_all_meshes()
     if m_config != null:
         if m_config.has_section(name):
-            m_config.remove_section(name)
+            m_config.erase_section(name)
     emit_signal("remove_composer", name)
 
 ##############################################################################

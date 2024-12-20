@@ -21,13 +21,20 @@ offset_right = 40.0
 offset_bottom = 40.0
 size_flags_horizontal = 3
 
-[node name="Control" type="Control" parent="HBoxToolbar"]
+[node name="SpaceBox" type="Control" parent="HBoxToolbar"]
 custom_minimum_size = Vector2(50, 0)
 layout_mode = 2
 
-[node name="ButtonStart" type="Button" parent="HBoxToolbar"]
+[node name="VBoxControl" type="VBoxContainer" parent="HBoxToolbar"]
+layout_mode = 2
+
+[node name="ButtonStart" type="Button" parent="HBoxToolbar/VBoxControl"]
 layout_mode = 2
 text = "Start"
+
+[node name="ButtonStep" type="Button" parent="HBoxToolbar/VBoxControl"]
+layout_mode = 2
+text = "Step"
 
 [node name="VBoxMeshLib" type="VBoxContainer" parent="HBoxToolbar"]
 layout_mode = 2
@@ -93,6 +100,25 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
 placeholder_text = "Y Size"
+
+[node name="GridContainerConfig" type="GridContainer" parent="HBoxToolbar"]
+layout_mode = 2
+
+[node name="EnableResetOnStart" type="CheckBox" parent="HBoxToolbar/GridContainerConfig"]
+layout_mode = 2
+text = "Reset On Start"
+
+[node name="EnableWFCStep" type="CheckBox" parent="HBoxToolbar/GridContainerConfig"]
+layout_mode = 2
+text = "Step Enable"
+
+[node name="TextEditStatus" type="TextEdit" parent="HBoxToolbar"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="ButtonShowConnectionMatrix" type="Button" parent="HBoxToolbar"]
+layout_mode = 2
+text = "Show Connections"
 
 [node name="MeshLibraryPathDialog" type="FileDialog" parent="."]
 title = "Open a File"

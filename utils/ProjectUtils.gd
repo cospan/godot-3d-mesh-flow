@@ -78,6 +78,8 @@ func open(_path:String):
 func is_type(_path:String):
     var base_path = _get_base_path(_path)
     var d = DirAccess.open(base_path)
+    if d == null:
+        return false
     if not d.dir_exists(_path):
         return false
     var proj_info_file = _path + "/" + m_config_file

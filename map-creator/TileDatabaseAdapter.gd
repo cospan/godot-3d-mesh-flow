@@ -241,8 +241,8 @@ func get_module_dict() -> Dictionary:
 
 func get_mesh_dict() -> Dictionary:
     m_logger.debug("Entered get_mesh_dict")
-    if m_mesh_dict != null:
-        return m_mesh_dict
+    #if m_mesh_dict != null:
+    #    return m_mesh_dict
     m_mesh_dict = {}
     var base_mesh_dir = get_mesh_dir_path()
 

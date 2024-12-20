@@ -29,8 +29,8 @@ var m_mesh_lib_database_path_temp = ""
 var m_mesh_lib_database_path = ""
 var m_tile_database_path:String = ""
 var m_wfc_pos = Vector2i(0, 0)
-var m_wfc_size = Vector2i(0, 0)
-var m_wfc_rect = Rect2i(0, 0, 0, 0)
+var m_wfc_size = Vector2i(10, 10)
+var m_wfc_rect = Rect2i(0, 0, 10, 10)
 
 ###################
 # Flags
@@ -54,8 +54,10 @@ var m_mesh_library_dialog = null
 @onready var m_text_edit_y_pos = $HBoxToolbar/VBoxPos/HBoxPos/TextEditYPos
 @onready var m_text_edit_x_size = $HBoxToolbar/VBoxSize/HBoxSize/TextEditXSize
 @onready var m_text_edit_y_size = $HBoxToolbar/VBoxSize/HBoxSize/TextEditYSize
-@onready var m_start_button = $HBoxToolbar/ButtonStart
+@onready var m_start_button = $HBoxToolbar/VBoxControl/ButtonStart
+@onready var m_step_button = $HBoxToolbar/VBoxControl/ButtonStep
 @onready var m_wfc_generator = $WFCGenerator
+@onready var m_status = $HBoxToolbar/TextEditStatus
 
 ##############################################################################
 # Exports
@@ -83,6 +85,9 @@ func get_toolbar():
     m_logger.debug("Get Toolbar Entered!")
     return m_toolbar
 
+func step():
+    pass
+
 ##############################################################################
 # Private Functions
 ##############################################################################
@@ -93,10 +98,16 @@ func _generate_tile_database(_library_db_path:String, _tile_db_path:String, _res
     m_tile_db_adapter.open_database(_tile_db_path, _reset_tile_db, _reset_tile_db)
     m_library_2_tile_converter.process_database(m_library_db_adapter, m_tile_db_adapter)
 
-func step():
-    # Override this function, Process WFC step at a time
-    if m_area_index < 0:
-        return
+func _step():
+    var status = "Step Start..."
+    if m_wfc_generator != null:
+        m_wfc_generator.step()
+        status = "Step Complete!"
+        status += "\nProgress: %f" % m_wfc_generator.get_progress()
+    else:
+        status = "WFC Generator Not Found!"
+
+    m_status.text = status
 
 ##############################################################################
 # Signal Handlers
@@ -134,6 +145,7 @@ func _ready():
     m_tile_database_path = m_config.get_value("config", "path") + "/%s.db" % name
 
     m_start_button.pressed.connect(_on_start_pressed)
+    m_wfc_generator.done.connect(_wfc_done)
 
 
 
@@ -157,13 +169,18 @@ func _ready():
             m_wfc_size.x = int(m_config.get_value(name, "x_size"))
         if m_config.has_section_key(name, "y_size"):
             m_wfc_size.y = int(m_config.get_value(name, "y_size"))
-        m_wfc_rect = Rect2i(m_wfc_pos, m_wfc_size)
+
+        if m_config.has_section_key(name, "reset_on_start"):
+            $HBoxToolbar/GridContainerConfig/EnableResetOnStart.button_pressed = m_config.get_value(name, "reset_on_start")
+        if m_config.has_section_key(name, "wfc_step_enable"):
+            $HBoxToolbar/GridContainerConfig/EnableWFCStep.button_pressed = m_config.get_value(name, "wfc_step_enable")
 
 
     m_text_edit_x_pos.text = str(m_wfc_pos.x)
     m_text_edit_y_pos.text = str(m_wfc_pos.y)
     m_text_edit_x_size.text = str(m_wfc_size.x)
     m_text_edit_y_size.text = str(m_wfc_size.y)
+    m_wfc_rect = Rect2i(m_wfc_pos, m_wfc_size)
 
     # Create a lambda for each of the above text boxes that will pass in the text box and the member
     # variable to set the value of the member variable when the text box changes
@@ -176,7 +193,27 @@ func _ready():
     m_text_edit_y_size.text_changed.connect(func(text):
         _on_pos_size_changed("y_size", text))
 
+
+    # Get references to configuration checkbuttons
+    var reset_on_start = $HBoxToolbar/GridContainerConfig/EnableResetOnStart
+    var wfc_step_enable = $HBoxToolbar/GridContainerConfig/EnableWFCStep
+    reset_on_start.toggled.connect(func(value):
+        m_config.set_value(name, "reset_on_start", value)
+        m_config.save(m_config.get_value("config", "config_path"))
+        )
+    wfc_step_enable.toggled.connect(func(value):
+        m_config.set_value(name, "wfc_step_enable", value)
+        m_config.save(m_config.get_value("config", "config_path"))
+        m_wfc_generator.set_step_enable(value)
+        )
+
+    m_step_button.pressed.connect(func():
+        _step()
+        )
+
     # Set the WFC Generator's Map Adapter
+    m_wfc_generator.set_subcomposer_id(name)
+    m_wfc_generator.set_layer_and_mask(mesh_layer, mesh_mask)
     m_wfc_generator.m_map_db_adapter = m_map_db_adapter
 
     remove_child(m_toolbar)
@@ -204,8 +241,18 @@ func _process(_delta):
             if m_flag_start_wfc:
                 m_logger.debug("Validating WFC!")
                 m_flag_start_wfc = false
+                var mesh_dict = m_tile_db_adapter.get_module_dict()
+                for key in mesh_dict.keys():
+                    m_logger.debug("Insert: %s" % key)
+                    m_map_db_adapter.insert_mesh(key, mesh_dict[key]["mesh"], mesh_dict[key]["transform"])
                 if m_wfc_generator.validate_inputs():
+                    var status = "Inputs Valid, Starting WFC!"
                     m_logger.debug("Starting WFC Generator!")
+                    if m_config.get_value(name, "reset_on_start"):
+                        status += "\nResetting WFC Map..."
+                        m_wfc_generator.reset()
+                        m_map_db_adapter.remove_all_composer_modules(name)
+                    m_status.text = status
                     m_wfc_generator.start()
                     m_state = STATES_T.START_PROCESSING_AREA
                 else:
@@ -291,3 +338,7 @@ func _on_start_pressed():
     m_config.save(config_path)
 
     m_flag_start_wfc = true
+
+func _wfc_done():
+    var status = "WFC Done!"
+    m_status.text = status
