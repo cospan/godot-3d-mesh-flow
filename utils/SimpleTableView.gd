@@ -1,4 +1,6 @@
-extends Window
+extends Control
+
+class_name SimpleTableView
 
 ##############################################################################
 # Signals
@@ -11,16 +13,18 @@ signal cell_hover_down(y: int, x: int)
 # Constants
 ##############################################################################
 enum STATES_T {
+    STATE_RESET,
     STATE_IDLE,
     STATE_LOADING,
     STATE_READY,
     STATE_ERROR
 }
-var m_state:STATES_T = STATES_T.STATE_IDLE
+var m_state:STATES_T = STATES_T.STATE_RESET
 ##############################################################################
 # Members
 ##############################################################################
 var m_logger = LogStream.new("Window Table View", LogStream.LogLevel.DEBUG)
+var m_table_name:String = ""
 
 var m_data: Array = []
 
@@ -29,12 +33,15 @@ var m_flag_loading_finished = false
 var m_flag_data_parse_error = false
 var m_flag_refresh = false
 var m_flag_input_handled = false
+var m_flag_initialized = false
 
 ##############################################################################
 # Scenes
 ##############################################################################
 @onready var m_grid_view: GridContainer = $VBox/ScrollContainer/GridContainer
 @onready var m_status: LineEdit = $VBox/HBoxStatus/LineEditStatusField
+@onready var m_refresh_button: Button = $VBox/HBoxMenu/ButtonRefresh
+@onready var m_table_name_label: Label = $VBox/LabelTableName
 
 
 ##############################################################################
@@ -59,6 +66,9 @@ func update_value(y: int, x: int, value) -> void:
 
     else:
         m_logger.error("Index out of bounds! y: %d, x: %d" % [y, x])
+
+func set_table_name(_name: String) -> void:
+    m_table_name = _name
 
 ##############################################################################
 # Private Functions
@@ -92,7 +102,7 @@ func _start_parse_data() -> void:
     _set_status("Loading Data with Size: %d x %d" % [height, width])
     for i in range(height):
         for j in range(width):
-            m_logger.debug("Data[%d][%d] = %d" % [i, j, m_data[i][j]])
+            #m_logger.debug("Data[%d][%d] = %d" % [i, j, m_data[i][j]])
             var cell = Button.new()
             if m_data[i][j] is float:
                 cell.text = String.num(m_data[i][j], 2)
@@ -124,26 +134,43 @@ func _ready_to_parse_data() -> bool:
 func _set_status(status: String) -> void:
     m_status.text = status
 
+
 ##############################################################################
 # Signal Handlers
 ##############################################################################
 
 func _ready() -> void:
-    m_logger.debug("Ready Entered!")
-    var refresh_button = $VBox/HBoxMenu/ButtonRefresh
-    refresh_button.pressed.connect(func() -> void:
+    m_logger.debug("Delayed Ready Entered!")
+    m_refresh_button.pressed.connect(func() -> void:
         m_flag_refresh = true
     )
     _set_status("Ready")
-    close_requested.connect(func() -> void:
-        m_logger.debug("Close Requested!")
-        hide()
-    )
+    m_table_name_label.text = m_table_name
+    m_flag_initialized = true
+
+
+
+#func _delayed_ready() -> void:
+#    if m_refresh_button == null:
+#        return
+#    if m_table_name_label == null:
+#        return
+#    if m_status == null:
+#        return
+#    if m_grid_view == null:
+#        return
 
 
 func _process(_delta: float) -> void:
     m_flag_input_handled = false
     match m_state:
+        STATES_T.STATE_RESET:
+            if m_flag_initialized:
+                m_flag_initialized = false
+                m_logger.debug("Reset State! return to IDLE")
+                m_state = STATES_T.STATE_IDLE
+            #else:
+            #    _delayed_ready()
         STATES_T.STATE_IDLE:
             if _ready_to_parse_data():
                 m_logger.debug("Ready to parse data!")

@@ -1,14 +1,10 @@
 [gd_scene load_steps=2 format=3 uid="uid://bdb0b1u2dx3fm"]
 
-[ext_resource type="Script" path="res://utils/WindowTableView.gd" id="1_dpoyt"]
+[ext_resource type="Script" path="res://utils/SimpleTableView.gd" id="1_5b0h1"]
 
-[node name="WindowTableView" type="Window"]
-title = "Table View"
-position = Vector2i(0, 36)
-size = Vector2i(500, 500)
-script = ExtResource("1_dpoyt")
-
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="SimpleTableView" type="Control"]
+custom_minimum_size = Vector2(400, 400)
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -16,6 +12,21 @@ grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+script = ExtResource("1_5b0h1")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="LabelTableName" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Table Name"
 
 [node name="HBoxMenu" type="HBoxContainer" parent="VBox"]
 custom_minimum_size = Vector2(400, 0)

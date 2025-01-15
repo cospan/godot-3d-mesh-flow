@@ -9,6 +9,7 @@ extends ComposerBase
 # Constants
 ##############################################################################
 const PROP_GENERATE_TERRAIN = "WFC Composer"
+const c_table_class = preload("res://utils/SimpleTableView.tscn")
 
 enum STATES_T {
     RESET,
@@ -58,6 +59,9 @@ var m_mesh_library_dialog = null
 @onready var m_step_button = $HBoxToolbar/VBoxControl/ButtonStep
 @onready var m_wfc_generator = $WFCGenerator
 @onready var m_status = $HBoxToolbar/TextEditStatus
+@onready var m_table_view = $WindowTablesView
+
+var connection_tables:Array = []
 
 ##############################################################################
 # Exports
@@ -97,6 +101,10 @@ func _generate_tile_database(_library_db_path:String, _tile_db_path:String, _res
     m_library_db_adapter.open_database(_library_db_path)
     m_tile_db_adapter.open_database(_tile_db_path, _reset_tile_db, _reset_tile_db)
     m_library_2_tile_converter.process_database(m_library_db_adapter, m_tile_db_adapter)
+
+func _generate_table_view_data():
+    #var rules = m_wfc_generator.m_rules
+    pass
 
 func _step():
     var status = "Step Start..."
@@ -146,6 +154,9 @@ func _ready():
 
     m_start_button.pressed.connect(_on_start_pressed)
     m_wfc_generator.done.connect(_wfc_done)
+    var show_table_view = $HBoxToolbar/ButtonShowConnectionMatrix
+    show_table_view.pressed.connect(_show_hide_connections)
+    m_table_view.close_requested.connect(_show_hide_connections)
 
 
 
@@ -218,6 +229,22 @@ func _ready():
 
     remove_child(m_toolbar)
 
+    # Set up the table view, we need as many tables as there are axis in the WFC Generator
+    var axis_count = len(m_wfc_generator.m_rules.axes)
+    # Get the size of the window
+    var table_size = m_table_view.get_size()
+    m_table_view.set_size(Vector2(table_size.x * axis_count, table_size.y))
+
+    for i in range(axis_count):
+        var table = c_table_class.instantiate()
+        connection_tables.append(table)
+        table.set_table_name("Axis %d" % i)
+
+        #table.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        #table.size_flags_vertical = Control.SIZE_EXPAND_FILL
+        var hb = $WindowTablesView/HBox
+        hb.add_child(table)
+
 
 func _process(_delta):
     match m_state:
@@ -253,7 +280,31 @@ func _process(_delta):
                         m_wfc_generator.reset()
                         m_map_db_adapter.remove_all_composer_modules(name)
                     m_status.text = status
+
+                    if m_config.has_section_key(name, "wfc_step_enable"):
+                        m_wfc_generator.set_step_enable(m_config.get_value(name, "wfc_step_enable"))
+                    #m_wfc_generator.set_step_enable(m_config.get_value(name, "wfc_step_enable"))
                     m_wfc_generator.start()
+                    # Populate the table view
+                    m_logger.debug("Populating Table View!")
+                    for i in range(len(m_wfc_generator.m_rules.axes)):
+                        var bit_matrix = m_wfc_generator.m_rules.axis_matrices[i]
+                        var matrix_data = []
+                        matrix_data.resize(bit_matrix.height)
+                        for h in range(bit_matrix.height):
+                            matrix_data[h] = []
+                            matrix_data[h].resize(bit_matrix.width)
+                            matrix_data[h].fill(false)
+                            for w in range(bit_matrix.width):
+                                matrix_data[h][w] = bit_matrix.rows[h].get_bit(w)
+                        connection_tables[i].set_data(matrix_data)
+
+                        # Generate a table for each axis
+                        #m_logger.debug("Matrix Data: %s" % matrix_data)
+                        #var matrix_probabilities = m_wfc_generator.m_rules.probabilities[i]
+                        #m_logger.debug("Matrix Probabilities: %s" % str(matrix_probabilities))
+
+                        #connection_tables[i].set_data(m_wfc_generator.m_rules.axis_matrices[i].get_data())
                     m_state = STATES_T.START_PROCESSING_AREA
                 else:
                     m_logger.error("Invalid WFC Inputs: %s %s %s" % [str(m_wfc_generator.m_tile_db_adapter), str(m_wfc_generator.m_map_db_adapter), str(m_wfc_generator.rect)])
@@ -342,3 +393,9 @@ func _on_start_pressed():
 func _wfc_done():
     var status = "WFC Done!"
     m_status.text = status
+
+func _show_hide_connections():
+    if m_table_view.visible:
+        m_table_view.visible = false
+    else:
+        m_table_view.visible = true

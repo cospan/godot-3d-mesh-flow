@@ -321,8 +321,8 @@ func _remove_object(_id:int):
         else:
             m_map_view.remove_child(obj)
         m_map_object_dict.erase(_id)
-    else:
-        m_logger.warn("Object with ID: " + str(_id) + " not found!")
+    #else:
+    #    m_logger.warn("Object with ID: " + str(_id) + " not found!")
 
 func _on_property_changed(property_name, property_value):
     match property_name:
@@ -409,7 +409,7 @@ func _on_area_shape_entered(local_mesh_instance, other_mesh_instance):
     var local_composer_name = m_map_db_adapter.get_composer_name(local_id)
     if len(local_composer_name) == 0:
         m_logger.warn("No Composer Name Found for ID: " + str(local_id))
-        assert(false)
+        #assert(false)
         return
     #var other_composer_name = m_map_db_adapter.get_composer_name(other_id)
     #m_logger.debug("  Composer Names: " + local_composer_name + " " + other_composer_name)

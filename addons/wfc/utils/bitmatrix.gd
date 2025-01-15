@@ -16,40 +16,40 @@ var width: int
 var height: int
 
 func _init(w: int, h: int):
-	width = w
-	height = h
+    width = w
+    height = h
 
-	for i in range(height):
-		rows.append(WFCBitSet.new(width))
+    for i in range(height):
+        rows.append(WFCBitSet.new(width))
 
 ## Creates a copy of this matrix.
 func copy() -> WFCBitMatrix:
-	var res: WFCBitMatrix = WFCBitMatrix.new(0, 0)
+    var res: WFCBitMatrix = WFCBitMatrix.new(0, 0)
 
-	res.width = width
-	res.height = height
+    res.width = width
+    res.height = height
 
-	for i in range(height):
-		res.rows.append(rows[i].copy())
+    for i in range(height):
+        res.rows.append(rows[i].copy())
 
-	return res
+    return res
 
 ## Set [param x]th bit in [param y]th row.
 func set_bit(x: int, y: int, value: bool = true):
-	assert(y >= 0 and y < height)
+    assert(y >= 0 and y < height)
 
-	rows[y].set_bit(x, value)
+    rows[y].set_bit(x, value)
 
 ## Create a new matrix that is a [url=https://en.wikipedia.org/wiki/Transpose]transposition[/url] of
 ## this matrix.
 func transpose() -> WFCBitMatrix:
-	var res: WFCBitMatrix = WFCBitMatrix.new(height, width)
+    var res: WFCBitMatrix = WFCBitMatrix.new(height, width)
 
-	for y in range(height):
-		for x in rows[y].iterator():
-			res.set_bit(y, x)
+    for y in range(height):
+        for x in rows[y].iterator():
+            res.set_bit(y, x)
 
-	return res
+    return res
 
 ## Multiply given [WFCBitSet] (considered as a bit-vector) by this matrix.
 ## [br]
@@ -57,14 +57,14 @@ func transpose() -> WFCBitMatrix:
 ## [br]
 ## [WFCBitSet.size] of input vector must match [member width] of this matrix.
 func transform(input: WFCBitSet) -> WFCBitSet:
-	assert(input.size == height)
+    assert(input.size == height)
 
-	var res: WFCBitSet = WFCBitSet.new(width)
+    var res: WFCBitSet = WFCBitSet.new(width)
 
-	for y in input.iterator():
-		res.union_in_place(rows[y])
+    for y in input.iterator():
+        res.union_in_place(rows[y])
 
-	return res
+    return res
 
 ## Find all structures like (including rotated)
 ## [codeblock]
@@ -82,14 +82,14 @@ func transform(input: WFCBitSet) -> WFCBitSet:
 ## If you know the name - plase submit a PR/issue.
 ## But for now let's call it [i]The Bondarenko Operator[/i].
 func complete():
-	for i in range(height):
-		var ri: WFCBitSet = rows[i]
-		for j in range(height):
-			if i != j:
-				var rj: WFCBitSet = rows[j]
+    for i in range(height):
+        var ri: WFCBitSet = rows[i]
+        for j in range(height):
+            if i != j:
+                var rj: WFCBitSet = rows[j]
 
-				if ri.intersects_with(rj):
-					rj.union_in_place(ri)
+                if ri.intersects_with(rj):
+                    rj.union_in_place(ri)
 
 ## Prints this matrix to string.
 ## [br]
@@ -101,16 +101,16 @@ func complete():
 ## )"
 ## [/codeblock]
 func format_bits() -> String:
-	var res: String = '('
+    var res: String = '('
 
-	for i in range(height):
-		res += '\n\t'
-		res += rows[i].format_bits()
-		res += ','
+    for i in range(height):
+        res += '\n\t'
+        res += rows[i].format_bits()
+        res += ','
 
-	res += '\n)'
+    res += '\n)'
 
-	return res
+    return res
 
 ## For an NxN bit-matrix, representing links in a direct graph of N nodes, returns the length of the
 ## longest path that is a shortest path between certain two nodes.
@@ -118,21 +118,21 @@ func format_bits() -> String:
 ## Returns -1 if graph consists of few unconnected sub-graphs (and thus paths between some pairs of
 ## nodes do not exist).
 func get_longest_path() -> int:
-	assert(width == height)
+    assert(width == height)
 
-	var all_set: WFCBitSet = WFCBitSet.new(width, true)
-	var longest_known_path: int = -1
+    var all_set: WFCBitSet = WFCBitSet.new(width, true)
+    var longest_known_path: int = -1
 
-	for start in range(width):
-		var cur: WFCBitSet = WFCBitSet.new(width)
-		cur.set_bit(start, true)
+    for start in range(width):
+        var cur: WFCBitSet = WFCBitSet.new(width)
+        cur.set_bit(start, true)
 
-		for path_len in range(1, width):
-			cur = transform(cur)
-			if cur.equals(all_set):
-				if path_len > longest_known_path:
-					longest_known_path = path_len
+        for path_len in range(1, width):
+            cur = transform(cur)
+            if cur.equals(all_set):
+                if path_len > longest_known_path:
+                    longest_known_path = path_len
 
-				break
+                break
 
-	return longest_known_path
+    return longest_known_path

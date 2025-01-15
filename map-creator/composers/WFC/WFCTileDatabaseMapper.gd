@@ -29,6 +29,7 @@ var m_subcomposer_id = "WFC"
 var m_modifiers = {}
 var m_mesh_layer = 1
 var m_mesh_mask = 1
+var m_tile_size = Vector3i(1, 1, 1)
 ## Flags ##
 
 ##############################################################################
@@ -59,6 +60,15 @@ func set_map_db_adapter(adapter: Node):
 
 func set_tile_db_adapter(adapter: Node):
     m_tile_db_adapter = adapter
+
+func get_id_dict() -> Dictionary:
+    return m_id_dict
+
+func get_attribute_dict() -> Dictionary:
+    return m_attribute_dict
+
+func set_tile_size(_size:Vector3i):
+    m_tile_size = _size
 
 ### From Base Class ###
 
@@ -107,9 +117,15 @@ func get_used_rect(_map: Node) -> Rect2i:
 ## [br]
 ## Returns a negative value if cell is empty or mapping for the cell is missing.
 func read_cell(_map: Node, _coords: Vector2i) -> int:
+    _coords.x = _coords.x * m_tile_size.x
+    _coords.y = _coords.y * m_tile_size.z
     var module_dict = m_map_db_adapter.get_module_at_pos(Vector2i(_coords.x, _coords.y))
     if module_dict:
         var attrs:Vector2i
+        var composer_id = module_dict["composer_id"]
+        if composer_id != m_subcomposer_id:
+            #XXX: This must hanlde the situation where it is a lower layer priority, need to tell WFC this is already populated
+            return -1
         var module_name = module_dict["module_name"]
         attrs = Vector2i(m_tile_dict[module_name]["id"], module_dict["rot_y_90_cw"])
         return m_attribute_dict[attrs]
@@ -123,6 +139,9 @@ func read_tile_meta(_tile_id: int, _meta_name: String) -> Array:
     var retval = []
     var attr = m_id_dict[_tile_id]["attr"]
     var _tile = attr.x
+    var _coords = Vector2i(attr.x, attr.y)
+    _coords.x = _coords.x * m_tile_size.x
+    _coords.y = _coords.y * m_tile_size.z
     var module_dict = m_map_db_adapter.get_module_at_pos(Vector2i(attr.x, attr.y))
     if len(module_dict) == 0:
         return retval
@@ -167,6 +186,8 @@ func write_cell(_map: Node, _coords: Vector2i, _code: int):
     if _code == -1:
         m_logger.warn("WFC Solution Failed!")
         return
+    _coords.x = _coords.x * m_tile_size.x
+    _coords.y = _coords.y * m_tile_size.z
     m_map_db_adapter.insert_module( false,
                                     m_subcomposer_id,
                                     m_id_dict[_code]["name"],

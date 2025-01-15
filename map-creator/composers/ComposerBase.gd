@@ -34,10 +34,10 @@ var m_remove_button = null
 # Exports
 ##############################################################################
 @export var composer_name:String = ""
-@export var enabled = true
-@export var mesh_layer = 1
-#@export var mesh_priority = 1
-@export var mesh_mask = 1
+@export var enabled:bool = true
+@export var mesh_layer:int = 1
+#@export var mesh_priority:int = 1
+@export var mesh_mask:int = 1
 
 ##############################################################################
 # Public Functions

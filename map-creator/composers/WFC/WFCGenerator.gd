@@ -28,6 +28,7 @@ var m_tile_db_adapter = null
 var m_target_node = null
 var m_subcomposer_id = "WFC"
 var m_wfc_step_enabled = false
+var m_tile_size = Vector3i(1, 1, 1)
 
 ## Flags ##
 
@@ -66,7 +67,7 @@ var map_db_target: String
 ## If not specified, default m_rules will be created.
 @export
 @export_category("Rules")
-var m_rules: WFCRules2D = WFCRules2D.new()
+var m_rules: WFCTileDatabaseRules = WFCTileDatabaseRules.new()
 
 ## Settings for a [WFCSolver].
 @export
@@ -103,7 +104,8 @@ var main_thread_runner_settings: WFCMainThreadRunnerSettings = WFCMainThreadRunn
 ## [member WFCMultithreadedRunnerSettings.max_threads] in [member multithreaded_runner_settings] to
 ## [code]1[/code].
 @export
-var use_multithreading: bool = false
+#var use_multithreading: bool = false
+var use_multithreading: bool = true
 
 ## If enabled, the generator will start WFC as soon as it is ready (i.e. literally in
 ## [method Node._ready]).
@@ -121,7 +123,8 @@ var start_on_ready: bool = true
 ## Even if this flag is disabled, generator [b]will[/b] render some intermediate results when
 ## running in multithreaded mode.
 @export
-var render_intermediate_results: bool = false
+#var render_intermediate_results: bool = false
+var render_intermediate_results: bool = true
 
 ## If enabled, some debug information about m_rules will be printed to console.
 @export
@@ -153,39 +156,41 @@ func set_step_enable(_enable: bool):
 func start():
 
     m_logger.debug("Starting WFC generation")
+    assert(m_map_db_adapter != null, "Map Database Adapter is null")
+    assert(m_tile_db_adapter != null, "Tile Database Adapter is null")
     assert(m_runner == null)
     assert(rect.has_area())
+    m_tile_size = m_tile_db_adapter.get_default_size_3d()
 
     if not m_rules.is_ready():
         m_logger.debug("Rules are not ready, learning from scratch")
-
-        assert(m_map_db_adapter != null, "Map Database Adapter is null")
-        assert(m_tile_db_adapter != null, "Tile Database Adapter is null")
-
-
         #assert(positive_sample != null)
 
         #var positive_sample_node: Node = get_node(positive_sample)
         #assert(positive_sample_node != null)
 
         if m_rules == null:
-            m_rules = WFCRules2D.new()
+            m_rules = WFCTileDatabaseRules.new()
         else:
-            m_rules = m_rules.duplicate(false) as WFCRules2D
+            m_rules = m_rules.duplicate(false) as WFCTileDatabaseRules
 
-            assert(m_rules != null)
+        assert(m_rules != null)
+        m_rules.set_tile_db_adapter(m_tile_db_adapter)
 
         if m_rules.mapper == null:
             #m_rules.mapper = _create_mapper(target_node)
             m_mapper = WFCTileDatabaseMapper.new()
-            m_mapper.set_subcomposer_id(m_subcomposer_id)
-            m_mapper.set_mesh_layer_and_mask(MESH_LAYER, MESH_MASK)
-            m_mapper.set_modifiers(m_modifiers)
-            m_mapper.set_map_db_adapter(m_map_db_adapter)
-            m_mapper.set_tile_db_adapter(m_tile_db_adapter)
-            m_mapper.learn_from(null)
-            m_rules.mapper = m_mapper
+        m_mapper.set_subcomposer_id(m_subcomposer_id)
+        m_mapper.set_mesh_layer_and_mask(MESH_LAYER, MESH_MASK)
+        m_mapper.set_modifiers(m_modifiers)
+        m_mapper.set_map_db_adapter(m_map_db_adapter)
+        m_mapper.set_tile_db_adapter(m_tile_db_adapter)
+        m_mapper.learn_from(null)
+        m_mapper.set_tile_size(m_tile_size)
+        m_rules.mapper = m_mapper
 
+        m_rules.set_id_dict(m_mapper.get_id_dict())
+        m_rules.set_attribution_dict(m_mapper.get_attribute_dict())
         #if not m_rules.mapper.is_ready():
         #    #m_rules.mapper.learn_from(positive_sample_node)
         #    m_rules.mapper.learn_from(null)
@@ -207,7 +212,11 @@ func start():
     var problem_settings: WFC2DProblem.WFC2DProblemSettings = WFC2DProblem.WFC2DProblemSettings.new()
 
     problem_settings.rules = m_rules
-    problem_settings.rect = rect
+    var temp_rect = rect
+    # XXX: Scale the rect to the tile size
+    temp_rect.size.x = temp_rect.size.x / m_tile_size.x
+    temp_rect.size.y = temp_rect.size.y / m_tile_size.y
+    problem_settings.rect = temp_rect
 
     var precondition: WFC2DPrecondition = _create_precondition(problem_settings, m_target_node)
 
